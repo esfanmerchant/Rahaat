@@ -1,15 +1,20 @@
 import createClient from 'openapi-fetch';
 import type { paths } from './schema';
+import { lang } from '../i18n';
 import { getAccessToken, refreshSession } from './session';
 
 /** Endpoints where a 401 means "wrong credentials" or "no session", never "refresh and retry". */
 const NO_RETRY = new Set(['/v1/auth/login', '/v1/auth/refresh', '/v1/auth/logout']);
 
+/**
+ * Bearer token from memory, and the UI language, so the server can write
+ * explanations and messages in the person's language.
+ */
 function withBearer(request: Request): Request {
   const token = getAccessToken();
-  if (!token) return request;
   const headers = new Headers(request.headers);
-  headers.set('Authorization', `Bearer ${token}`);
+  headers.set('Accept-Language', lang.peek());
+  if (token) headers.set('Authorization', `Bearer ${token}`);
   return new Request(request, { headers });
 }
 

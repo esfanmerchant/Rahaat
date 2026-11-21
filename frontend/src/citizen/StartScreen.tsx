@@ -1,5 +1,5 @@
 import { useLocation } from 'preact-iso';
-import { playPrompt, unlockAudio } from '../shared/audio';
+import { playPrompt, unlockAudio, warmAudio } from '../shared/audio';
 import { Button } from '../shared/components/Button';
 import { RahatMark } from '../shared/components/RahatMark';
 import { lang, LANGUAGES, setLang, t, type Lang } from '../shared/i18n';
@@ -18,6 +18,7 @@ export function StartScreen() {
 
   const start = (): void => {
     unlockAudio();
+    warmAudio(current); // fill the offline audio cache in the background
     route('/login');
   };
 
@@ -46,7 +47,7 @@ export function StartScreen() {
         <h2 id="choose-language" class="text-center text-lg font-semibold">
           {t('choose_language')}
         </h2>
-        <div role="radiogroup" aria-labelledby="choose-language" class="grid grid-cols-3 gap-3">
+        <div role="radiogroup" aria-labelledby="choose-language" class="grid grid-cols-2 gap-3">
           {LANGUAGES.map((option) => {
             const selected = option.code === current;
             return (

@@ -133,7 +133,139 @@ const ICONS = {
       <path d="M11 22a13 13 0 0 0 26 0M24 35v7M17 42h14" />
     </>
   ),
+  /** "I do not know": a question mark in a circle. */
+  unknown: () => (
+    <>
+      <circle cx="24" cy="24" r="19" />
+      <path d="M18.5 19a5.5 5.5 0 1 1 8.2 4.8c-1.9 1-2.7 2.3-2.7 4.2v.5M24 34.5h.01" />
+    </>
+  ),
+  plus: () => <path d="M24 9v30M9 24h30" />,
+  minus: () => <path d="M9 24h30" />,
+  /** The Rahat card: a photo and lines of text. */
+  card: () => (
+    <>
+      <rect x="4" y="10" width="40" height="28" rx="3" />
+      <circle cx="15" cy="21" r="4" />
+      <path d="M9 32a6 6 0 0 1 12 0M26 18h12M26 24h12M26 30h8" />
+    </>
+  ),
+  edit: () => (
+    <>
+      <path d="M31 8l9 9-22 22H9v-9z" />
+      <path d="M26 13l9 9" />
+    </>
+  ),
+  /** Income bands: one to four banknotes stacked (more notes, more money). */
+  'income-1': () => notes(1),
+  'income-2': () => notes(2),
+  'income-3': () => notes(3),
+  'income-4': () => notes(4),
+
+  // Tracking-code symbols (backend TRACKING_SYMBOLS): everyday things a person can name.
+  moon: () => <path d="M31 7a17 17 0 1 0 10 27A14 14 0 0 1 31 7z" />,
+  star: () => (
+    <path d="M24 6l4.4 11.9 12.7.5-10 7.9 3.5 12.3L24 31.5l-10.6 7.1 3.5-12.3-10-7.9 12.7-.5z" />
+  ),
+  fish: () => (
+    <>
+      <path d="M4 24c6-8 14-11 22-9 5 1 8 5 10 9-2 4-5 8-10 9-8 2-16-1-22-9z" />
+      <path d="M36 24l8-8v16zM12 22h.01" />
+    </>
+  ),
+  tree: () => (
+    <>
+      <circle cx="24" cy="17" r="12" />
+      <path d="M24 29v14M17 43h14M24 34l-5-5" />
+    </>
+  ),
+  house: () => (
+    <>
+      <path d="M7 23L24 9l17 14M11 20v22h26V20M31 14V7h5v11" />
+      <path d="M19 29h10v8H19z" />
+    </>
+  ),
+  sun: () => (
+    <>
+      <circle cx="24" cy="24" r="8" />
+      <path d="M24 4v6M24 38v6M4 24h6M38 24h6M9.9 9.9l4.2 4.2M33.9 33.9l4.2 4.2M9.9 38.1l4.2-4.2M33.9 14.1l4.2-4.2" />
+    </>
+  ),
+  bird: () => <path d="M4 17c7-4 13-2 20 9 7-11 13-13 20-9M24 26v6" />,
+  flower: () => (
+    <>
+      <circle cx="24" cy="15" r="3.5" />
+      <circle cx="24" cy="6.5" r="4.5" />
+      <circle cx="32" cy="12.5" r="4.5" />
+      <circle cx="29" cy="22" r="4.5" />
+      <circle cx="19" cy="22" r="4.5" />
+      <circle cx="16" cy="12.5" r="4.5" />
+      <path d="M24 26.5V44M24 38c-3-4-7-5-10-4M24 35c3-3 6-4 9-3" />
+    </>
+  ),
+  key: () => (
+    <>
+      <circle cx="14" cy="24" r="8" />
+      <path d="M22 24h22M37 24v7M43 24v5" />
+    </>
+  ),
+  boat: () => (
+    <>
+      <path d="M5 31h38l-6 9H11z" />
+      <path d="M24 31V6l13 19H24" />
+    </>
+  ),
+  lamp: () => (
+    <>
+      <path d="M5 30h34c-2 7-9 10-17 10S7 37 5 30zM39 30l5-4" />
+      <path d="M22 24c-4-3-4-8 0-14 4 6 4 11 0 14z" />
+    </>
+  ),
+  leaf: () => (
+    <>
+      <path d="M8 40C8 20 20 8 40 8c0 20-12 32-32 32z" />
+      <path d="M8 40l20-20" />
+    </>
+  ),
+  cup: () => (
+    <>
+      <path d="M8 18h26v9a13 13 0 0 1-26 0z" />
+      <path d="M34 21h3a5 5 0 0 1 0 10h-4M6 44h30M17 6v6M25 6v6" />
+    </>
+  ),
+  drum: () => (
+    <>
+      <ellipse cx="24" cy="13" rx="16" ry="5" />
+      <path d="M8 13v21c0 3 7 6 16 6s16-3 16-6V13M8 22l8 8 8-8 8 8 8-8" />
+    </>
+  ),
+  kite: () => (
+    <>
+      <path d="M24 4l14 15-14 19-14-19z" />
+      <path d="M10 19h28M24 4v34M24 38c-4 2 4 4 0 7" />
+    </>
+  ),
+  bell: () => (
+    <>
+      <path d="M24 6a3 3 0 0 1 3 3v1.5A12 12 0 0 1 36 22v9l4 5H8l4-5v-9a12 12 0 0 1 9-11.5V9a3 3 0 0 1 3-3z" />
+      <path d="M20 40a4 4 0 0 0 8 0" />
+    </>
+  ),
 } satisfies Record<string, () => JSX.Element>;
+
+/** n banknotes stacked from the bottom; the top one has the coin mark. */
+function notes(count: number): JSX.Element {
+  const rows = Array.from({ length: count }, (_, index) => 36 - index * 9);
+  const top = rows[rows.length - 1] ?? 36;
+  return (
+    <>
+      {rows.map((y) => (
+        <rect key={y} x="7" y={y} width="34" height="7" rx="2" />
+      ))}
+      <path d={`M24 ${top + 3.5}h.01`} />
+    </>
+  );
+}
 
 export type PictogramName = keyof typeof ICONS;
 
@@ -141,6 +273,24 @@ export type PictogramName = keyof typeof ICONS;
 const DIRECTIONAL: ReadonlySet<PictogramName> = new Set<PictogramName>(['back', 'forward', 'delete']);
 
 export const PICTOGRAM_NAMES = Object.keys(ICONS) as PictogramName[];
+
+/** Names the server may use for the same picture. */
+const ALIASES: Readonly<Record<string, PictogramName>> = {
+  'person-will-help': 'person-help',
+  person_will_help: 'person-help',
+  approved: 'yes',
+  rejected: 'no',
+  needs_proof: 'document',
+  proof: 'document',
+  money: 'payment',
+};
+
+/** A pictogram name from server data, or null when we have no such picture. */
+export function pictogramFor(name: string | null | undefined): PictogramName | null {
+  if (!name) return null;
+  if (Object.prototype.hasOwnProperty.call(ICONS, name)) return name as PictogramName;
+  return ALIASES[name] ?? null;
+}
 
 interface PictogramProps {
   name: PictogramName;

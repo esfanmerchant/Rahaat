@@ -2,12 +2,12 @@ import { computed, effect, signal } from '@preact/signals';
 import { useLayoutEffect } from 'preact/hooks';
 import { getPref, setPref } from '../prefs';
 import { en, type Dict, type MessageKey } from './en';
-import { sd } from './sd';
 import { ur } from './ur';
 
 export type { MessageKey } from './en';
 
-export type Lang = 'ur' | 'sd' | 'en';
+/** Urdu (default) and English. Sindhi was dropped: nobody on the team can proofread it (docs/DESIGN.md). */
+export type Lang = 'ur' | 'en';
 export type Dir = 'rtl' | 'ltr';
 
 export interface LangInfo {
@@ -19,20 +19,12 @@ export interface LangInfo {
 
 export const LANGUAGES: readonly LangInfo[] = [
   { code: 'ur', native: 'اردو', dir: 'rtl' },
-  { code: 'sd', native: 'سنڌي', dir: 'rtl' },
   { code: 'en', native: 'English', dir: 'ltr' },
 ];
 
 export const DEFAULT_LANG: Lang = 'ur';
 
-const DICTS: Record<Lang, Partial<Dict>> = { en, ur, sd };
-
-/** Lookup order for a missing key. TODO(sd): drop the Urdu fallback once Sindhi is complete. */
-const FALLBACK: Record<Lang, readonly Lang[]> = {
-  ur: ['ur', 'en'],
-  sd: ['sd', 'ur', 'en'],
-  en: ['en'],
-};
+const DICTS: Record<Lang, Dict> = { en, ur };
 
 /** The current UI language. Reading `.value` in a component subscribes it. */
 export const lang = signal<Lang>(DEFAULT_LANG);
@@ -41,7 +33,7 @@ export const dir = computed<Dir>(() => dirOf(lang.value));
 let chosenOnThisDevice = false;
 
 export function isLang(value: unknown): value is Lang {
-  return value === 'ur' || value === 'sd' || value === 'en';
+  return value === 'ur' || value === 'en';
 }
 
 export function dirOf(code: Lang): Dir {
@@ -56,14 +48,25 @@ const PDI = '⁩';
 
 export type Params = Readonly<Record<string, string | number>>;
 
+/**
+ * True when `key` is one of our message keys. Server responses name keys
+ * (`message_key`, `label_key`, audio keys); only known keys are shown, so the
+ * server can never put arbitrary text on a citizen screen through a key.
+ */
+export function isMessageKey(key: string): key is MessageKey {
+  return Object.prototype.hasOwnProperty.call(en, key);
+}
+
+/** Server keys use dots (`timeline.submitted`); ours use underscores. */
+export function messageKeyFor(serverKey: string | null | undefined): MessageKey | null {
+  if (!serverKey) return null;
+  const local = serverKey.replace(/[.-]/g, '_');
+  return isMessageKey(local) ? local : null;
+}
+
 /** Translate a key. Interpolates `{name}` placeholders, each bidi-isolated. */
 export function t(key: MessageKey, params?: Params, code: Lang = lang.value): string {
-  let text: string | undefined;
-  for (const candidate of FALLBACK[code]) {
-    text = DICTS[candidate][key];
-    if (text !== undefined) break;
-  }
-  const template = text ?? key;
+  const template = DICTS[code][key] ?? en[key] ?? key;
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (match, name: string) => {
     const value = params[name];

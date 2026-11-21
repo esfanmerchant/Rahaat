@@ -106,12 +106,3 @@
   --rh-leading-snug: 2;
   --rh-leading-body: 2.2;
 }
-
-/* Sindhi is usually set in Naskh; Nastaliq fonts can miss Sindhi letters. */
-:lang(sd) {
-  --rh-font: "Noto Naskh Arabic", "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", system-ui, sans-serif;
-  --rh-script-scale: 1.1;
-  --rh-leading-tight: 2;
-  --rh-leading-snug: 2;
-  --rh-leading-body: 2.2;
-}
