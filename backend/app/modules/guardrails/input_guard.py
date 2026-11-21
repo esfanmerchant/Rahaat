@@ -24,7 +24,7 @@ from typing import Final, Literal
 
 from app.modules.guardrails import pii
 from app.modules.guardrails.concepts import Concept, Rule, concept, match
-from app.modules.guardrails.textnorm import has_hidden_characters, skeleton, squash
+from app.modules.guardrails.textnorm import has_hidden_characters, skeleton, squash, tokens
 from app.modules.guardrails.verdict import GuardVerdict, Surface, text_hash
 
 MODEL_VERSION: Final = "guardrails-input-v1"
@@ -140,6 +140,11 @@ _C: dict[str, Concept] = {
             "badal do", "manzoor karo",
             "کرو", "کر دو", "کیجیے", "کیجئے", "کر دیں", "دیجیے", "بھیج دو", "بھیجو", "لکھ دو", "دے دو", "ڈال دو", "بدل دو",
         ]),
+        # Reported speech: a person reporting a scam ("a man told me to send the fee") is not giving us an order.
+        concept("REPORTED", [
+            "asked", "told", "said", "says", "saying", "message said", "message says", "kaha", "kehta", "kehti", "keh raha",
+            "keh rahi", "bola", "boli", "pucha", "maanga", "manga", "کہا", "کہتا", "کہتی", "بولا", "بولی", "پوچھا", "مانگا",
+        ]),
         concept("QUESTION", [
             "how", "what", "when", "where", "why", "who", "which", "will", "can", "could", "would", "should", "does",
             "if", "kya", "kab", "kaise", "kese", "kaisay", "kahan", "kyun", "kyon", "kaun", "kon", "kitne", "kitna", "kitni",
@@ -158,8 +163,13 @@ SOFT_CODES: Final = ("hidden_characters", "encoded_payload")
 ALL_CODES: Final = OVERRIDE_CODES + HARM_CODES + ACTION_CODES + SOFT_CODES
 
 def _unless_asking(code: str, needs: tuple[str, ...], window: int, any_of: tuple[tuple[str, ...], ...] = ()) -> Rule:
-    """A rule that a plain question does not trip, unless the question also gives an order."""
-    return Rule(code, needs, window=window, any_of=any_of, unless=("QUESTION",), unless_overridden_by=("IMPERATIVE",))
+    """An action rule. A plain question does not trip it unless it also gives an order; reported speech never does.
+
+    The guard is defence in depth: no model output can approve or pay anything. Refusing a scam victim who
+    repeats what the scammer said would be the worse failure.
+    """
+    return Rule(code, needs, window=window, any_of=any_of, unless=("QUESTION",), unless_overridden_by=("IMPERATIVE",),
+                unless_always=("REPORTED",))
 
 
 _RULES: tuple[Rule, ...] = (
@@ -201,10 +211,22 @@ _ACTIONS: Final[dict[str, dict[str, Literal["block", "flag"]]]] = {
 }
 
 
+_POLITE_START: Final = frozenset({"please", "kindly", "now", "pls", "plz", "just"})
+_ORDER_CONCEPTS: Final = ("SEND", "APPROVE", "MARK", "SKIP", "IGNORE", "SHOW_ALL", "REVEAL")
+
+
+def _starts_with_order(text: str) -> bool:
+    """English gives orders verb first: "Send the money...", "Approve me", "Please mark me as eligible"."""
+    words = [w for w in tokens(text) if w not in _POLITE_START]
+    return bool(words) and words[0].isascii() and any(words[0] in _C[name].words for name in _ORDER_CONCEPTS)
+
+
 def findings(text: str) -> list[str]:
     """Every instruction-like pattern in the text (personal-data codes come from `pii`)."""
     masked = pii.mask(text).text  # "[phone]" becomes a word the payment rule understands
     present = ["QUESTION"] if ("?" in text or "؟" in text) else []
+    if _starts_with_order(masked):
+        present.append("IMPERATIVE")
     codes = match(masked, _C, _RULES, present=present)
     folded = skeleton(text)
     if _MARKUP.search(text) or _MARKUP.search(folded):

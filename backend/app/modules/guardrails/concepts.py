@@ -53,6 +53,8 @@ class Rule:
     unless: tuple[str, ...] = ()
     # ...unless one of these is present too (an imperative overrides the question exemption).
     unless_overridden_by: tuple[str, ...] = ()
+    # The rule never fires when one of these is present (reported speech: "someone told me to send...").
+    unless_always: tuple[str, ...] = ()
 
 
 @dataclass(slots=True)
@@ -116,6 +118,8 @@ def _within_window(groups: list[list[int]], window: int) -> bool:
 def fired(hits: Hits, rules: Iterable[Rule]) -> list[str]:
     codes: list[str] = []
     for rule in rules:
+        if rule.unless_always and any(hits.has(c) for c in rule.unless_always):
+            continue
         if rule.unless and any(hits.has(c) for c in rule.unless) and not any(hits.has(c) for c in rule.unless_overridden_by):
             continue
         groups = [hits.positions.get(name, []) for name in rule.needs]
