@@ -82,7 +82,12 @@ def my_access_log(
 
 @router.get("/me/data-requests", response_model=list[requests.DataRequestOut], summary="My correction and erasure requests")
 def my_data_requests(ctx: PersonContext = Depends(_read), db: Session = Depends(get_db)) -> list[requests.DataRequestOut]:
-    return requests.list_requests(db, ctx)
+    require_consent_for_helper_read(db, ctx, action="data_requests.read")
+    out = requests.list_requests(db, ctx)  # identifiers masked for a helper
+    if ctx.via_helper:
+        access_log.record_view(db, ctx.principal, ctx.person_id, what="data_requests")
+        db.commit()
+    return out
 
 
 @router.post("/me/corrections", response_model=requests.DataRequestOut, status_code=201,

@@ -213,3 +213,118 @@ def test_a_rejected_erasure_keeps_the_data(client: TestClient, world: World) -> 
     assert _decide(client, world, _case_of(asked["id"]).id, "reject", "An investigation into this payment is open").status_code == 200
     assert client.get("/v1/me/person", headers=world.h("citizen")).status_code == 200
     assert client.get("/v1/me/data-requests", headers=world.h("citizen")).json()[0]["status"] == "rejected"
+
+
+def test_identity_and_payout_corrections_are_the_persons_own_and_never_on_a_decided_application(client: TestClient, world: World) -> None:
+    pid = world.citizen.person_id
+    app = new_app(client, world).json()
+    body = {"field": "payout_account", "new_value": "0999-7654321", "reason": "Send it to this wallet", "application_id": app["id"]}
+    by_helper = client.post("/v1/me/corrections", json=body, headers=world.h("helper", pid))
+    assert by_helper.status_code == 403 and by_helper.json()["code"] == "citizen_only_field", "a helper cannot redirect a payout"
+    with system_session() as db:
+        db.get(models.Application, uuid.UUID(app["id"])).status = "approved"  # approved; the payment may still be waiting
+    decided = client.post("/v1/me/corrections", json=body, headers=world.h("citizen"))
+    assert decided.status_code == 409 and decided.json()["code"] == "application_decided"
+    # A name on a decided application is corrected on the person record only; the decided answers stay.
+    name = client.post("/v1/me/corrections", json={"field": "full_name", "new_value": "Test Citizen Bibi", "reason": "My full name"},
+                       headers=world.h("helper", pid))  # fmt: skip
+    assert name.status_code == 201, name.text
+    case = _case_of(name.json()["id"])
+    assert case.application_id is None
+    detail = client.get(f"/v1/cases/{case.id}", headers=world.h("officer")).json()
+    assert "helper" in detail["handoff"]["understanding"] and detail["handoff"]["evidence"]["requested_by_role"] == "helper"
+    assert _decide(client, world, case.id, "approve").status_code == 200
+    with system_session() as db:
+        assert db.get(models.Person, pid).full_name == "Test Citizen Bibi"
+        assert db.get(models.Application, uuid.UUID(app["id"])).form["full_name"]["value"] is None
+
+
+def test_after_withdrawal_a_helper_sees_no_requests_and_identifiers_are_masked(client: TestClient, world: World) -> None:
+    pid = world.citizen.person_id
+    new_app(client, world)
+    asked = client.post("/v1/me/corrections", json={"field": "phone", "new_value": "0999-7654321", "reason": "New number"},
+                        headers=world.h("citizen"))  # fmt: skip
+    assert asked.status_code == 201, asked.text
+    case = _case_of(asked.json()["id"])
+    assert "0999-7654321" not in str(case.handoff), "identifiers stay out of case packages"
+    masked = client.get("/v1/me/data-requests", headers=world.h("helper", pid)).json()[0]["new_value"]
+    assert masked != "0999-7654321" and masked.endswith("321")
+    assert client.get("/v1/me/data-requests", headers=world.h("citizen")).json()[0]["new_value"] == "0999-7654321"
+    _withdraw(client, world)
+    after = client.get("/v1/me/data-requests", headers=world.h("helper", pid))
+    assert after.status_code == 403 and after.json()["code"] == "consent_required"
+    assert client.get("/v1/me/export", headers=world.h("helper", pid)).status_code == 403
+
+
+def test_erasure_also_clears_copies_in_sync_records_and_case_packages(client: TestClient, world: World) -> None:
+    pid = world.citizen.person_id
+    app = new_app(client, world).json()
+    op = {"op_id": uuid.uuid4().hex, "kind": "patch_application", "entity_id": app["id"], "base_version": 1,
+          "patch": {"phone": {"value": "0999-1112223", "provenance": "typed"}}}  # fmt: skip
+    synced = client.post("/v1/sync", json={"device_id": "phone-" + uuid.uuid4().hex[:8], "ops": [op]}, headers=world.h("citizen"))
+    assert synced.status_code == 200
+    correction = client.post("/v1/me/corrections", json={"field": "household_size", "new_value": 7, "reason": "Two more children"},
+                             headers=world.h("citizen")).json()  # fmt: skip
+    erase = client.post("/v1/me/erasure-request", json={}, headers=world.h("citizen")).json()
+    assert _decide(client, world, _case_of(erase["id"]).id, "approve", "No open payment or investigation").status_code == 200
+    with system_session() as db:
+        ops = db.scalars(select(models.SyncOp).where(models.SyncOp.person_id == pid)).all()
+        assert ops and all(o.payload == {} and "0999" not in str(o.result) for o in ops)
+        cases = db.scalars(select(models.Case).where(models.Case.subject_person_id == pid)).all()
+        assert cases and all(c.handoff == {} and c.status in ("resolved", "closed") for c in cases)
+        assert db.get(models.CorrectionRequest, uuid.UUID(correction["id"])).status == "rejected"
+        requests = db.scalars(select(models.CorrectionRequest).where(models.CorrectionRequest.person_id == pid)).all()
+        assert all(r.new_value_enc == "" for r in requests)
+        erased = db.scalars(select(models.AuditLog).where(models.AuditLog.tenant_id == world.tenant.id,
+                                                          models.AuditLog.action == "person.erased")).one()  # fmt: skip
+        assert erased.actor_id == str(world.officer.user_id), "the erasure row names the officer who approved it"
+
+
+def test_an_erasure_never_hangs_behind_a_writer_waiting_for_the_audit_lock(client: TestClient, world: World) -> None:
+    """Regression: the erasure used to run while the officer's transaction held the tenant's audit lock, so a citizen's
+    edit holding the application row and waiting for that lock blocked everyone, with no deadlock Postgres could see."""
+    import threading
+    import time
+
+    from sqlalchemy import text
+
+    from app.core import audit
+    from app.core.db import RlsContext, open_session
+
+    app_id = uuid.UUID(new_app(client, world).json()["id"])
+    case_id = _case_of(client.post("/v1/me/erasure-request", json={}, headers=world.h("citizen")).json()["id"]).id
+    officer_headers = world.h("officer")
+    locked, go, outcome = threading.Event(), threading.Event(), {}
+
+    def writer() -> None:  # what PATCH /v1/applications/{id} does: lock the row, then write its audit row
+        session = open_session(RlsContext(role="system"))
+        try:
+            session.scalars(select(models.Application).where(models.Application.id == app_id).with_for_update()).first()
+            locked.set()
+            go.wait(15)
+            session.execute(text("SET LOCAL lock_timeout = 8000"))
+            audit.write(session, tenant_id=world.tenant.id, action="test.writer")
+            outcome["writer"] = "got the audit lock"
+            session.rollback()
+        except Exception as exc:  # noqa: BLE001
+            outcome["writer"] = type(exc).__name__
+        finally:
+            session.close()
+
+    def officer() -> None:
+        started = time.monotonic()
+        response = client.post(f"/v1/cases/{case_id}/actions", json={"action": "approve", "reason": "Erasure checked"},
+                               headers=officer_headers)  # fmt: skip
+        outcome["officer"] = (response.status_code, round(time.monotonic() - started, 1))
+
+    w = threading.Thread(target=writer, daemon=True)
+    w.start()
+    assert locked.wait(10)
+    o = threading.Thread(target=officer, daemon=True)
+    o.start()
+    time.sleep(1.5)  # the erasure is now waiting for the application row the writer holds
+    go.set()
+    w.join(20)
+    o.join(30)
+    assert outcome.get("writer") == "got the audit lock", outcome
+    assert outcome.get("officer", (None,))[0] == 200 and not o.is_alive(), outcome

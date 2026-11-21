@@ -44,6 +44,8 @@ SESSION_OBJECT: Final = "helper_session"
 PIN_WINDOW: Final = timedelta(minutes=15)
 PIN_MAX_PER_FAMILY: Final = 5
 PIN_MAX_PER_HELPER: Final = 15
+# Over any length of time: this many wrong PINs since the last good switch (or since the family set the PIN) spends it.
+PIN_BLOCK_AFTER: Final = 10
 COUNTED_FAILURES: Final = ("wrong_pin", "no_delegation")
 
 TICKET_DENIALS: Final[frozenset[str]] = frozenset({"ticket_required", "ticket_invalid", "ticket_expired"})

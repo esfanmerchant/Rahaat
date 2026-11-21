@@ -37,7 +37,7 @@ from app.modules.applications import pipeline
 from app.modules.applications import service as applications
 from app.modules.applications.forms import check_client_patch, merge_client_patch, raise_if_errors, scopes_needed
 from app.modules.applications.status import EDITABLE
-from app.modules.consent.rules import require_consent
+from app.modules.consent.rules import active_consent, require_consent
 from app.modules.helpers.tickets import TICKET_DENIALS
 from app.modules.people.context import PersonContext, resolve_person
 from app.modules.sync import merge
@@ -70,7 +70,8 @@ def _lock(db: Session, tenant_id: UUID, device_id: str, op_id: str) -> None:
     db.execute(_OP_LOCK, {"tenant_id": str(tenant_id), "device_id": device_id, "op_id": op_id})
 
 
-def _duplicate(op: SyncOpIn, stored: models.SyncOp, principal: Principal, person_id: UUID) -> SyncOpResult:
+def _duplicate(op: SyncOpIn, stored: models.SyncOp, principal: Principal, person_id: UUID, *, reveal: bool = True) -> SyncOpResult:
+    """The stored answer to an op sent again. `reveal` False drops what the server held (conflict values)."""
     if stored.created_by != principal.user_id:
         # Someone else's op id on the same device id: never show another person's result.
         return SyncOpResult(op_id=op.op_id, status="rejected", reason="op_id_taken", detail="Use a new op_id for this change.")
@@ -81,6 +82,9 @@ def _duplicate(op: SyncOpIn, stored: models.SyncOp, principal: Principal, person
     result = dict(stored.result or {})
     result.pop("op_id", None)
     result.pop("status", None)
+    if not reveal:
+        result.pop("conflicts", None)
+        result.pop("extra", None)
     return SyncOpResult(op_id=op.op_id, status="duplicate", original_status=stored.status, **result)
 
 
@@ -206,19 +210,20 @@ _HANDLERS = {"create_application": _create, "patch_application": _patch, "submit
 # --- one op, then the batch ---------------------------------------------------------------------------------
 
 
-def apply_op(db: Session, principal: Principal, device_id: str, op: SyncOpIn, *, request_person: UUID, acting_for: str | None,
+def apply_op(db: Session, principal: Principal, device_id: str, op: SyncOpIn, *, acting_for: str | None,
              ticket: str | None) -> SyncOpResult:  # fmt: skip
     _lock(db, principal.tenant_id, device_id, op.op_id)
-    stored = _stored(db, principal.tenant_id, device_id, op.op_id)
-    if stored is not None:
-        db.commit()  # releases the op lock
-        return _duplicate(op, stored, principal, request_person)
-
     try:
-        ctx = resolve_person(db, principal, acting_for, "apply", ticket)  # authorised again, now
+        ctx = resolve_person(db, principal, acting_for, "apply", ticket)  # authorised again, now, even for a repeat
     except AppError as exc:
         db.rollback()
-        return _store_rejection(db, principal, device_id, op, request_person, _rejected(op, exc))
+        return _rejected(op, exc)  # not recorded: authorisation is checked again on every attempt
+    stored = _stored(db, principal.tenant_id, device_id, op.op_id)
+    if stored is not None:
+        # A helper whose family has taken back its consent learns the op's fate, not what the server holds.
+        reveal = not ctx.via_helper or active_consent(db, tenant_id=ctx.tenant_id, person_id=ctx.person_id) is not None
+        db.commit()  # releases the op lock
+        return _duplicate(op, stored, principal, ctx.person_id, reveal=reveal)
     if op.person_id is not None and op.person_id != ctx.person_id:
         db.rollback()
         if not ctx.via_helper:  # a citizen can only ever act for themself: final
@@ -257,7 +262,7 @@ def apply_batch(db: Session, ctx: PersonContext, body: SyncIn, *, acting_for: st
     results: list[SyncOpResult] = []
     for op in body.ops:
         try:
-            result = apply_op(db, principal, body.device_id, op, request_person=ctx.person_id, acting_for=acting_for, ticket=ticket)
+            result = apply_op(db, principal, body.device_id, op, acting_for=acting_for, ticket=ticket)
         except Exception:  # noqa: BLE001  (one broken op must not lose the results of the others)
             db.rollback()
             log.exception("sync op failed unexpectedly; it can be sent again")

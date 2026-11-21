@@ -42,8 +42,9 @@ def test_rubina_serves_forty_families_and_the_seed_is_repeatable(client: TestCli
     assert first["persons"] == 40 and first["delegations"] == 40 and first["consents"] >= 40 and first["applications"] >= 6
 
     with system_session() as db:
-        names = {p.data.get("family_key"): p.full_name for p in db.scalars(select(models.Person).where(
-            models.Person.data["seed"].astext == "helper_families")).all()}  # fmt: skip
+        seeded = db.scalars(select(models.Person).where(models.Person.data["seed"].astext == "helper_families")).all()
+        names = {p.data.get("family_key"): p.full_name for p in seeded}
+        khadija = str(next(p.id for p in seeded if p.data.get("family_key") == "f04"))
         for a, b in seed_step.SPELLING_PAIRS:
             assert names[a] != names[b], "the same family, spelled two ways"
         statuses = set(db.scalars(select(models.Application.status).where(models.Application.client_op_id.like("seed-%"))).all())
@@ -54,9 +55,11 @@ def test_rubina_serves_forty_families_and_the_seed_is_repeatable(client: TestCli
     headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
     families = client.get("/v1/helper/families", headers=headers).json()
     assert len(families["items"]) == 40 and families["live_count"] == 40
-    shown: dict[str, Any] = {f["display_name"]: f for f in families["items"]}
+    shown: dict[str, Any] = {f["display_name"]: f for f in families["items"] if f["display_name"]}
     assert "Zainab Bibi" in shown and "Shazia Memon" in shown
-    assert shown["Khadija Bibi"]["consent_active"] is False, "one family took its consent back"
+    assert sum(1 for f in families["items"] if f["display_name"]) == 39, "all but the family that withdrew are named"
+    withdrawn = next(f for f in families["items"] if f["person_id"] == khadija)
+    assert withdrawn["consent_active"] is False and withdrawn["display_name"] is None, "one family took its consent back"
     target = shown["Shazia Memon"]
     assert target["application"]["status"] == "draft"
     switched = client.post("/v1/helper/switch", json={"person_id": target["person_id"], "pin": DEMO_PIN}, headers=headers)

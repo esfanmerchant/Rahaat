@@ -237,3 +237,37 @@ def test_wrong_pins_sent_in_parallel_are_all_counted(client: TestClient, world: 
     with ThreadPoolExecutor(max_workers=8) as pool:
         codes = list(pool.map(lambda _: _switch(client, world, pid, pin="1357", headers=headers).json()["code"], range(8)))
     assert codes.count("pin_incorrect") == tickets.PIN_MAX_PER_FAMILY and codes.count("pin_locked") == 3, codes
+
+
+def test_after_withdrawal_the_family_list_and_switch_show_no_name(client: TestClient, world: World) -> None:
+    pid = world.citizen.person_id
+    consent_id = next(c["id"] for c in client.get("/v1/consents", headers=world.h("citizen")).json() if c["status"] == "active")
+    assert client.post(f"/v1/consents/{consent_id}/withdraw", headers=world.h("citizen")).status_code == 200
+    family = client.get("/v1/helper/families", headers=world.h("helper")).json()["items"][0]
+    assert family["consent_active"] is False and family["display_name"] is None and family["district"] is None
+    switched = _switch(client, world, pid)
+    assert switched.status_code == 200 and switched.json()["display_name"] is None, "the helper can still help them consent again"
+
+
+def test_a_pin_is_spent_after_ten_wrong_tries_however_slowly(client: TestClient, world: World, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tickets, "PIN_MAX_PER_FAMILY", 100)  # take the 15-minute pause out of the way: only the total counts here
+    monkeypatch.setattr(tickets, "PIN_MAX_PER_HELPER", 100)
+    pid = world.citizen.person_id
+    for _ in range(tickets.PIN_BLOCK_AFTER):
+        assert _switch(client, world, pid, pin="1357").json()["code"] == "pin_incorrect"
+    blocked = _switch(client, world, pid)
+    assert blocked.status_code == 403 and blocked.json()["code"] == "pin_blocked", "even the right PIN: the family must set a new one"
+    mine = client.get("/v1/me/helpers", headers=world.h("citizen")).json()[0]
+    client.post(f"/v1/me/helpers/{mine['id']}/revoke", headers=world.h("citizen"))
+    regrant = client.post("/v1/me/helpers", headers=world.h("citizen"),
+                          json={"helper_phone": world.helper.identifier, "scopes": ["track"], "pin": "6181"})  # fmt: skip
+    assert regrant.status_code == 201
+    assert _switch(client, world, pid, pin="6181").status_code == 200, "a new PIN starts a new count"
+
+
+def test_a_cursor_without_a_timezone_is_read_as_utc(client: TestClient, world: World) -> None:
+    import base64
+
+    cursor = base64.urlsafe_b64encode(f"2020-01-01T00:00:00|{uuid.uuid4()}".encode()).decode().rstrip("=")
+    assert client.get(f"/v1/helper/families?cursor={cursor}", headers=world.h("helper")).status_code == 200
+    assert client.get("/v1/helper/families?cursor=not-a-cursor", headers=world.h("helper")).status_code == 422

@@ -17,11 +17,13 @@ from __future__ import annotations
 
 import base64
 import json
+import time
+from collections import defaultdict, deque
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import and_, case, select, text
 from sqlalchemy.orm import Session
 
 from app.contracts.common import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
@@ -54,7 +56,8 @@ log = get_logger("rahat.helpers")
 SCOPE_ORDER: Final = ("track", "apply", "upload")
 ENDED_VISIBLE_FOR: Final = timedelta(days=30)  # a revoked or expired family stays on the list this long, without its name
 FAMILY_LIST_VIEW_EVERY: Final = timedelta(hours=1)  # one "seen in the family list" row per family per hour
-MAX_DELEGATIONS_SCANNED: Final = 500
+GRANTS_PER_HOUR: Final = 10  # helper look-ups by phone, per person (in process, like the sign-in throttle)
+_grant_attempts: dict[str, deque[float]] = defaultdict(deque)
 _DELEGATION_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('delegation:' || :person_id || ':' || :helper_id, 0))")
 # One switch attempt at a time per helper, so wrong PINs sent in parallel are all counted before the next is checked.
 _SWITCH_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('helper-switch:' || :helper_id, 0))")
@@ -142,15 +145,34 @@ def list_delegations(db: Session, ctx: PersonContext) -> list[DelegationOut]:
     return [_out(d, cards.get(d.helper_user_id), now) for d in rows]
 
 
+def _throttle_grant(ctx: PersonContext) -> None:
+    """At most a few helper look-ups per person per hour, so phone numbers cannot be tried in bulk."""
+    now = time.monotonic()
+    hits = _grant_attempts[str(ctx.person_id)]
+    while hits and now - hits[0] > 3600:
+        hits.popleft()
+    if len(hits) >= GRANTS_PER_HOUR:
+        retry = int(3600 - (now - hits[0])) + 1
+        raise TooManyRequests("Too many tries. Try again later.", code="too_many_helper_lookups", headers={"Retry-After": str(retry)})
+    hits.append(now)
+    if len(_grant_attempts) > 10_000:
+        _grant_attempts.clear()
+
+
 def grant(db: Session, ctx: PersonContext, body: DelegationCreate) -> DelegationOut:
-    """Let one helper act for me. 404 `helper_not_found`, 409 `delegation_exists`, 422 for a weak PIN."""
+    """Let one helper act for me. 404 `helper_not_found`, 409 `delegation_exists`, 422 for a weak PIN, 429 when
+    too many numbers were tried."""
     _require_self(ctx)
     phone = normalise_mock_phone(body.helper_phone)
     if phone is None:
         raise Unprocessable("Use the mock phone format 0999-NNNNNNN.", code="mock_phone_format")
     check_pin_strength(body.pin)
+    _throttle_grant(ctx)
     found = _find_helper(ctx.tenant_id, phone)
     if found is None:
+        audit.write_independent(tenant_id=ctx.tenant_id, action="helper.lookup_failed", actor_id=ctx.user_id, actor_role=ctx.principal.role,
+                                object_type="person", object_id=ctx.person_id, result="denied", reason="helper_not_found",
+                                details={"phone_ref": blind_index(phone, scope="helper-lookup")[:16]})  # fmt: skip
         raise NotFound("No community helper in this department uses that number.", code="helper_not_found")
     helper_id, helper_name = found
     if helper_id == ctx.user_id:
@@ -201,25 +223,6 @@ def revoke(db: Session, ctx: PersonContext, delegation_id: UUID) -> DelegationOu
     return _out(delegation, cards.get(delegation.helper_user_id), now)
 
 
-def revoke_all_for_person(db: Session, *, tenant_id: UUID, person_id: UUID, actor_id: UUID | None, actor_role: str | None,
-                          reason: str) -> int:  # fmt: skip
-    """Revoke every live delegation of a person (erasure). Does not commit."""
-    now = datetime.now(UTC)
-    count = 0
-    for delegation in db.scalars(
-        select(models.HelperDelegation)
-        .where(models.HelperDelegation.tenant_id == tenant_id, models.HelperDelegation.person_id == person_id,
-               models.HelperDelegation.revoked_at.is_(None))  # fmt: skip
-        .with_for_update()
-    ).all():
-        delegation.revoked_at = now
-        count += 1
-        audit.write(db, tenant_id=tenant_id, action="helper.delegation_revoked", actor_id=actor_id, actor_role=actor_role,
-                    actor_type="user" if actor_id else "system", object_type="helper_delegation", object_id=delegation.id,
-                    reason=reason, details={"person_id": str(person_id)})  # fmt: skip
-    return count
-
-
 # --- helper side: families ---------------------------------------------------------------------------------
 
 
@@ -231,17 +234,10 @@ def _decode_cursor(cursor: str) -> tuple[datetime, UUID]:
     try:
         raw = base64.urlsafe_b64decode((cursor + "=" * (-len(cursor) % 4)).encode()).decode()
         at, _, ident = raw.partition("|")
-        return datetime.fromisoformat(at), UUID(ident)
-    except (ValueError, UnicodeDecodeError) as exc:
+        parsed = datetime.fromisoformat(at)
+        return (parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)), UUID(ident)
+    except (ValueError, UnicodeDecodeError, TypeError) as exc:
         raise Unprocessable("The page cursor is not valid. Start from the first page.", code="invalid_cursor") from exc
-
-
-def _pick(delegations: list[models.HelperDelegation], now: datetime) -> models.HelperDelegation:
-    """One delegation per family: a live one (longest left), else the newest."""
-    live = [d for d in delegations if delegation_status(d, now) == "live"]
-    if live:
-        return max(live, key=lambda d: (d.expires_at, d.created_at))
-    return max(delegations, key=lambda d: (d.created_at, d.id))
 
 
 def _latest_application(db: Session, tenant_id: UUID, person_id: UUID) -> models.Application | None:
@@ -283,23 +279,22 @@ def families(db: Session, principal: Principal, *, cursor: str | None = None, li
     """The helper's families: name and application status while the delegation is live and consent is active."""
     now = datetime.now(UTC)
     limit = max(1, min(limit or DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE))
+    delegation = models.HelperDelegation
+    live_first = case((and_(delegation.revoked_at.is_(None), delegation.expires_at > now), 0), else_=1)
+    # One row per family (a live delegation first, the longest left), however often it was granted and revoked.
     rows = db.scalars(
-        select(models.HelperDelegation)
-        .where(models.HelperDelegation.tenant_id == principal.tenant_id, models.HelperDelegation.helper_user_id == principal.user_id)
-        .order_by(models.HelperDelegation.created_at, models.HelperDelegation.id)
-        .limit(MAX_DELEGATIONS_SCANNED)
+        select(delegation)
+        .where(delegation.tenant_id == principal.tenant_id, delegation.helper_user_id == principal.user_id)
+        .order_by(delegation.person_id, live_first, delegation.expires_at.desc(), delegation.created_at.desc())
+        .distinct(delegation.person_id)
     ).all()
-    by_person: dict[UUID, list[models.HelperDelegation]] = {}
-    for delegation in rows:
-        by_person.setdefault(delegation.person_id, []).append(delegation)
     chosen = []
-    for person_id, group in by_person.items():
-        pick = _pick(group, now)
+    for pick in rows:
         status = delegation_status(pick, now)
         ended_at = pick.revoked_at or pick.expires_at
         if status != "live" and ended_at < now - ENDED_VISIBLE_FOR:
             continue
-        chosen.append((pick.created_at, person_id, pick, status))
+        chosen.append((pick.created_at, pick.person_id, pick, status))
     chosen.sort(key=lambda item: (item[0], item[1]))
     if cursor:
         at, ident = _decode_cursor(cursor)
@@ -311,18 +306,19 @@ def families(db: Session, principal: Principal, *, cursor: str | None = None, li
     seen = _recently_listed(db, principal, now)
     items: list[FamilyOut] = []
     shown: list[UUID] = []
-    for _, person_id, delegation, status in page:
+    for _, person_id, chosen_delegation, status in page:
         live = status == "live"
-        person = db.get(models.Person, person_id) if live else None  # RLS: readable only with a live delegation
         consent = active_consent(db, tenant_id=principal.tenant_id, person_id=person_id) is not None if live else False
-        application = _latest_application(db, principal.tenant_id, person_id) if live and consent else None
+        # RLS lets a live delegation read the person; without the department consent the helper is shown nothing more.
+        person = db.get(models.Person, person_id) if live and consent else None
+        application = _latest_application(db, principal.tenant_id, person_id) if person is not None else None
         if person is not None:
             shown.append(person_id)
         items.append(FamilyOut(
-            person_id=person_id, delegation_id=delegation.id, delegation_status=status,
+            person_id=person_id, delegation_id=chosen_delegation.id, delegation_status=status,
             display_name=person.full_name if person else None, display_name_ur=person.full_name_ur if person else None,
-            district=person.district if person else None, scopes=ordered_scopes(list(delegation.scopes or [])),
-            expires_at=_iso(delegation.expires_at) or "", consent_active=consent, application=_family_application(application),
+            district=person.district if person else None, scopes=ordered_scopes(list(chosen_delegation.scopes or [])),
+            expires_at=_iso(chosen_delegation.expires_at) or "", consent_active=consent, application=_family_application(application),
             current=current == person_id,
         ))  # fmt: skip
     for person_id in shown:
@@ -360,18 +356,24 @@ def _last_switch(db: Session, principal: Principal, person_id: UUID) -> datetime
     )
 
 
-def _refuse(principal: Principal, person_id: UUID, code: str, details: dict[str, Any] | None = None) -> None:
+def _refuse(db: Session, principal: Principal, person_id: UUID, code: str, details: dict[str, Any] | None = None) -> None:
+    """Record a refused switch and commit it now, in this request's own transaction (nothing else was written).
+
+    Committed before the error is raised, so the row survives the failed request. It is not a separate
+    best-effort write: if it cannot be recorded the request fails with it, so no wrong PIN goes uncounted.
+    """
     metrics.ACCESS_DENIED.labels("helper_switch").inc()
-    audit.write_independent(
-        tenant_id=principal.tenant_id, action=tickets.SWITCH_DENIED, actor_id=principal.user_id, actor_role=principal.role,
+    audit.write(
+        db, tenant_id=principal.tenant_id, action=tickets.SWITCH_DENIED, actor_id=principal.user_id, actor_role=principal.role,
         acting_for_person_id=person_id, object_type="person", object_id=person_id, result="denied", reason=code,
         details=details or {},
     )  # fmt: skip
+    db.commit()
 
 
-def _locked(principal: Principal, person_id: UUID, remaining: timedelta) -> TooManyRequests:
+def _locked(db: Session, principal: Principal, person_id: UUID, remaining: timedelta) -> TooManyRequests:
     seconds = max(1, int(remaining.total_seconds()) + 1)
-    _refuse(principal, person_id, "pin_locked", {"retry_after": seconds})
+    _refuse(db, principal, person_id, "pin_locked", {"retry_after": seconds})
     return TooManyRequests("Too many wrong PINs. Wait a little and try again.", code="pin_locked",
                            headers={"Retry-After": str(seconds)}, extra={"retry_after": seconds})  # fmt: skip
 
@@ -379,8 +381,9 @@ def _locked(principal: Principal, person_id: UUID, remaining: timedelta) -> TooM
 def switch(db: Session, principal: Principal, body: SwitchIn) -> SwitchOut:
     """Check the family PIN and give this session a ticket for that one family.
 
-    403 `no_delegation`, `pin_not_set` or `pin_incorrect` (with `attempts_left`); 429 `pin_locked`. One
-    hash verification runs on every path, so a family without a delegation takes as long as a wrong PIN.
+    403 `no_delegation`, `pin_not_set`, `pin_incorrect` (with `attempts_left`) or `pin_blocked` (too many wrong
+    PINs since the last good one: the family must set a new PIN); 429 `pin_locked`. One hash verification runs
+    on every path that checks a PIN, so a family without a delegation takes as long as a wrong PIN.
     """
     if principal.session_id is None:
         raise Forbidden("Switching families needs a signed-in helper.", code="session_required")
@@ -391,30 +394,38 @@ def switch(db: Session, principal: Principal, body: SwitchIn) -> SwitchOut:
     remaining = tickets.lock_remaining(_failure_times(db, principal, person_id=None, since=window_start), now=now,
                                        limit=tickets.PIN_MAX_PER_HELPER)  # fmt: skip
     if remaining is not None:
-        raise _locked(principal, person_id, remaining)
+        raise _locked(db, principal, person_id, remaining)
+    delegations = live_delegations(db, tenant_id=principal.tenant_id, helper_user_id=principal.user_id, person_id=person_id)
+    delegation = max(delegations, key=lambda d: (d.expires_at, d.created_at)) if delegations else None
     last_success = _last_switch(db, principal, person_id)
     family_failures = _failure_times(db, principal, person_id=person_id, since=window_start)
     remaining = tickets.lock_remaining(family_failures, now=now, limit=tickets.PIN_MAX_PER_FAMILY, since=last_success)
     if remaining is not None:
-        raise _locked(principal, person_id, remaining)
+        raise _locked(db, principal, person_id, remaining)
+    if delegation is not None:
+        # Over any length of time: after this many wrong PINs since the last good switch (or since the family set
+        # this PIN), the PIN is spent. A slow guesser gets ten tries, not ten thousand.
+        since = max(t for t in (last_success, delegation.created_at) if t is not None)
+        if len(_failure_times(db, principal, person_id=person_id, since=since)) >= tickets.PIN_BLOCK_AFTER:
+            _refuse(db, principal, person_id, "pin_blocked")
+            raise Forbidden("Too many wrong PINs for this family. Ask the family to set a new PIN.", code="pin_blocked")
 
-    delegations = live_delegations(db, tenant_id=principal.tenant_id, helper_user_id=principal.user_id, person_id=person_id)
-    delegation = max(delegations, key=lambda d: (d.expires_at, d.created_at)) if delegations else None
     pin_ok = verify_secret(delegation.pin_hash if delegation is not None else None, body.pin)  # always one verification
     if delegation is None:
-        _refuse(principal, person_id, "no_delegation")
+        _refuse(db, principal, person_id, "no_delegation")
         raise Forbidden("You cannot help this family. Ask them to choose you as their helper.", code="no_delegation")
     if not delegation.pin_hash:
-        _refuse(principal, person_id, "pin_not_set")
+        _refuse(db, principal, person_id, "pin_not_set")
         raise Forbidden("This family has not set a PIN yet. Ask them to set one.", code="pin_not_set")
     if not pin_ok:
-        _refuse(principal, person_id, "wrong_pin")
+        _refuse(db, principal, person_id, "wrong_pin")
         left = tickets.attempts_left([*family_failures, now], now=now, limit=tickets.PIN_MAX_PER_FAMILY, since=last_success)
         raise Forbidden("That PIN is not right.", code="pin_incorrect", extra={"attempts_left": left})
 
     raw, hashed = tickets.new_ticket()
     expires_at = now + tickets.TICKET_TTL
-    person = db.get(models.Person, person_id)
+    consent = active_consent(db, tenant_id=principal.tenant_id, person_id=person_id) is not None
+    person = db.get(models.Person, person_id) if consent else None  # after withdrawal: no name, but the helper can help re-grant
     scopes = ordered_scopes([s for s in (delegation.scopes or []) if s in DELEGATION_SCOPES])
     audit.write(
         db, tenant_id=principal.tenant_id, action=tickets.SWITCHED, actor_id=principal.user_id, actor_role=principal.role,

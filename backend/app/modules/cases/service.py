@@ -463,17 +463,18 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
         details["priority"] = case.priority
     if case.assigned_to is None and body.action != "escalate":
         case.assigned_to = principal.user_id
+    if case.kind == "correction" and body.action in ("approve", "reject"):
+        # A correction or erasure request from the consent centre: apply it or close it with the case. This runs
+        # before this transaction's first audit row: an erasure commits in its own transaction and needs the
+        # tenant's audit lock, which this one would otherwise hold until it ends.
+        from app.modules.consent.requests import on_case_decided
+
+        on_case_decided(db, principal, case, approve=body.action == "approve", reason=body.reason)
     _event(db, case, body.action, from_status=old, to_status=new_status, actor_id=principal.user_id, details={**details, "reason": body.reason[:300]})
     audit.write(db, tenant_id=principal.tenant_id, action=f"case.{body.action}", actor_id=principal.user_id, actor_role=principal.role,
                 acting_for_person_id=case.subject_person_id, object_type="case", object_id=case.id, reason=body.reason,
                 rule_version_id=decision.rule_version_id if decision else None, details=details)  # fmt: skip
     db.flush()
-    if case.kind == "correction" and body.action in ("approve", "reject"):
-        # A correction or erasure request from the consent centre: apply it or close it with the case.
-        from app.modules.consent.requests import on_case_decided
-
-        on_case_decided(db, principal, case, approve=body.action == "approve", reason=body.reason)
-        db.flush()
 
     if on_application:
         assert application is not None
