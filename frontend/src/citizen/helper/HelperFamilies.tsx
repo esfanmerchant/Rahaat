@@ -25,7 +25,7 @@ export function namesOf(family: FamilyOut): { main: string; other: string | null
   const en = family.display_name ?? '';
   const ur = family.display_name_ur ?? '';
   const wantUr = lang.value === 'ur';
-  const main = (wantUr ? ur || en : en || ur) || '-';
+  const main = (wantUr ? ur || en : en || ur) || t('helper_name_hidden');
   const other = (wantUr ? en : ur) || null;
   const mainIsUr = wantUr ? Boolean(ur) : !en;
   return { main, other: other && other !== main ? other : null, mainLang: mainIsUr ? 'ur' : 'en', otherLang: mainIsUr ? 'en' : 'ur' };

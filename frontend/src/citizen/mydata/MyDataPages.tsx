@@ -8,14 +8,55 @@ import type { Speech } from '../../shared/components/AudioPrompt';
 import { Button } from '../../shared/components/Button';
 import { CrossedPictogram, Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
-import { lang, t, type MessageKey } from '../../shared/i18n';
+import { acting } from '../../shared/acting';
+import { lang, t, type Key, type MessageKey } from '../../shared/i18n';
+import '../../shared/i18n/more';
+import { lazyRoute } from '../../shared/routing';
 import { Redirect } from '../../shared/routing';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { InlineFailure, Notice, sayKey } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
 import { CitizenNotFoundPage } from '../NotFound';
 import { consents, doneNotice, effectiveStatus, loadConsents, narrowConsent, shareAgain, withdrawConsent } from './api';
-import { AccessLogSection, ConsentCard, knownScopes, SCOPE_ICON, scopeKey, ScopeChips } from './parts';
+import { ConsentCard, knownScopes, SCOPE_ICON, scopeKey, ScopeChips } from './parts';
+
+// The access log, corrections, export, erasure and helpers: a second lazy chunk, so consents load first.
+const MoreData = lazyRoute<{ parts: readonly string[] }>(() => import('./MoreData'));
+
+const MORE_LINKS: ReadonlyArray<{ path: string; icon: PictogramName; label: Key; ownOnly: boolean }> = [
+  { path: 'access', icon: 'lock', label: 'mydata_open_access', ownOnly: false },
+  { path: 'fix', icon: 'edit', label: 'mydata_open_fix', ownOnly: false },
+  { path: 'download', icon: 'document', label: 'mydata_open_download', ownOnly: false },
+  { path: 'requests', icon: 'clock', label: 'mydata_open_requests', ownOnly: false },
+  { path: 'helpers', icon: 'person-help', label: 'mydata_open_helpers', ownOnly: true },
+  { path: 'delete', icon: 'delete', label: 'mydata_open_delete', ownOnly: true },
+];
+
+/** The rest of "My information": who looked, fix, download, requests, helpers, delete. */
+function MoreSection() {
+  const { route } = useLocation();
+  // Choosing helpers and deleting are the person's own; a helper acting for a family never sees them.
+  const links = MORE_LINKS.filter((link) => !(link.ownOnly && acting.value !== null));
+  return (
+    <section aria-labelledby="mydata-more" class="flex flex-col gap-3">
+      <h2 id="mydata-more" class="text-lg font-semibold text-ink-muted">
+        {t('mydata_more')}
+      </h2>
+      {links.map((link) => (
+        <button
+          key={link.path}
+          type="button"
+          onClick={() => route(`/my-data/${link.path}`)}
+          class="flex min-h-tap-lg items-center gap-3 rounded-lg border-2 border-line-strong bg-paper px-3 py-2 text-start text-xl font-semibold hover:bg-surface"
+        >
+          <Pictogram name={link.icon} size={40} class={link.path === 'delete' ? 'text-danger' : 'text-primary'} />
+          <span class="flex-1">{t(link.label)}</span>
+          <Pictogram name="forward" size={28} class="text-ink-muted" />
+        </button>
+      ))}
+    </section>
+  );
+}
 
 type Loaded = { state: 'loading' } | { state: 'failed'; failure: ApiFailure } | { state: 'ready'; list: ConsentOut[] };
 
@@ -131,7 +172,7 @@ function MyDataList() {
         </section>
       ) : null}
 
-      <AccessLogSection />
+      <MoreSection />
 
       <Button size="md" variant="quiet" icon="home" block onClick={() => route('/')} class="mt-auto">
         {t('go_home')}
@@ -390,6 +431,9 @@ function AgainScreen({ consent }: { consent: ConsentOut }) {
 export default function MyDataPages({ parts }: { parts: readonly string[] }) {
   const [id, action, ...extra] = parts;
   if (id === undefined) return <MyDataList />;
+  if (id === 'access' || id === 'fix' || id === 'download' || id === 'requests' || id === 'helpers' || id === 'delete') {
+    return <MoreData parts={parts} />;
+  }
   if (extra.length > 0 || !/^[0-9a-f-]{36}$/i.test(id)) return <CitizenNotFoundPage />;
   switch (action) {
     case 'less':
