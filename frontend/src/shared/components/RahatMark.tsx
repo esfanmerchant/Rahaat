@@ -1,11 +1,11 @@
-/** The Rahat mark: a shelter roof over a person. Same geometry as public/favicon.svg. */
-export function RahatMark({ size = 80, class: className = '' }: { size?: number; class?: string }) {
-  return (
-    <svg viewBox="0 0 512 512" width={size} height={size} aria-hidden="true" focusable="false" class={`shrink-0 ${className}`}>
-      <rect width="512" height="512" rx="96" fill="#0d5c3d" />
-      <path d="M120 250L256 130l136 120" fill="none" stroke="#ffffff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" />
-      <circle cx="256" cy="262" r="44" fill="#ffffff" />
-      <path d="M156 392a100 76 0 0 1 200 0z" fill="#ffffff" />
-    </svg>
-  );
+import { Emblem, type EmblemTone } from './Emblem';
+
+/** The Rahat mark: the Noor emblem (an eight-point star, a lamp and eight homes). Kept for existing call sites. */
+export function RahatMark({ size = 80, class: className = '', tone = 'paper', animate = false }: {
+  size?: number;
+  class?: string;
+  tone?: EmblemTone;
+  animate?: boolean;
+}) {
+  return <Emblem size={size} class={className} tone={tone} animate={animate} />;
 }

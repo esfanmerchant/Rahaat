@@ -1,42 +1,71 @@
 /*
- * Rahat design tokens. Light theme only. See docs/DESIGN.md.
+ * Rahat design tokens: the "Noor" visual language (docs/DESIGN.md, Visual language v2).
  *
- * Contrast (WCAG, against --color-paper unless noted):
- *   ink 16.9:1, ink-muted 9.3:1 (both AAA, citizen body text), ink-subtle 5.9:1
- *   (AA, staff metadata only), white on primary 8.0:1, white on danger 9.0:1,
- *   primary-strong on primary-soft 9.2:1, warning-ink on warning-soft 7.7:1,
- *   line-strong 4.7:1 (input borders, 3:1 needed).
+ * Concept: light reaching the last home. Palette from Sindhi ajrak dyes and a night sky: indigo, madder red,
+ * saffron, emerald, lamp gold on warm paper. Geometry from the eight-point star (khatam) of the ajrak block.
  *
- * Forbidden: gradients, blobs, glass or blur effects, emoji as icons, shadows as decoration.
+ * Contrast (WCAG, against --color-paper #fffdf8 unless noted):
+ *   ink 17.6:1, ink-muted 10.1:1 (AAA, citizen body text), ink-subtle 6.2:1 (AA, metadata),
+ *   white on primary 6.6:1, white on danger 7.4:1, white on info 9.1:1,
+ *   warning-ink on warning-soft 7.8:1, line-strong 5.2:1 (input borders, 3:1 needed).
+ *   Night palette: night-ink on night-1 17.9:1, night-muted on night-1 8.7:1.
+ *
+ * Gradients, glows and depth are allowed when they carry meaning (light, focus, elevation), never as
+ * decoration for its own sake. Still forbidden: emoji as icons, web fonts, placeholder text, claims the
+ * live system cannot back.
  */
 
 /* Static tokens. Tailwind turns each into utilities (bg-primary, text-ink, rounded-md, min-h-tap...). */
 @theme static {
   --color-*: initial;
   --color-white: #ffffff;
-  --color-paper: #ffffff;
-  --color-surface: #f4f2ee;
-  --color-sunken: #f7f7f5;
-  --color-ink: #1a1d21;
-  --color-ink-muted: #3f4852;
-  --color-ink-subtle: #5c6670;
-  --color-line: #d3d6da;
-  --color-line-strong: #6b7480;
-  --color-primary: #0d5c3d;
-  --color-primary-strong: #094730;
-  --color-primary-soft: #e3f0e8;
-  --color-danger: #8f1a1a;
-  --color-danger-soft: #fbe9e7;
-  --color-warning: #f2b63d;
-  --color-warning-ink: #6b4300;
-  --color-warning-soft: #fdf1d6;
-  --color-info: #1f4fa3;
-  --color-info-strong: #173d80;
-  --color-info-soft: #e6edf8;
-  --color-focus: #1f4fa3;
-  --color-chrome: #22272e;
-  --color-chrome-ink: #ffffff;
-  --color-chrome-muted: #b9c0c8;
+  --color-black: #000000;
+
+  /* Paper theme (citizen app, light). */
+  --color-paper: #fffdf8; /* warm ivory, like handmade paper */
+  --color-surface: #f6f1e7; /* parchment */
+  --color-sunken: #efe8da;
+  --color-ink: #141626; /* indigo black */
+  --color-ink-muted: #3a3f58;
+  --color-ink-subtle: #5a5f7a;
+  --color-line: #e2d9c8;
+  --color-line-strong: #6c6880;
+  --color-primary: #0b6a46; /* emerald: relief, yes, paid */
+  --color-primary-strong: #064b31;
+  --color-primary-soft: #e0f3e9;
+  --color-danger: #a3203a; /* madder: scams, refusals, stop */
+  --color-danger-soft: #fbe7ea;
+  --color-warning: #f2a51e; /* saffron: needs something from you */
+  --color-warning-ink: #6a4100;
+  --color-warning-soft: #fdf0d3;
+  --color-info: #24409e; /* ajrak indigo: a person will help, information */
+  --color-info-strong: #1a2f78;
+  --color-info-soft: #e7ebf8;
+  --color-focus: #24409e;
+  --color-chrome: #0b1026; /* staff bar: the night */
+  --color-chrome-ink: #f3f4ff;
+  --color-chrome-muted: #aab1d8;
+
+  /* Night palette (staff console, /demo, /live, hero bands). Use directly or through a night theme scope. */
+  --color-night: #070b1d;
+  --color-night-1: #0b1026;
+  --color-night-2: #121a3c;
+  --color-night-3: #1b2552;
+  --color-night-line: #2a3570;
+  --color-night-ink: #eef0ff;
+  --color-night-muted: #a7aed6;
+
+  /* Light and dye accents. */
+  --color-noor: #ffd36e; /* lamp light: the moment something good happens */
+  --color-noor-soft: #fff4d6;
+  --color-noor-strong: #b8860b;
+  --color-indigo: #24409e;
+  --color-madder: #a3203a;
+  --color-saffron: #f2a51e;
+  --color-emerald: #13a86b; /* bright emerald for night surfaces */
+  --color-emerald-glow: #4ee6a6;
+  --color-madder-glow: #ff6b81;
+  --color-indigo-glow: #8ea2ff;
 
   /* Spacing keeps Tailwind's 0.25rem step; these name the touch sizes. */
   --spacing-tap: 3rem; /* 48px: the minimum for any citizen tap target */
@@ -49,12 +78,117 @@
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
   --radius-full: 9999px;
 
+  /* Depth with meaning: lift (raised, tappable), glow (light: success, focus of attention), ring (selection). */
   --shadow-*: initial;
+  --shadow-lift: 0 1px 2px rgb(20 22 38 / 0.06), 0 10px 28px -12px rgb(20 22 38 / 0.28);
+  --shadow-float: 0 2px 6px rgb(20 22 38 / 0.08), 0 24px 48px -20px rgb(20 22 38 / 0.35);
+  --shadow-glow: 0 0 0 1px rgb(255 211 110 / 0.35), 0 0 36px -6px rgb(255 211 110 / 0.55);
+  --shadow-glow-emerald: 0 0 0 1px rgb(78 230 166 / 0.35), 0 0 36px -6px rgb(78 230 166 / 0.5);
+  --shadow-glow-madder: 0 0 0 1px rgb(255 107 129 / 0.35), 0 0 36px -6px rgb(255 107 129 / 0.5);
+  --shadow-ring: 0 0 0 4px rgb(36 64 158 / 0.18);
   --inset-shadow-*: initial;
   --drop-shadow-*: initial;
+  --drop-shadow-glow: 0 0 12px rgb(255 211 110 / 0.6);
   --blur-*: initial;
+  --blur-sm: 8px;
+  --blur-md: 16px;
+
+  /* Motion. Durations: 120 (feedback), 220 (state), 420 (enter), 800 (story). Everything stops for reduced motion. */
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: linear(0, 0.38 9%, 0.86 20%, 1.07 30%, 1.1 36%, 1.04 47%, 0.99 60%, 1.005 76%, 1);
+
+  --animate-*: initial;
+  --animate-rise: rh-rise 560ms var(--ease-out) both;
+  --animate-fade: rh-fade 420ms var(--ease-out) both;
+  --animate-pop: rh-pop 640ms var(--ease-spring) both;
+  --animate-draw: rh-draw 1200ms var(--ease-in-out) both;
+  --animate-twinkle: rh-twinkle 3.2s ease-in-out infinite;
+  --animate-ring: rh-ring 1.8s var(--ease-out) infinite;
+  --animate-float: rh-float 5s ease-in-out infinite;
+  --animate-spin-slow: rh-spin 60s linear infinite;
+  --animate-shimmer: rh-shimmer 1.6s linear infinite;
+  --animate-pulse: rh-fade 1s ease-in-out infinite alternate;
+
+  @keyframes rh-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes rh-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes rh-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes rh-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes rh-twinkle {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @keyframes rh-ring {
+    from {
+      opacity: 0.55;
+      transform: scale(0.7);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.9);
+    }
+  }
+  @keyframes rh-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  @keyframes rh-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes rh-shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
 }
 
 /*
@@ -82,6 +216,12 @@
   --text-2xl--line-height: var(--rh-leading-tight);
   --text-3xl: calc(2.25rem * var(--rh-script-scale));
   --text-3xl--line-height: var(--rh-leading-tight);
+  --text-4xl: calc(3rem * var(--rh-script-scale));
+  --text-4xl--line-height: var(--rh-leading-display);
+  --text-5xl: calc(4rem * var(--rh-script-scale));
+  --text-5xl--line-height: var(--rh-leading-display);
+  --text-hero: calc(clamp(3rem, 9vw, 7rem) * var(--rh-script-scale));
+  --text-hero--line-height: var(--rh-leading-display);
 
   --leading-*: initial;
   --leading-tight: var(--rh-leading-tight);
@@ -96,6 +236,7 @@
   --rh-leading-tight: 1.25;
   --rh-leading-snug: 1.4;
   --rh-leading-body: 1.5;
+  --rh-leading-display: 1.02;
 }
 
 /* Urdu: Nastaliq first, from the device. No web fonts. */
@@ -105,4 +246,5 @@
   --rh-leading-tight: 2;
   --rh-leading-snug: 2;
   --rh-leading-body: 2.2;
+  --rh-leading-display: 1.6;
 }

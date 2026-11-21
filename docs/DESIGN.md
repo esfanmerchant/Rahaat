@@ -4,6 +4,52 @@ Prototype. Not an official service. All identity, payment and data services are 
 
 The rules both frontend tracks follow. Citizen app (`frontend/src/citizen`, `frontend/src/shared`, Track D1); staff console (`frontend/src/staff`, Track D2). Change tokens, pictograms or shared components by request to D1.
 
+## Visual language v2: "Noor" (decided Sat 21 Nov, 20:00; supersedes the "never gradients" rule below)
+
+The owner asked for an interface that stops people in their tracks: judges, citizens and the team. The answer
+is not decoration. It is one idea told everywhere: **light reaching the last home.** Every family is a point of
+light; Rahat is the thread that reaches the last one; a decision is a lamp being lit, a scam is a light being
+shielded, "I am not sure" is a lamp handed to a person.
+
+**Sources.** The Sindhi ajrak block print (indigo, madder red, black, ivory; the eight-point star, the khatam)
+and a Karachi night sky. Nothing here is a copy of an existing product.
+
+**Palette** (`shared/tokens.css`). Paper theme for citizens: ivory `paper`, parchment `surface`, indigo-black
+`ink`. Meaning colours: `primary` emerald (relief, yes, paid), `danger` madder (scam, stop), `warning` saffron
+(we need something from you), `info` indigo (a person will help). Light: `noor` lamp gold, only for the moment
+something good happens (approved, paid, verified). Night palette `night`..`night-3`, `night-ink`,
+`night-muted`, and bright `emerald` / `emerald-glow` / `madder-glow` / `indigo-glow` for night surfaces.
+
+**Geometry.** The emblem (`shared/components/Emblem.tsx`): two squares make the eight-point star, a lamp at the
+centre, eight homes around it; it draws itself (`animate`). The `rh-lattice` / `rh-lattice-night` texture
+repeats the star as a faint background. Corners: `rounded-xl` / `rounded-2xl` for cards, `rounded-full` for
+pills. Depth only with meaning: `shadow-lift` (raised, tappable), `shadow-float` (sheets, dialogs),
+`shadow-glow*` (light: success, live, focus of attention).
+
+**Type.** System fonts only. Latin: system-ui, heavy weights (700 to 900) and tight tracking for display
+(`text-4xl`, `text-5xl`, `text-hero`), `rh-num` tabular numbers that count up. Urdu: Nastaliq from the device,
+never squeezed: display sizes keep a line height of at least 1.6. Monospace for hashes and codes.
+
+**Motion** (tokens `--ease-out`, `--ease-spring`, `animate-rise|fade|pop|draw|twinkle|ring|float|spin-slow|shimmer`;
+classes `rh-stagger`, `rh-draw`, `rh-skeleton`; route changes use the View Transitions API). Rules:
+- Motion explains: it shows where something came from, what changed, what to look at next. 120 ms feedback,
+  220 ms state change, 420 ms entrance, up to 1.2 s for a story moment (a decision, a payment).
+- Animate transform and opacity only (60 fps on a cheap phone). No layout thrash, no scroll hijacking.
+- `prefers-reduced-motion`: everything becomes a short fade; nothing loops. Respect `Save-Data` for heavy work.
+- Sound and touch are part of motion on the citizen app: a soft generated chime (Web Audio, no files) and a
+  short vibration on a decision, both off when the phone is silent or the person turned them off.
+
+**Signature moments** (each built once, reused): the self-drawing emblem; the journey path where each step is a
+star that lights up; the verdict reveal (approved: the lamp lights and the homes glow; needs proof: a saffron
+card slides in; a person will check: the lamp is handed over); the scam shield; the live pulse of the system.
+
+**Where weight is allowed.** The citizen route keeps its 100 KB gzip budget: CSS, SVG and tiny scripts only.
+WebGL (three.js) lives only in its own lazy chunk on `/live`, loads only when WebGL works and neither
+reduced motion nor Save-Data is on, and always has a static SVG fallback.
+
+**Still never.** Emoji as icons, web fonts, icon packages, placeholder text, numbers or claims the live system
+cannot back, motion that hides content, text below AA contrast in either theme.
+
 ## Users and reading level
 
 - **Citizen**: a widow who cannot read, a shopkeeper, a helper with 40 families. A cheap Android phone, weak signal, often offline. Urdu by default (RTL), and English. Sindhi was dropped: nobody on the team can proofread it, and an unchecked translation is worse than none.
@@ -25,7 +71,7 @@ The rules both frontend tracks follow. Citizen app (`frontend/src/citizen`, `fro
 | Touch | `min-h-tap` 48px (minimum), `min-h-tap-lg` 64px (answers, keypad), `min-h-tap-xl` 96px (start) |
 | Shape | `rounded-sm/md/lg/full`, `max-w-phone` 30rem. Shadows and blurs are removed from the theme. |
 
-Light theme only. Tailwind's default colour palette is removed: only the tokens above exist. Never: gradients, blobs, glass or blur, decorative shadows, emoji as icons, web fonts, icon packages.
+Tailwind's default colour palette is removed: only the tokens exist. The "Noor" section above replaces the old rule against gradients and depth; emoji as icons, web fonts and icon packages are still out.
 
 ## Pictograms (`shared/components/Pictogram.tsx`)
 

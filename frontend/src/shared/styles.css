@@ -53,7 +53,32 @@
     color: var(--color-ink-muted);
   }
 
+  /* Route changes cross-fade with a small rise (View Transitions API; browsers without it just swap). */
+  ::view-transition-old(root) {
+    animation: rh-vt-out 180ms var(--ease-in-out) both;
+  }
+  ::view-transition-new(root) {
+    animation: rh-vt-in 380ms var(--ease-out) both;
+  }
+  @keyframes rh-vt-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+  @keyframes rh-vt-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none !important;
+    }
+
     *,
     *::before,
     *::after {
@@ -61,5 +86,65 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/* Noor motion and texture helpers. Plain classes, so any screen can use them without new JS. */
+@layer components {
+  /* Children rise one after another. Up to 12 steps; set --i on a child to place it yourself. */
+  .rh-stagger > * {
+    animation: rh-rise 560ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+  .rh-stagger > :nth-child(2) { --i: 1; }
+  .rh-stagger > :nth-child(3) { --i: 2; }
+  .rh-stagger > :nth-child(4) { --i: 3; }
+  .rh-stagger > :nth-child(5) { --i: 4; }
+  .rh-stagger > :nth-child(6) { --i: 5; }
+  .rh-stagger > :nth-child(7) { --i: 6; }
+  .rh-stagger > :nth-child(8) { --i: 7; }
+  .rh-stagger > :nth-child(9) { --i: 8; }
+  .rh-stagger > :nth-child(10) { --i: 9; }
+  .rh-stagger > :nth-child(11) { --i: 10; }
+  .rh-stagger > :nth-child(n + 12) { --i: 11; }
+
+  /* SVG strokes that draw themselves: give the path pathLength="100". */
+  .rh-draw {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: rh-draw 1200ms var(--ease-in-out) both;
+    animation-delay: var(--delay, 0ms);
+  }
+
+  /* The ajrak lattice: eight-point stars joined corner to corner. A texture, never behind body text. */
+  .rh-lattice {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%2324409e' stroke-opacity='.09'%3E%3Cpath d='M18 18h28v28H18z'/%3E%3Cpath d='M32 12.2 51.8 32 32 51.8 12.2 32z'/%3E%3Ccircle cx='32' cy='32' r='3'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 64px 64px;
+  }
+  .rh-lattice-night {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffd36e' stroke-opacity='.08'%3E%3Cpath d='M18 18h28v28H18z'/%3E%3Cpath d='M32 12.2 51.8 32 32 51.8 12.2 32z'/%3E%3Ccircle cx='32' cy='32' r='3'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 64px 64px;
+  }
+
+  /* Night sky: indigo with a lamp-light pool at the top. */
+  .rh-night-sky {
+    background-color: var(--color-night-1);
+    background-image: radial-gradient(120% 70% at 50% -10%, rgb(255 211 110 / 0.16), transparent 60%),
+      radial-gradient(90% 60% at 100% 110%, rgb(36 64 158 / 0.45), transparent 70%);
+    color: var(--color-night-ink);
+  }
+
+  /* Loading placeholder that shimmers (never text). */
+  .rh-skeleton {
+    background: linear-gradient(90deg, var(--color-sunken) 0%, var(--color-surface) 50%, var(--color-sunken) 100%);
+    background-size: 200% 100%;
+    animation: rh-shimmer 1.6s linear infinite;
+    border-radius: var(--radius-md);
+  }
+
+  /* Numbers that change in place keep their width. */
+  .rh-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
