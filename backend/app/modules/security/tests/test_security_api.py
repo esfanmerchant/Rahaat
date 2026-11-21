@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.db import models
@@ -38,7 +37,6 @@ def test_the_database_refuses_every_bypass_and_the_run_is_audited(client: TestCl
     assert len(runs) == 2 and runs[-1].seq == body["audit_seq"]
 
 
-@pytest.mark.xfail(strict=True, reason="needs the migration that sets search_path = public, pg_temp on app_can_read_person")
 def test_the_consent_function_cannot_be_hijacked_by_a_temporary_table(client: TestClient, factory: Any) -> None:
     body = _run(client, factory.headers(client, factory.account(factory.tenant(), "admin")))
     assert {p["name"]: p["passed"] for p in body["probes"]}["consent_function_is_safe"]

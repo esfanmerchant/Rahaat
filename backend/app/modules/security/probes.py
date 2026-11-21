@@ -115,16 +115,20 @@ def audit_is_append_only(conn: Connection) -> ProbeResult:
 
 
 def consent_function_is_safe(conn: Connection) -> ProbeResult:
-    sql = ("SELECT p.prosecdef, pg_get_userbyid(p.proowner), coalesce(array_to_string(p.proconfig, ','), '') "
+    # The search_path value itself contains a comma ("public, pg_temp"), so read that one setting, not a joined list.
+    sql = ("SELECT p.prosecdef, pg_get_userbyid(p.proowner), "
+           "coalesce((SELECT c FROM unnest(p.proconfig) AS c WHERE starts_with(c, 'search_path=')), ''), "
+           "has_database_privilege(current_user, current_database(), 'TEMP') "
            "FROM pg_proc p WHERE p.proname = 'app_can_read_person'")  # fmt: skip
-    definer, owner, config = conn.execute(text(sql)).one()
-    path = next((c.removeprefix("search_path=") for c in config.split(",") if c.startswith("search_path=")), "")
+    definer, owner, setting, can_create_temp = conn.execute(text(sql)).one()
+    path = setting.removeprefix("search_path=")
     pg_temp_last = path.replace(" ", "").endswith("pg_temp")
     return ProbeResult("consent_function_is_safe",
                        "The consent check runs as its owner, which the API's role is not, with a search path that a temporary table "
-                       "cannot hijack (pg_temp named last).",
-                       bool(definer) and owner != "rahat_app" and pg_temp_last, sql,
-                       {"security_definer": definer, "owner": owner, "search_path": path, "pg_temp_last": pg_temp_last})  # fmt: skip
+                       "cannot hijack (pg_temp named last), and the API's role cannot create temporary tables at all.",
+                       bool(definer) and owner != "rahat_app" and pg_temp_last and not can_create_temp, sql,
+                       {"security_definer": definer, "owner": owner, "search_path": path, "pg_temp_last": pg_temp_last,
+                        "app_role_can_create_temp_tables": can_create_temp})  # fmt: skip
 
 
 def run_all(*, tenant_id: UUID, user_id: UUID, role: str) -> list[ProbeResult]:
