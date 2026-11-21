@@ -1,0 +1,119 @@
+import { defineConfig, type ProxyOptions } from 'vite';
+import preact from '@preact/preset-vite';
+import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
+
+// FastAPI serves the built app and the API from one origin. In dev, Vite
+// forwards these prefixes to the API so cookies and paths behave the same.
+const API_ORIGIN = 'http://127.0.0.1:8000';
+const SERVER_PREFIXES = ['/v1', '/healthz', '/readyz', '/metrics', '/docs', '/redoc', '/openapi.json', '/mock'];
+const proxy: Record<string, ProxyOptions> = Object.fromEntries(
+  SERVER_PREFIXES.map((prefix) => [prefix, { target: API_ORIGIN, changeOrigin: false }]),
+);
+
+// Navigations to these paths must reach the server, never the SPA shell.
+const NAVIGATE_FALLBACK_DENYLIST = [
+  /^\/v1(?:\/|$)/,
+  /^\/docs(?:\/|$)/,
+  /^\/redoc(?:\/|$)/,
+  /^\/openapi\.json$/,
+  /^\/healthz$/,
+  /^\/readyz$/,
+  /^\/metrics$/,
+  /^\/mock(?:\/|$)/,
+];
+
+// `npm run preview` sends the same strict policy the server sends in production
+// (no 'unsafe-inline'), so a CSP violation shows up locally first. Not used by
+// `npm run dev`, where Vite injects styles inline for hot reload.
+const PREVIEW_CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self'",
+  "media-src 'self'",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+export default defineConfig({
+  plugins: [
+    preact(),
+    tailwindcss(),
+    VitePWA({
+      strategies: 'generateSW',
+      registerType: 'autoUpdate',
+      // Registered from bundled code (src/main.tsx) so the page needs no inline script.
+      injectRegister: false,
+      // globPatterns below already precaches the icons; avoid duplicate entries.
+      includeManifestIcons: false,
+      manifest: {
+        id: '/',
+        name: 'Rahat (Prototype)',
+        short_name: 'Rahat',
+        description:
+          'Prototype relief program. Not an official service. All identity, payment and data services are simulated.',
+        lang: 'en',
+        dir: 'ltr',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#0d5c3d',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+        ],
+      },
+      workbox: {
+        // App shell and fixed audio prompts only. Staff and demo chunks load from
+        // the network so a citizen on a weak connection never downloads them.
+        globPatterns: ['**/*.{js,css,html,svg,png,mp3}'], // the plugin adds manifest.webmanifest itself
+        globIgnores: ['**/assets/staff-*.js', '**/assets/demo-*.js'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: NAVIGATE_FALLBACK_DENYLIST,
+        // A stale service worker during the live demo would be a disaster.
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+        // Never cache API responses: no runtime caching at all.
+        runtimeCaching: [],
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+      },
+      devOptions: { enabled: false },
+    }),
+  ],
+  server: {
+    port: 5173,
+    proxy,
+  },
+  preview: {
+    port: 4173,
+    proxy,
+    headers: { 'Content-Security-Policy': PREVIEW_CSP },
+  },
+  build: {
+    manifest: true,
+    rollupOptions: {
+      output: {
+        // Without this, Rollup pulls every unassigned dependency of a manual chunk
+        // (preact, src/shared) into it, and the citizen entry then imports the
+        // staff chunk statically. check:bundle fails the build if that happens.
+        onlyExplicitManualChunks: true,
+        manualChunks(id) {
+          const path = id.replace(/\\/g, '/');
+          if (path.includes('/src/staff/demo/')) return 'demo';
+          if (path.includes('/src/staff/')) return 'staff';
+          return undefined;
+        },
+      },
+    },
+  },
+});

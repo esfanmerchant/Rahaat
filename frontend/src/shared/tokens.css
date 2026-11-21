@@ -1,0 +1,117 @@
+/*
+ * Rahat design tokens. Light theme only. See docs/DESIGN.md.
+ *
+ * Contrast (WCAG, against --color-paper unless noted):
+ *   ink 16.9:1, ink-muted 9.3:1 (both AAA, citizen body text), ink-subtle 5.9:1
+ *   (AA, staff metadata only), white on primary 8.0:1, white on danger 9.0:1,
+ *   primary-strong on primary-soft 9.2:1, warning-ink on warning-soft 7.7:1,
+ *   line-strong 4.7:1 (input borders, 3:1 needed).
+ *
+ * Forbidden: gradients, blobs, glass or blur effects, emoji as icons, shadows as decoration.
+ */
+
+/* Static tokens. Tailwind turns each into utilities (bg-primary, text-ink, rounded-md, min-h-tap...). */
+@theme static {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-paper: #ffffff;
+  --color-surface: #f4f2ee;
+  --color-sunken: #f7f7f5;
+  --color-ink: #1a1d21;
+  --color-ink-muted: #3f4852;
+  --color-ink-subtle: #5c6670;
+  --color-line: #d3d6da;
+  --color-line-strong: #6b7480;
+  --color-primary: #0d5c3d;
+  --color-primary-strong: #094730;
+  --color-primary-soft: #e3f0e8;
+  --color-danger: #8f1a1a;
+  --color-danger-soft: #fbe9e7;
+  --color-warning: #f2b63d;
+  --color-warning-ink: #6b4300;
+  --color-warning-soft: #fdf1d6;
+  --color-info: #1f4fa3;
+  --color-info-strong: #173d80;
+  --color-info-soft: #e6edf8;
+  --color-focus: #1f4fa3;
+  --color-chrome: #22272e;
+  --color-chrome-ink: #ffffff;
+  --color-chrome-muted: #b9c0c8;
+
+  /* Spacing keeps Tailwind's 0.25rem step; these name the touch sizes. */
+  --spacing-tap: 3rem; /* 48px: the minimum for any citizen tap target */
+  --spacing-tap-lg: 4rem; /* 64px: citizen answers and keypad keys */
+  --spacing-tap-xl: 6rem; /* 96px: the start button */
+
+  --container-phone: 30rem;
+
+  --radius-*: initial;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --blur-*: initial;
+}
+
+/*
+ * Language-dependent tokens. Inlined into utilities so they resolve on the element,
+ * which lets an Urdu line inside an English page (or the reverse) get its own
+ * font and line height. Nastaliq needs a line height of at least 2.
+ */
+@theme inline {
+  --font-*: initial;
+  --font-sans: var(--rh-font);
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+
+  --text-*: initial;
+  --text-xs: calc(0.75rem * var(--rh-script-scale));
+  --text-xs--line-height: var(--rh-leading-snug);
+  --text-sm: calc(0.875rem * var(--rh-script-scale));
+  --text-sm--line-height: var(--rh-leading-snug);
+  --text-base: calc(1rem * var(--rh-script-scale));
+  --text-base--line-height: var(--rh-leading-body);
+  --text-lg: calc(1.125rem * var(--rh-script-scale));
+  --text-lg--line-height: var(--rh-leading-body);
+  --text-xl: calc(1.375rem * var(--rh-script-scale));
+  --text-xl--line-height: var(--rh-leading-tight);
+  --text-2xl: calc(1.75rem * var(--rh-script-scale));
+  --text-2xl--line-height: var(--rh-leading-tight);
+  --text-3xl: calc(2.25rem * var(--rh-script-scale));
+  --text-3xl--line-height: var(--rh-leading-tight);
+
+  --leading-*: initial;
+  --leading-tight: var(--rh-leading-tight);
+  --leading-snug: var(--rh-leading-snug);
+  --leading-normal: var(--rh-leading-body);
+}
+
+:root,
+:lang(en) {
+  --rh-font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --rh-script-scale: 1;
+  --rh-leading-tight: 1.25;
+  --rh-leading-snug: 1.4;
+  --rh-leading-body: 1.5;
+}
+
+/* Urdu: Nastaliq first, from the device. No web fonts. */
+:lang(ur) {
+  --rh-font: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Noto Naskh Arabic", system-ui, sans-serif;
+  --rh-script-scale: 1.1;
+  --rh-leading-tight: 2;
+  --rh-leading-snug: 2;
+  --rh-leading-body: 2.2;
+}
+
+/* Sindhi is usually set in Naskh; Nastaliq fonts can miss Sindhi letters. */
+:lang(sd) {
+  --rh-font: "Noto Naskh Arabic", "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", system-ui, sans-serif;
+  --rh-script-scale: 1.1;
+  --rh-leading-tight: 2;
+  --rh-leading-snug: 2;
+  --rh-leading-body: 2.2;
+}

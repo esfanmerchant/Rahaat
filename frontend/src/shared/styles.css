@@ -1,0 +1,65 @@
+/* Tailwind entry. Scans src/ only. Built into one external stylesheet (CSP: style-src 'self'). */
+@import "tailwindcss" source("../");
+@import "./tokens.css";
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Re-resolve the script font and line height on every language island. */
+  html,
+  [lang] {
+    font-family: var(--rh-font);
+    line-height: var(--rh-leading-body);
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  /* Headings and <main> get focus by script on a route change (screen readers
+     announce them); they are not controls, so no ring. */
+  [tabindex="-1"]:focus,
+  [tabindex="-1"]:focus-visible {
+    outline: none;
+  }
+
+  /* Numbers, phone numbers and PINs always read left to right, even in Urdu. */
+  .rh-ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  /* Boot message shown by index.html before the app script runs. */
+  .rh-boot {
+    display: flex;
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+    color: var(--color-ink-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
