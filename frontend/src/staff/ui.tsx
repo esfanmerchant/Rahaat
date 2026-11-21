@@ -83,9 +83,9 @@ export const humanize = (code: string): string => code.replace(/_/g, ' ');
 
 export function Section({ title, id, children, aside }: { title: string; id: string; children?: ComponentChildren; aside?: ComponentChildren }) {
   return (
-    <section aria-labelledby={id} class="border border-line">
-      <div class="flex items-center justify-between gap-2 border-b border-line bg-sunken px-3 py-1.5">
-        <h2 id={id} class="text-sm font-semibold uppercase tracking-wide text-ink">
+    <section aria-labelledby={id} class="st-panel">
+      <div class="st-panel-head flex items-center justify-between gap-2 px-3 py-1.5">
+        <h2 id={id} class="text-xs font-bold uppercase tracking-widest text-ink-muted">
           {title}
         </h2>
         {aside}
@@ -96,16 +96,11 @@ export function Section({ title, id, children, aside }: { title: string; id: str
 }
 
 type Tone = 'neutral' | 'good' | 'bad' | 'warn' | 'info';
-const TONES: Record<Tone, string> = {
-  neutral: 'border-line-strong text-ink',
-  good: 'border-primary bg-primary-soft text-primary-strong',
-  bad: 'border-danger bg-danger-soft text-danger',
-  warn: 'border-warning-ink bg-warning-soft text-warning-ink',
-  info: 'border-info-strong bg-info-soft text-info-strong',
-};
+const TONES: Record<Tone, string> = { neutral: '', good: 'ok', bad: 'bad', warn: 'warn', info: 'info' };
 
+/** A status chip. The words carry the meaning; the tone only helps the eye. */
 export function Badge({ tone = 'neutral', children }: { tone?: Tone; children?: ComponentChildren }) {
-  return <span class={`inline-block rounded-sm border px-1.5 font-mono text-xs ${TONES[tone]}`}>{children}</span>;
+  return <span class={`st-chip font-mono ${TONES[tone]}`}>{children}</span>;
 }
 
 /** Confidence as a number plus a small bar (the number is the information; the bar is a glance aid). */
@@ -115,9 +110,9 @@ export function ConfBar({ value }: { value: number | null | undefined }) {
   const tone = value >= 0.9 ? 'bg-primary' : value >= 0.7 ? 'bg-warning-ink' : 'bg-danger';
   return (
     <span class="inline-flex items-center gap-1.5">
-      <svg width="48" height="8" viewBox="0 0 100 8" role="img" aria-label={`confidence ${w} percent`} class="shrink-0">
-        <rect width="100" height="8" class="fill-surface" />
-        <rect width={w} height="8" class={tone === 'bg-primary' ? 'fill-primary' : tone === 'bg-warning-ink' ? 'fill-warning-ink' : 'fill-danger'} />
+      <svg width="48" height="6" viewBox="0 0 100 8" role="img" aria-label={`confidence ${w} percent`} class="shrink-0">
+        <rect width="100" height="8" rx="4" class="fill-surface" />
+        <rect width={w} height="8" rx="4" class={`${tone === 'bg-primary' ? 'fill-primary' : tone === 'bg-warning-ink' ? 'fill-warning-ink' : 'fill-danger'} st-bar-fill`} />
       </svg>
       <span class="font-mono text-xs tabular-nums">{pct(value)}</span>
     </span>
@@ -137,7 +132,7 @@ export function Th({ children, sort, onSort, active, dir }: { children?: Compone
     <th
       scope="col"
       aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : undefined}
-      class="sticky top-0 border-b border-line-strong bg-sunken px-2 py-1 text-start text-xs font-semibold uppercase tracking-wide text-ink-muted"
+      class="sticky top-0 border-b border-line-strong bg-sunken px-2 py-1.5 text-start text-xs font-semibold uppercase tracking-wider text-ink-muted"
     >
       {sort ? (
         <button type="button" class="font-semibold uppercase hover:underline" onClick={onSort}>
@@ -152,4 +147,4 @@ export function Th({ children, sort, onSort, active, dir }: { children?: Compone
 }
 
 export const TD = 'border-b border-line px-2 py-1 align-top';
-export const INPUT = 'h-8 rounded-sm border border-line-strong bg-paper px-2 text-sm text-ink';
+export const INPUT = 'h-8 rounded-md border border-line-strong bg-paper px-2 text-sm text-ink';

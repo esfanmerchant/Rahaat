@@ -6,6 +6,7 @@ import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { LoadMore, usePaged } from '../kit';
 import { Badge, ConfBar, fmtAge, humanize, INPUT, TD, Th, slaText, useNow, type CaseSummary } from '../ui';
+import { AgeChip, HeatBar } from '../viz';
 
 type SortKey = 'priority' | 'confidence' | 'age';
 type StatusFilter = 'active' | 'all' | CaseSummary['status'];
@@ -87,7 +88,7 @@ export function QueuePage() {
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3" onKeyDown={onKeyDown}>
       <div class="flex flex-wrap items-center gap-3">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-lg font-semibold">
+        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-xl font-black tracking-tight">
           Review queue
         </h1>
         <label class="flex items-center gap-1">
@@ -127,10 +128,10 @@ export function QueuePage() {
             <option value="age">Age</option>
           </select>
         </label>
-        <button type="button" class="h-8 rounded-sm border border-line-strong px-3 hover:bg-sunken" onClick={reload}>
+        <button type="button" class="h-8 rounded-md border border-line-strong px-3 hover:bg-sunken" onClick={reload}>
           Refresh
         </button>
-        <span class="ms-auto text-xs text-ink-subtle">j and k move, Enter opens. Cases are handled one at a time.</span>
+        <span class="ms-auto text-xs text-ink-subtle"><kbd class="st-kbd">j</kbd> <kbd class="st-kbd">k</kbd> move, <kbd class="st-kbd">Enter</kbd> opens. Cases are handled one at a time.</span>
       </div>
 
       <p id="sort-help" class="text-xs text-ink-subtle">
@@ -147,8 +148,8 @@ export function QueuePage() {
       ) : null}
 
       {rows.length > 0 ? (
-        <div class="overflow-x-auto border border-line">
-          <table ref={tableRef} class="w-full border-collapse text-sm">
+        <div class="st-panel max-h-[calc(100dvh-15rem)] min-h-40 overflow-auto">
+          <table ref={tableRef} class="st-table w-full border-collapse text-sm">
             <caption class="sr-only">Cases, sorted by the server</caption>
             <thead>
               <tr>
@@ -167,17 +168,21 @@ export function QueuePage() {
               {rows.map((c, i) => {
                 const sla = slaText(c.sla_due_at, now);
                 const current = i === cursor;
+                const [origin, ...rest] = c.opened_reason.includes('.') ? c.opened_reason.split('.') : ['', c.opened_reason];
                 return (
                   <tr
                     key={c.id}
                     data-row={i}
+                    style={{ '--i': i }}
                     aria-selected={current}
-                    class={current ? 'bg-info-soft outline outline-2 -outline-offset-2 outline-focus' : 'hover:bg-sunken'}
+                    class={`st-row-in ${current ? 'st-cursor' : 'hover:bg-sunken'}`}
                     onClick={() => setCursor(i)}
                     onDblClick={() => route(`/staff/cases/${c.id}`)}
                   >
-                    <td class={`${TD} font-mono tabular-nums`}>{c.priority}</td>
-                    <td class={TD}>{humanize(c.kind)}</td>
+                    <td class={TD}>
+                      <HeatBar priority={c.priority} />
+                    </td>
+                    <td class={`${TD} text-ink-muted`}>{humanize(c.kind)}</td>
                     <td class={TD}>
                       <a href={`/staff/cases/${c.id}`} class="font-semibold">
                         {c.subject_name ?? 'Unnamed subject'}
@@ -186,11 +191,18 @@ export function QueuePage() {
                     <td class={TD}>
                       <ConfBar value={c.confidence} />
                     </td>
-                    <td class={TD}>{humanize(c.opened_reason)}</td>
+                    <td class={TD}>
+                      <span class="inline-flex flex-wrap items-center gap-1">
+                        {origin ? <span class="text-xs uppercase tracking-wide text-ink-subtle">{origin}</span> : null}
+                        <span class={`st-chip ${origin === 'guard' ? 'warn' : origin === 'rule' ? 'info' : ''}`}>{humanize(rest.join(' '))}</span>
+                      </span>
+                    </td>
                     <td class={TD}>
                       <Badge>{humanize(c.status)}</Badge>
                     </td>
-                    <td class={`${TD} font-mono tabular-nums`}>{fmtAge(c.age_minutes)}</td>
+                    <td class={TD}>
+                      <AgeChip minutes={c.age_minutes} text={fmtAge(c.age_minutes)} />
+                    </td>
                     <td class={TD}>
                       {c.sla_due_at ? <Badge tone={sla.overdue ? 'bad' : 'neutral'}>{sla.text}</Badge> : <span class="text-ink-subtle">none</span>}
                     </td>

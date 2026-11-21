@@ -6,6 +6,7 @@ import { Button } from '../../shared/components/Button';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { Badge, ConfBar, fmtAge, fmtTime, humanize, INPUT, Mono, Section, TD, Th, useLoad, type CaseAction, type CaseDetail } from '../ui';
+import { DecisionAnatomy } from './Anatomy';
 import { DocumentsView, HandoffView, TraceView } from './parts';
 
 const ACTION_LABEL: Record<CaseAction, string> = {
@@ -70,7 +71,7 @@ export function CasePage({ id }: { id: string }) {
           Back to the queue
         </a>
         <div class="flex flex-wrap items-center gap-3">
-          <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-lg font-semibold">
+          <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-2xl font-black tracking-tight">
             {c.subject_name ?? 'Unnamed subject'}
           </h1>
           <Badge>{humanize(c.kind)}</Badge>
@@ -95,6 +96,7 @@ export function CasePage({ id }: { id: string }) {
       ) : null}
 
       <HandoffView handoff={c.handoff} />
+      {c.decision ? <DecisionAnatomy trace={c.decision} form={c.form} /> : null}
       <FormTable detail={c} />
       <DocumentsView checks={c.document_checks ?? []} />
       <Section
@@ -186,7 +188,7 @@ function ActionBar({ detail, onDone }: { detail: CaseDetail; onDone: (next: Case
   };
 
   return (
-    <section aria-label="Actions" class="border border-line-strong bg-sunken p-3">
+    <section aria-label="Actions" class="st-panel st-lit p-3">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-semibold">Decide</span>
         {allowed.length === 0 ? <span class="text-ink-muted">No action is available for this case in its current status.</span> : null}

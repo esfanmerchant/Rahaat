@@ -329,6 +329,7 @@ html[data-theme="day"],
 .st-marker {
   position: absolute;
   top: 50%;
+  left: 0;
   width: 18px;
   height: 18px;
   margin: -9px 0 0 -9px;
@@ -336,13 +337,20 @@ html[data-theme="day"],
   background: var(--st-noor);
   border: 2px solid var(--color-paper);
   box-shadow: 0 0 0 1px var(--st-noor), 0 0 18px 3px var(--st-glow-noor);
-  animation: st-marker 1100ms var(--ease-spring) both;
-  animation-delay: 150ms;
+  transform: translateX(var(--tx, 0px));
+  animation: st-marker 1200ms var(--ease-out) 200ms both;
 }
 @keyframes st-marker {
   from {
-    left: 0;
+    transform: translateX(0);
     opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(var(--tx, 0px));
+    opacity: 1;
   }
 }
 .st-tick {
@@ -353,7 +361,8 @@ html[data-theme="day"],
   border-inline-start: 2px dashed var(--color-ink-muted);
 }
 .st-bar-fill {
-  transform-origin: left;
+  transform-box: fill-box;
+  transform-origin: left center;
   animation: st-grow 800ms var(--ease-out) both;
 }
 
