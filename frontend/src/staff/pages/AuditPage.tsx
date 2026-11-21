@@ -12,6 +12,8 @@ import { CountUp } from '../viz';
 import { Card, Info } from './pg';
 
 const PAGE = 25;
+/** How many of the newest blocks are drawn; the verification itself always covers the whole chain. */
+const SHOWN = 12;
 
 interface Filters {
   action: string;
@@ -119,9 +121,23 @@ export function AuditPage() {
                 <Card title="Chain" i={0} aside={<VerifyButton verify={verify} />}>
                   {state}
                   {loaded.state === 'ok' && items.length === 0 ? <ScreenState kind="empty" density="staff" heading="h2" title="No audit rows" body="Nothing matches. Clear the filters." /> : null}
-                  {chain.length > 0 ? <ChainStrip rows={chain} states={verify.states} onPick={setOpen} openSeq={open?.seq} /> : null}
-                  <div aria-live="polite" class="min-h-14">
+                  {chain.length > 0 ? (
+                    <ChainStrip rows={chain.slice(-SHOWN)} states={verify.states.slice(-SHOWN)} hidden={Math.max(0, chain.length - SHOWN)} onPick={setOpen} openSeq={open?.seq} />
+                  ) : null}
+                  <div aria-live="polite" class="flex min-h-16 flex-wrap items-center gap-4">
                     <VerifySeal verify={verify} />
+                    {verify.data ? (
+                      <dl class="flex flex-wrap gap-3">
+                        <div class="rounded-xl border border-line px-3 py-1.5">
+                          <dt class="pg-cap">Rows</dt>
+                          <dd class="pg-big rh-num" style={{ fontSize: '1.5rem' }}>{verify.data.checked}</dd>
+                        </div>
+                        <div class="rounded-xl border border-line px-3 py-1.5">
+                          <dt class="pg-cap">Head</dt>
+                          <dd class="pg-big rh-num" style={{ fontSize: '1.5rem' }}>#{verify.data.head_seq}</dd>
+                        </div>
+                      </dl>
+                    ) : null}
                   </div>
                 </Card>
                 {open ? <RowDetail row={open} onClose={() => setOpen(null)} /> : null}
@@ -289,9 +305,15 @@ function RowDetail({ row, onClose }: { row: AuditEntry; onClose: () => void }) {
 }
 
 /** The newest rows as linked blocks: each block holds its own hash and the previous one, so a change breaks the link. */
-function ChainStrip({ rows, states, onPick, openSeq }: { rows: AuditEntry[]; states: BlockState[]; onPick: (r: AuditEntry) => void; openSeq: number | undefined }) {
+function ChainStrip({ rows, states, hidden, onPick, openSeq }: { rows: AuditEntry[]; states: BlockState[]; hidden: number; onPick: (r: AuditEntry) => void; openSeq: number | undefined }) {
   return (
     <ol class="pg-chain" aria-label="Audit rows as a hash chain, oldest on the left">
+      {hidden > 0 ? (
+        <li class="flex items-center">
+          <span class="st-chip font-mono" title="Older rows on this page are not drawn">+{hidden}</span>
+          <span class="pg-link" aria-hidden="true" />
+        </li>
+      ) : null}
       {rows.map((r, i) => {
         const st = states[i] ?? 'idle';
         return (
@@ -413,7 +435,7 @@ function Integrity({ verify }: { verify: Verify }) {
     { seq: 45, state: 'unchecked' as const, h: '71c8d0f4', p: 'e2b619' },
   ];
   return (
-    <div class="pg-grid pg-21">
+    <div class="flex flex-col gap-3">
       <Card title="Break" i={0} lit aside={<><span class="st-chip warn">example</span><Info label="About a break">If a row is edited, its hash no longer matches what the next row remembers. Verify reports the first sequence that fails; later rows cannot be trusted either.</Info></>}>
         <ol class="pg-chain" aria-label="Example of a broken chain, illustration only">
           {demo.map((r, i) => (
@@ -433,18 +455,18 @@ function Integrity({ verify }: { verify: Verify }) {
           <span class="st-chip unk">not trusted</span>
         </div>
       </Card>
-      <Card title="Last check" i={1}>
+      <Card title="Last check" i={1} lit={data !== null && !data.ok}>
         {data === null ? (
           <div class="flex flex-col items-start gap-3">
             <p class="text-ink-muted">Not run yet.</p>
             <VerifyButton verify={verify} />
           </div>
         ) : (
-          <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-x-8 gap-y-3">
             <p class={`pg-big ${data.ok ? '' : 'text-danger'}`} style={data.ok ? { color: 'var(--st-ok)' } : undefined}>
               {data.ok ? 'Intact' : 'Broken'}
             </p>
-            <dl class="pg-kv">
+            <dl class="pg-kv" style={{ flex: '1 1 18rem' }}>
               <dt>Checked</dt>
               <dd class="font-mono">{data.checked}</dd>
               <dt>Head</dt>

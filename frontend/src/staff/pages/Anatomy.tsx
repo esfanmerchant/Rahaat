@@ -257,8 +257,8 @@ export function Provenance({ form }: { form: CaseDetail['form'] | undefined }) {
       <h3 class="pg-cap">Provenance</h3>
       <ul class="flex flex-col gap-1">
         {[...by.entries()].map(([prov, names]) => (
-          <li key={prov} class="flex flex-wrap items-center gap-1.5">
-            <span class="w-36 shrink-0">
+          <li key={prov} class="grid items-start gap-2" style={{ gridTemplateColumns: '9.5rem minmax(0, 1fr)' }}>
+            <span>
               <ProvBadge prov={prov} verified={fields.find(([, f]) => f.provenance === prov)?.[1].verified} />
             </span>
             <span class="font-mono text-xs text-ink-muted">{names.join(', ')}</span>
