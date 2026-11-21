@@ -2219,8 +2219,7 @@
           "languages": {
             "default": [
               "ur",
-              "en",
-              "sd"
+              "en"
             ],
             "items": {
               "type": "string"

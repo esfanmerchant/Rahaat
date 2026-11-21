@@ -37,6 +37,8 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
+      - name: Install Tesseract so the OCR tests run
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-urd
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run mypy

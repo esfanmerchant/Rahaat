@@ -51,7 +51,7 @@ Why, in the organisers' own words:
 | Problem understanding | 5 | Anchor sentence, three personas, Pakistan specifics: feature phones, name spellings, shared phones, relief-payment SMS scams | T0 |
 | End-to-end task completion | 7 | The Relief application finishes for all three personas, unhappy paths included | T0 |
 | Practical impact | 3 | Impact report (time saved, handoff rate, fraud stopped, cost per claim), USSD/SMS channel | T2 |
-| Voice and regional language | 4 | Urdu prompts, Urdu speech input with read-back, Sindhi prompts | T1-T2 |
+| Voice and regional language | 4 | Urdu prompts and Urdu speech input with read-back (the brief asks for Urdu or a regional language) | T1 |
 | Low-literacy usability | 3 | One question per screen, pictograms, no typing, symbol tracking code | T0-T1 |
 | Weak internet | 3 | Offline PWA, outbox sync, under 100 KB, image compression, resume | T1 |
 | Uncertainty and handoff | 5 | Three-way router everywhere, handoff package, silent-guess rate 0 and measured | T0-T1 |
@@ -80,7 +80,7 @@ Why, in the organisers' own words:
 6. **Feature-phone channel.** A USSD/SMS simulator for status check, scam check and consent withdrawal. Most relief beneficiaries do not own a smartphone.
 7. **Symbol tracking code.** A case is tracked by three pictograms plus digits, so a person who cannot read can still recognise and say their code.
 8. **Mistakes ledger.** A page listing the real people we wrongly flagged or blocked and what that cost. The brief asks for honest false alarms; we make them a screen.
-9. **Human voice.** Fixed prompts can be re-recorded by a native speaker on the team in Urdu and Sindhi. It works offline and it is trusted more than a synthetic voice.
+9. **Human voice.** Fixed Urdu prompts can be re-recorded by a native speaker on the team. It works offline and it is trusted more than a synthetic voice.
 
 ## 4. Scope, in the order that scores
 
@@ -108,7 +108,7 @@ Why, in the organisers' own words:
 3. Eval dashboard, analytics per tenant, mistakes ledger.
 4. Offline-first sync with conflict UI, Helper Mode in full.
 5. Webhooks, plans and usage limits, notification channels, jobs dashboard.
-6. USSD/SMS simulator, verify code, symbol tracking code, Sindhi.
+6. USSD/SMS simulator, verify code, symbol tracking code.
 7. Anomaly detection, memory, appeals and complaints.
 
 **T3, stretch (only when T0-T2 are green)**
@@ -413,7 +413,7 @@ Phase 2
 
 Phase 3
 - D1.10 Sync conflict UI; local data encrypted with a key derived from the PIN; QR switch.
-- D1.11 USSD/SMS simulator, symbol tracking code, Sindhi strings and audio, appeals, "did you understand?" feedback.
+- D1.11 USSD/SMS simulator, symbol tracking code, appeals, "did you understand?" feedback.
 - D1.12 Budgets in CI: citizen route at most 100 KB gzipped JS, axe clean, Slow-3G and offline Playwright runs.
 
 ### 7.D2 Track D2, staff console and proof (`frontend/src/staff`)
@@ -472,7 +472,9 @@ A seat is one person with one Claude subscription and one machine. Details and p
 | 2 | First: A, then B, then C by tier. Second: D1, then D2. Expect T0, T1 and the top of T2. |
 | 1 | One orchestrating session running the track agents in parallel. Expect T0 and T1. |
 
-Only humans can do these: create accounts and keys, test on a real phone, record audio, review Urdu and Sindhi wording, rehearse, record the video, submit.
+Only humans can do these: create accounts and keys, test on a real phone, record audio, review the Urdu wording, rehearse, record the video, submit.
+
+**Current mode (decided Sat 21 Nov): one seat.** The lead session runs the track agents in parallel, each in its own git worktree, then merges, integrates and checks the gate. Languages are Urdu and English; no Sindhi, because nobody on the team can check it.
 
 ## 10. Demo
 
@@ -510,7 +512,7 @@ Security strip: cross-tenant read blocked through the API and through raw SQL, S
 | Scam classifier and name matching, trained and tested on synthetic data | USSD gateway (simulator) |
 | Urdu speech input, offline sync, webhooks, rate limits | Every person, case, message and document; billing |
 
-Limitations to state openly: models are trained on synthetic data and real-world accuracy is unknown; `p_ok` assumes independence; Urdu speech recognition is imperfect, which is why every spoken answer is read back; Sindhi speech input is experimental.
+Limitations to state openly: models are trained on synthetic data and real-world accuracy is unknown; `p_ok` assumes independence; Urdu speech recognition is imperfect, which is why every spoken answer is read back; other regional languages are not supported.
 
 ## 12. Risks and fallbacks
 

@@ -103,3 +103,30 @@ Functions other tracks call (define them with these names so integration is a on
 - Python's clock on Windows ticks about every 15 ms. Two rows created in one request can share a `created_at`; never use it alone to order.
 - SQLAlchemy `text()` reads `:name` as a parameter. Pass JSON and anything with a colon as a bound value.
 - The first start of the embedded database takes about 15 seconds; after that it stays running. `npm run db:stop` stops it.
+
+## The decision pipeline: who builds what
+
+`backend/app/contracts/engine.py` defines the shapes and lists the exact import path of every function below.
+
+1. Track A's submit pipeline gathers evidence: the form, the stored `DocumentCheck`s, an `IdentityCheck` and a `RegistryRecord` from the mock services. It builds a `DecisionInput`.
+2. Track B's `decide_and_record` reads the active rule version, the tenant's cost matrix and the active evidence model, calls the pure `decide`, stores the `decisions` row and writes the audit entry.
+3. Track A applies the result. Approve leads to `request_payment`. `ask_more` sets the application to `needs_proof`. `human` opens a case with the handoff package. Every outcome sends a notification.
+
+Until another track's function exists in your tree, import it inside the function that needs it and degrade safely when the import fails: no document check yet means "a person will check"; no engine yet means the case goes to a human. Never fake a result. Tests replace the import with a fake.
+
+Trust rule for form fields: a client may send only provenance `tapped`, `typed` or `spoken`, and never `verified`. Only the server sets `qr_signed` or `registry`, after it has checked a signature or called the registry.
+
+## Hooks instead of shared files
+
+| To do this | Add this file | Do not |
+|---|---|---|
+| Add endpoints | `app/modules/<name>/router.py` defining `router` | edit `app/main.py` |
+| Add demo data | `app/modules/<name>/seed_step.py` defining `seed(db)` (optional `ORDER`); safe to run twice | edit `app/seed.py` |
+| Start or stop something with the app | `app/modules/<name>/lifecycle.py` defining `startup()` and `shutdown()`; check `get_settings().worker_enabled_effective` | edit `app/main.py` |
+| Module test fixtures | `app/modules/<name>/tests/conftest.py` | edit `backend/conftest.py` |
+
+Demo citizens (names, mock IDs, dates of birth) come from `app.demo_accounts.demo_citizens()`. Specimen cards and the mock registry are built from it, so they always agree with the seed.
+
+Tracking codes: `app.contracts.common.tracking_symbols(number)` gives three pictogram names from `TRACKING_SYMBOLS`.
+
+Each test run gets its own throwaway database, so several runs at once do not disturb each other.

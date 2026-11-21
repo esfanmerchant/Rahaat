@@ -7,6 +7,7 @@ import pkgutil
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.responses import FileResponse
@@ -46,7 +47,35 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
     except Exception:  # noqa: BLE001
         # Stay up so /healthz answers and /readyz can report the real problem.
         log.exception("startup bootstrap failed; is the database migrated and reachable?")
+    hooks = _lifecycle_modules()
+    for name, module in hooks:
+        try:
+            getattr(module, "startup", lambda: None)()
+        except Exception:  # noqa: BLE001
+            log.exception("startup hook of %s failed", name)
     yield
+    for name, module in reversed(hooks):
+        try:
+            getattr(module, "shutdown", lambda: None)()
+        except Exception:  # noqa: BLE001
+            log.exception("shutdown hook of %s failed", name)
+
+
+def _lifecycle_modules() -> list[tuple[str, Any]]:
+    """`app/modules/<name>/lifecycle.py` may define `startup()` and `shutdown()` (for example the job worker).
+
+    Hooks decide for themselves whether to do anything: check `get_settings().worker_enabled_effective`
+    before starting a background loop, so tests stay quiet.
+    """
+    found: list[tuple[str, Any]] = []
+    for module in sorted(pkgutil.iter_modules(modules_pkg.__path__), key=lambda m: m.name):
+        name = f"app.modules.{module.name}.lifecycle"
+        try:
+            found.append((module.name, importlib.import_module(name)))
+        except ModuleNotFoundError as exc:
+            if exc.name != name:
+                raise
+    return found
 
 
 def _include_module_routers(app: FastAPI) -> None:

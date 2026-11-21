@@ -65,6 +65,32 @@ RULES_V1 = {
 EXTRA_STEPS: list[Callable[[Session], None]] = []
 
 
+def _module_seed_steps() -> list[Callable[[Session], None]]:
+    """Each track adds demo data by defining `seed(db)` in `app/modules/<name>/seed_step.py`.
+
+    Nobody edits this file to add a step. Steps run after the base seed, ordered by the module's optional
+    `ORDER` number (default 100) and then by name. Every step must be safe to run twice.
+    """
+    import importlib
+    import pkgutil
+
+    import app.modules as modules_pkg
+
+    found: list[tuple[int, str, Callable[[Session], None]]] = []
+    for module in pkgutil.iter_modules(modules_pkg.__path__):
+        name = f"app.modules.{module.name}.seed_step"
+        try:
+            step_module = importlib.import_module(name)
+        except ModuleNotFoundError as exc:
+            if exc.name == name:
+                continue
+            raise
+        step = getattr(step_module, "seed", None)
+        if callable(step):
+            found.append((int(getattr(step_module, "ORDER", 100)), module.name, step))
+    return [step for _, _, step in sorted(found, key=lambda item: (item[0], item[1]))]
+
+
 def _reset() -> None:
     """Empty every table through the owner connection (the app role cannot truncate the audit log)."""
     names = ", ".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
@@ -80,7 +106,7 @@ def _tenant(db: Session, spec: dict[str, str]) -> models.Tenant:
             slug=spec["slug"], name=spec["name"], name_ur=spec["name_ur"], region=spec["region"],
             kind="department", plan_id=plan.id if plan else None, wrapped_dek=new_wrapped_dek(),
             cost_matrix=CostMatrix().model_dump(),
-            config={"payment_four_eyes_limit_pkr": 10000, "languages": ["ur", "en", "sd"], "official_sender": "RAHAT"},
+            config={"payment_four_eyes_limit_pkr": 15000, "languages": ["ur", "en"], "official_sender": "RAHAT"},
         )  # fmt: skip
         db.add(tenant)
         db.flush()
@@ -140,14 +166,14 @@ def _user(db: Session, account: DemoAccount) -> models.User:
     return user
 
 
-def _person(db: Session, tenant: models.Tenant, user: models.User, account: DemoAccount, serial: int) -> models.Person:
+def _person(db: Session, tenant: models.Tenant, user: models.User, account: DemoAccount) -> models.Person:
     person = db.scalar(select(models.Person).where(models.Person.tenant_id == tenant.id, models.Person.user_id == user.id))
     if person is None:
-        national_id = make_mock_id(serial)
+        national_id = make_mock_id(account["id_serial"])
         scope = str(tenant.id)
         person = models.Person(
             tenant_id=tenant.id, user_id=user.id, full_name=account["name"], full_name_ur=account.get("name_ur"),
-            dob=date(1974 + serial % 20, 1 + serial % 12, 1 + serial % 27), gender="female" if serial % 2 else "male",
+            dob=date.fromisoformat(account["dob"]), gender=account["gender"],
             district=account.get("district"), lang=account.get("lang", "ur"),
             phone_enc=encrypt_field(tenant.wrapped_dek, account["identifier"]),
             phone_hash=blind_index(account["identifier"], scope=scope),
@@ -190,13 +216,13 @@ def seed(db: Session) -> None:
     helpers: dict[str, list[models.User]] = {slug: [] for slug in tenants}
     admins: dict[str, models.User] = {}
 
-    for index, account in enumerate(DEMO_ACCOUNTS):
+    for account in DEMO_ACCOUNTS:
         user = _user(db, account)
         for order, slug in enumerate(account["tenants"]):
             tenant = tenants[slug]
             person = None
             if account["role"] == "citizen":
-                person = _person(db, tenant, user, account, serial=1_000_200 + index)
+                person = _person(db, tenant, user, account)
                 citizens[slug].append(person)
             elif account["role"] == "helper":
                 helpers[slug].append(user)
@@ -221,7 +247,7 @@ def seed(db: Session) -> None:
                         expires_at=datetime.now(UTC) + timedelta(days=90),
                     ))  # fmt: skip
     db.flush()
-    for step in EXTRA_STEPS:
+    for step in [*_module_seed_steps(), *EXTRA_STEPS]:
         step(db)
 
 

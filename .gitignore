@@ -36,6 +36,7 @@ desktop.ini
 
 # claude: keep agents tracked, ignore local settings
 .claude/settings.local.json
+.claude/worktrees/
 
 # the organisers' documents stay local; they are not ours to publish
 AI_Hackathon_*.pdf

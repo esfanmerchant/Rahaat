@@ -28,6 +28,9 @@ class DemoAccount(TypedDict, total=False):
     name_ur: str
     lang: str
     district: str
+    gender: str
+    dob: str  # ISO date
+    id_serial: int  # the mock ID is make_mock_id(id_serial)
 
 
 DEMO_TENANTS: list[DemoTenant] = [
@@ -59,17 +62,34 @@ DEMO_ACCOUNTS: list[DemoAccount] = [
     {"label": "Community helper", "kind": "citizen", "role": "helper", "tenants": ["sindh-relief"],
      "identifier": "0999-0000101", "name": "Rubina Shaikh", "name_ur": "روبینہ شیخ", "lang": "ur", "district": "Karachi East"},
     {"label": "Citizen: widow", "kind": "citizen", "role": "citizen", "tenants": ["sindh-relief"],
-     "identifier": "0999-0000201", "name": "Zainab Bibi", "name_ur": "زینب بی بی", "lang": "ur", "district": "Karachi East"},
+     "identifier": "0999-0000201", "name": "Zainab Bibi", "name_ur": "زینب بی بی", "lang": "ur", "district": "Karachi East",
+     "gender": "female", "dob": "1978-03-14", "id_serial": 1000201},
     {"label": "Citizen: shopkeeper", "kind": "citizen", "role": "citizen", "tenants": ["sindh-relief"],
-     "identifier": "0999-0000202", "name": "Aslam Khan", "name_ur": "اسلم خان", "lang": "ur", "district": "Hyderabad"},
+     "identifier": "0999-0000202", "name": "Aslam Khan", "name_ur": "اسلم خان", "lang": "ur", "district": "Hyderabad",
+     "gender": "male", "dob": "1981-09-02", "id_serial": 1000202},
     {"label": "Admin (Punjab)", "kind": "staff", "role": "admin", "tenants": ["punjab-relief"],
      "identifier": "admin@punjab.rahat.example", "name": "Imran Chaudhry", "lang": "en"},
     {"label": "Officer (Punjab)", "kind": "staff", "role": "officer", "tenants": ["punjab-relief"],
      "identifier": "officer@punjab.rahat.example", "name": "Hira Malik", "lang": "en"},
     {"label": "Citizen (Punjab)", "kind": "citizen", "role": "citizen", "tenants": ["punjab-relief"],
-     "identifier": "0999-0000301", "name": "Rukhsana Parveen", "name_ur": "رخسانہ پروین", "lang": "ur", "district": "Lahore"},
+     "identifier": "0999-0000301", "name": "Rukhsana Parveen", "name_ur": "رخسانہ پروین", "lang": "ur", "district": "Lahore",
+     "gender": "female", "dob": "1985-06-21", "id_serial": 1000301},
 ]  # fmt: skip
 
 
 def secret_for(account: DemoAccount) -> str:
     return DEMO_PASSWORD if account["kind"] == "staff" else DEMO_PIN
+
+
+def demo_citizens() -> list[dict[str, str]]:
+    """The demo citizens with their mock IDs. Specimen cards and the mock registry are built from this."""
+    from app.core.mockdata import make_mock_id
+
+    return [
+        {
+            "name": a["name"], "name_ur": a.get("name_ur", ""), "phone": a["identifier"], "tenant_slug": a["tenants"][0],
+            "national_id": make_mock_id(a["id_serial"]), "dob": a["dob"], "gender": a["gender"], "district": a.get("district", ""),
+        }  # fmt: skip
+        for a in DEMO_ACCOUNTS
+        if a["role"] == "citizen"
+    ]

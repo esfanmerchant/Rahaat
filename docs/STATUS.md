@@ -83,7 +83,7 @@ Track D2
 - [ ] A15 Webhooks  - [ ] A16 Plans and usage  - [ ] A17 USSD/SMS and verify code  - [ ] A18 Appeals, complaints, admin users, reports
 - [ ] B12 Digital Twin  - [ ] B13 Eval dashboard API  - [ ] B14 Analytics  - [ ] B15 Anomaly detection  - [ ] B16 Override feedback
 - [ ] C9 RAG  - [ ] C10 Agent  - [ ] C11 Guardrails and red team  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
-- [ ] D1.10 Sync conflicts, local encryption  - [ ] D1.11 USSD simulator, symbols, Sindhi  - [ ] D1.12 Budgets in CI
+- [ ] D1.10 Sync conflicts, local encryption  - [ ] D1.11 USSD simulator, symbols  - [ ] D1.12 Budgets in CI
 - [ ] D2.8 Digital Twin view  - [ ] D2.9 Scam Map  - [ ] D2.10 Dashboards  - [ ] D2.11 Admin screens
 
 **Gate 3**: every item passes its check or is `HIDDEN`.

@@ -44,12 +44,16 @@ def database() -> Iterator[None]:
     from app.core.db import dispose_engines
 
     explicit = os.environ.get("TEST_DATABASE_URL_OWNER")
+    throwaway: str | None = None
     if explicit:
         os.environ["DATABASE_URL_OWNER"] = explicit
     else:
         from app import devdb
 
-        os.environ["DATABASE_URL_OWNER"] = devdb.database_uri("rahat_test", recreate=True)
+        # One database per test run, so several runs (people or agents) never drop each other's data.
+        throwaway = f"rahat_test_{os.getpid()}"
+        devdb.drop_stale_databases("rahat_test_")
+        os.environ["DATABASE_URL_OWNER"] = devdb.database_uri(throwaway, recreate=True)
     reset_settings_cache()
     dispose_engines()
 
@@ -63,6 +67,10 @@ def database() -> Iterator[None]:
     ensure_platform_rows()
     yield
     dispose_engines()
+    if throwaway:
+        from app import devdb
+
+        devdb.drop_database(throwaway)
 
 
 @pytest.fixture(scope="session")

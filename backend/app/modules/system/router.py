@@ -28,7 +28,7 @@ class InfoOut(BaseModel):
     version: str
     prototype_label: str = PROTOTYPE_LABEL
     prototype_label_ur: str = PROTOTYPE_LABEL_UR
-    languages: list[str] = ["ur", "en", "sd"]
+    languages: list[str] = ["ur", "en"]
     features: dict[str, bool]
     demo_mode: bool
     ai_profile: str

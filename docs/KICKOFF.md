@@ -9,7 +9,7 @@ Answer these four questions first, then tell the lead session:
 1. **Seats.** How many teammates have their own Claude subscription and laptop?
 2. **Host.** Which row of PLAN 5.4 can you do? University email for Azure for Students, a card for Hugging Face PRO ($9), or neither (laptop + tunnel).
 3. **Keys.** Can someone create a free Groq key (better Urdu speech recognition)? Any LLM key? Both are optional.
-4. **Regional language.** Which language does a teammate speak natively: Sindhi, Punjabi or Pashto? That person records the prompts.
+4. **Languages.** Decided: Urdu and English. No regional language is shipped unless a native speaker can check every string.
 
 Then:
 
@@ -134,7 +134,7 @@ Gate times are in PLAN section 8. At each gate: anything not green is cut or hid
 ## 7. Only people can do these
 
 - Test the citizen flow on a real phone, with the network throttled and in airplane mode.
-- Read every Urdu and Sindhi string aloud. Fix anything a grandmother would not understand.
+- Read every Urdu string aloud. Fix anything a grandmother would not understand.
 - Record the fixed prompts in a quiet room (the list is generated in item C5) and drop the files in by name.
 - Rehearse the eight-minute demo twice with a timer, then record the video.
 - Check the Google Drive link in a private browser window. Submit by 16:30.

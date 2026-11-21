@@ -41,7 +41,9 @@ def run_migrations_online() -> None:
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
         with context.begin_transaction():
             context.run_migrations()
-            _sync_app_role_password(connection)
+            # Dev and test never change the password, and parallel test runs must not race on ALTER ROLE.
+            if not get_settings().defaults_allowed:
+                _sync_app_role_password(connection)
         connection.commit()
     engine.dispose()
 

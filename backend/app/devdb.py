@@ -47,6 +47,30 @@ def database_uri(name: str, *, recreate: bool = False) -> str:
     return str(server.get_uri(database=name))
 
 
+def drop_database(name: str) -> None:
+    import psycopg
+    from psycopg import sql
+
+    with psycopg.connect(_server().get_uri(), autocommit=True) as conn:
+        conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
+
+
+def drop_stale_databases(prefix: str, *, older_than_minutes: int = 20) -> None:
+    """Remove databases left behind by test runs that were killed: only idle ones that are old enough."""
+    import psycopg
+    from psycopg import sql
+
+    with psycopg.connect(_server().get_uri(), autocommit=True) as conn:
+        rows = conn.execute(
+            "SELECT d.datname FROM pg_database d WHERE starts_with(d.datname, %s) "
+            "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.datname = d.datname) "
+            "AND (pg_stat_file('base/' || d.oid || '/PG_VERSION')).modification < now() - make_interval(mins => %s)",
+            (prefix, older_than_minutes),
+        ).fetchall()
+        for (name,) in rows:
+            conn.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(name)))
+
+
 def stop() -> None:
     import pgserver
 

@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     ai_profile: Literal["full", "lite"] = "lite"
     feature_flags: str = ""
     stubs_enabled: bool | None = None
+    worker_enabled: bool | None = None  # background job loop; on by default except in tests
     max_body_bytes: int = 6_000_000
     login_max_failures: int = 5
     login_lock_minutes: int = 15
@@ -87,6 +88,12 @@ class Settings(BaseSettings):
         if self.stubs_enabled is not None:
             return self.stubs_enabled and self.defaults_allowed
         return self.defaults_allowed
+
+    @property
+    def worker_enabled_effective(self) -> bool:
+        if self.worker_enabled is not None:
+            return self.worker_enabled
+        return self.app_env != "test"
 
     def jwt_keys(self) -> dict[str, str]:
         keys = {self.jwt_active_kid: self.secret_key}

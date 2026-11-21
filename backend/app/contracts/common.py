@@ -43,6 +43,18 @@ INCOME_BAND_BOUNDS: dict[str, tuple[int, int | None]] = {
 
 ConsentScope = Literal["identity", "contact", "household", "income", "documents"]
 
+# A tracking code is shown as three of these pictograms plus digits, so a person who cannot read can still
+# recognise and say it. The frontend has one pictogram per name.
+TRACKING_SYMBOLS: tuple[str, ...] = (
+    "moon", "star", "fish", "tree", "house", "sun", "bird", "flower",
+    "key", "boat", "lamp", "leaf", "cup", "drum", "kite", "bell",
+)  # fmt: skip
+
+
+def tracking_symbols(number: int) -> list[str]:
+    """Three symbols derived from a tracking number (16 x 16 x 16 combinations)."""
+    return [TRACKING_SYMBOLS[(number >> shift) & 0xF] for shift in (8, 4, 0)]
+
 
 class Strict(BaseModel):
     """Base for request bodies: unknown fields are rejected, so nothing can be mass-assigned."""

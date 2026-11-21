@@ -67,3 +67,18 @@ Short records of choices we must be able to defend to the judges. Newest at the 
 ## 14. Lint line length 150
 **Decision.** Ruff allows 150 characters.
 **Why.** Many lines carry Urdu strings and long keyword calls; wrapping them cost readability and time.
+
+## 15. One lead session, track agents in isolated worktrees
+**Context.** One person, one Claude seat, about 28 hours left.
+**Decision.** The lead session fixes the cross-track contracts first (`app/contracts/engine.py`), then runs one agent per track in parallel, each in its own git worktree and branch. Agents commit to their branch; the lead merges, wires the tracks together and checks the gate by running the flow.
+**Why.** In a shared working tree one agent's half-written file breaks every other agent's tests. Worktrees give each agent a consistent tree, and hooks (`router.py`, `seed_step.py`, `lifecycle.py`) mean no two agents edit the same file.
+**Cost.** A merge and integration step after every wave, done by the lead.
+
+## 16. Urdu is the voice language; no Sindhi
+**Context.** The brief asks for speech in "Urdu or a regional language". Nobody on the team speaks a regional language other than Urdu.
+**Decision.** Ship Urdu (prompts, speech input, read-back) and English. Remove the Sindhi option.
+**Why.** A language nobody can check is a half-finished feature shown to judges who may speak it. Urdu already meets the requirement.
+
+## 17. Payments: a second person above Rs 15,000
+**Decision.** A payment at or below the tenant's limit (seeded at Rs 15,000) is released as soon as the decision is approved, whether by the engine alone or by an officer. Above the limit a second person, different from whoever approved the case, must release it. The limit is tenant configuration.
+**Why.** The standard Rs 12,000 payment must be able to complete without a human when the engine is confident enough, otherwise nothing ever "acts alone". Larger amounts keep maker-checker. Lowering the limit in the demo shows the gate.

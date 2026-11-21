@@ -1401,8 +1401,7 @@ export interface components {
              * Languages
              * @default [
              *       "ur",
-             *       "en",
-             *       "sd"
+             *       "en"
              *     ]
              */
             languages: string[];
