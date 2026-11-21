@@ -6,6 +6,7 @@ import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { BTN, BTN_PRIMARY, flashFail, FlashLine, MIN_REASON, type Flash } from '../kit';
 import { activeRole } from '../scam';
 import { INPUT, Section, useLoad } from '../ui';
+import { CostSummary } from './CostPage';
 
 const STANDARD_PAYMENT = 12_000;
 const fmtRs = (n: number) => `Rs ${n.toLocaleString('en-US')}`;
@@ -26,9 +27,7 @@ export function SettingsPage() {
         {settings.state === 'ok' ? <FourEyes limit={settings.data.four_eyes_limit_pkr} canEdit={canEdit} onSaved={reload} /> : null}
       </Section>
       <Section id="cost-matrix" title="Cost matrix">
-        <div class="border border-dashed border-line-strong p-3 text-ink-muted" data-slot="cost-matrix">
-          Reserved for the cost matrix editor, which is being built separately. Until it is connected, this page does not show or change costs.
-        </div>
+        <CostSummary />
       </Section>
     </section>
   );

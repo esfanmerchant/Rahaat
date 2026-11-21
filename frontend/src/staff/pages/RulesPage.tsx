@@ -294,6 +294,11 @@ function VersionBody({ v, reload, onChanged }: { v: Version; reload: () => void;
           <button type="button" class={BTN} disabled={busy} onClick={() => void newDraft()}>
             New draft from this version
           </button>
+          {v.status === 'draft' || v.status === 'pending_approval' ? (
+            <a href={`/staff/twin?draft=${encodeURIComponent(v.id)}`} class="text-xs">
+              Run in the Digital Twin
+            </a>
+          ) : null}
           {(v.status === 'published' || v.status === 'retired') && !v.is_active ? (
             <button type="button" class={BTN} disabled={busy} onClick={() => toggle('rollback')}>
               Roll back to this version

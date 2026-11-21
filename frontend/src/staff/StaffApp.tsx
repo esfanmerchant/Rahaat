@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { Route, Router } from 'preact-iso';
+import { Route, Router, useLocation } from 'preact-iso';
 import { homePathFor, isStaffRole, session } from '../shared/api/auth';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 import { LinkButton } from '../shared/components/Button';
@@ -11,7 +11,14 @@ import { findNavItem, navFor, type NavItem } from './nav';
 import { PlaceholderPage } from './PlaceholderPage';
 import { AuditPage } from './pages/AuditPage';
 import { CasePage } from './pages/CasePage';
-import { DecisionIndex, DecisionPage } from './pages/DecisionPage';
+import { DecisionPage } from './pages/DecisionPage';
+import { DecisionIndex } from './pages/DecisionList';
+import { CostPage } from './pages/CostPage';
+import { TwinPage } from './pages/TwinPage';
+import { EvalsPage } from './pages/EvalsPage';
+import { DuplicatesPage } from './pages/DuplicatesPage';
+import { KeysPage } from './pages/KeysPage';
+import { LabPage } from './pages/LabPage';
 import { JobsPage, MocksPage } from './pages/AdminPages';
 import { HealthPage } from './pages/HealthPage';
 import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
@@ -165,6 +172,18 @@ function SectionPage({ item }: { item: NavItem }) {
       return <ScamReportsPage />;
     case 'mistakes':
       return <MistakesPage />;
+    case 'costs':
+      return <CostPage />;
+    case 'twin':
+      return <TwinRoute />;
+    case 'evals':
+      return <EvalsPage />;
+    case 'duplicates':
+      return <DuplicatesPage />;
+    case 'keys':
+      return <KeysPage />;
+    case 'lab':
+      return <LabPage />;
     case 'settings':
       return <SettingsPage />;
     case 'health':
@@ -217,4 +236,9 @@ function StaffNotFound() {
       )}
     </StaffGuard>
   );
+}
+
+function TwinRoute() {
+  const { query } = useLocation();
+  return <TwinPage initialDraft={query['draft']} />;
 }
