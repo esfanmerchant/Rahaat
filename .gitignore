@@ -1,0 +1,41 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# local runtime state
+.devdb/
+backend/var/
+backend/.devdb/
+
+# os and editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# claude: keep agents tracked, ignore local settings
+.claude/settings.local.json
+
+# the organisers' documents stay local; they are not ours to publish
+AI_Hackathon_*.pdf

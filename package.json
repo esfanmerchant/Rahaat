@@ -1,0 +1,27 @@
+{
+  "name": "rahat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rahat prototype. Not an official service. All identity, payment and data services are simulated.",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "uv run --directory backend uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+    "dev:web": "npm --prefix frontend run dev",
+    "migrate": "uv run --directory backend alembic upgrade head",
+    "seed": "uv run --directory backend python -m app.seed",
+    "gen:api": "uv run --directory backend python -m app.export_openapi && npm --prefix frontend run gen:api",
+    "lint": "uv run --directory backend ruff check .",
+    "typecheck": "uv run --directory backend mypy && npm --prefix frontend run typecheck",
+    "test": "uv run --directory backend pytest -q",
+    "test:fast": "uv run --directory backend pytest -q -m \"not db\"",
+    "lint:mock": "python scripts/lint_mock_data.py",
+    "build:web": "npm --prefix frontend run build && npm --prefix frontend run check:bundle",
+    "verify:fast": "npm run lint && npm run typecheck && npm run test:fast && npm run lint:mock",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build:web && npm run lint:mock",
+    "db:stop": "uv run --directory backend python -m app.devdb stop",
+    "install:all": "uv sync --directory backend && npm --prefix frontend install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

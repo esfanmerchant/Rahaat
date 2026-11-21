@@ -1,0 +1,37 @@
+# Azure VM: the app image plus Caddy for automatic HTTPS.
+# Reads secrets from /opt/rahat/.env (see deploy/README.md). Never commit that file.
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: rahat:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: demo
+      PORT: "8000"
+    expose:
+      - "8000"
+    volumes:
+      - uploads:/app/backend/var
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  uploads:
+  caddy_data:
+  caddy_config:

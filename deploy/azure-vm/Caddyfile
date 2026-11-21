@@ -1,0 +1,9 @@
+# {$DOMAIN} is your Azure DNS name, e.g. rahat-demo.southeastasia.cloudapp.azure.com
+# Caddy gets and renews the HTTPS certificate automatically.
+{$DOMAIN} {
+	encode gzip
+	# flush_interval -1 keeps server-sent events streaming.
+	reverse_proxy app:8000 {
+		flush_interval -1
+	}
+}

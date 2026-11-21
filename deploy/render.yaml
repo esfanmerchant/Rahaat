@@ -1,0 +1,28 @@
+# Render Blueprint (free web service). Lite AI profile for 512 MB of RAM.
+# Free services sleep after 15 minutes idle; ping /healthz every 10 minutes to keep it awake.
+services:
+  - type: web
+    name: rahat
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: demo
+      - key: AI_PROFILE
+        value: lite
+      - key: PORT
+        value: "8000"
+      - key: FRONTEND_DIST
+        value: /app/frontend/dist
+      - key: DATABASE_URL_OWNER
+        sync: false
+      - key: APP_DB_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: MASTER_KEY
+        sync: false

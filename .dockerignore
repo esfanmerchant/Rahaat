@@ -1,0 +1,24 @@
+.git
+.github
+.claude
+.venv
+**/.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.devdb
+backend/var
+.env
+.env.*
+!.env.example
+docs
+*.pdf
+# everything under deploy/ except the container start script, which the image copies
+deploy/*
+!deploy/start.sh
+scripts
+Dockerfile
+.dockerignore

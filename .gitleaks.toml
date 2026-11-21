@@ -1,0 +1,22 @@
+# Secret scanning in CI (gitleaks). The default rules stay on.
+title = "rahat"
+
+[extend]
+useDefault = true
+
+# Everything allowed here is invented and public on purpose:
+# - the demo sign-ins, which the app itself lists at /v1/demo/accounts outside prod;
+# - development-only defaults that APP_ENV=demo and APP_ENV=prod refuse to start with
+#   (backend/app/core/config.py, check_secrets);
+# - throwaway values inside tests.
+[allowlist]
+description = "Published demo credentials, development-only defaults, test fixtures"
+regexes = [
+  '''Rahat-Demo-2026!''',
+  '''dev-only-secret-key-not-for-demo-or-prod-0000000000''',
+  '''rahat_app_dev_password''',
+]
+paths = [
+  '''backend/tests/.*''',
+  '''backend/conftest\.py''',
+]
