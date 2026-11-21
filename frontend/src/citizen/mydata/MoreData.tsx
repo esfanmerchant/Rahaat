@@ -15,7 +15,7 @@ import { AnswerButton, AnswerGroup, InlineFailure, Notice, sayKey } from '../app
 import { CitizenShell } from '../CitizenShell';
 import { Keypad } from '../Keypad';
 import { CitizenNotFoundPage } from '../NotFound';
-import { MOCK_PHONE_LOCAL_DIGITS, mockPhone, PIN_MAX, PIN_MIN } from '../phone';
+import { MOCK_PHONE_LOCAL_DIGITS, mockPhone, PIN_MAX, PIN_MIN, showPhone } from '../phone';
 import { formatDate } from '../result/data';
 
 /** The common frame: back to "My information", a speaker for the prompt, a picture and a title. */
@@ -719,7 +719,7 @@ function NewHelperPage() {
     <Page icon="person-help" title="mh_new_title" prompt={phone ? 'mh_phone' : step === 'pin' ? 'mh_pin' : 'mh_pin_again'}>
       {phone ? (
         <p dir="ltr" class="rh-ltr flex min-h-tap-lg items-center justify-center rounded-lg border-2 border-line-strong bg-paper text-3xl font-bold">
-          {mockPhone(local)}
+          {showPhone(local)}
         </p>
       ) : (
         <>

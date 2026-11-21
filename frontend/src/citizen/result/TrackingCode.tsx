@@ -1,5 +1,6 @@
 import type { SpeechItem } from '../../shared/audio';
 import { AudioPrompt } from '../../shared/components/AudioPrompt';
+import { Seal } from '../../shared/components/Seal';
 import { Pictogram, pictogramFor } from '../../shared/components/Pictogram';
 import { isMessageKey, lang, t } from '../../shared/i18n';
 import { numberKey } from '../apply/parts';
@@ -40,7 +41,9 @@ export function TrackingCode({ code, symbols }: { code: string | null | undefine
         ))}
       </ul>
       {code ? (
-        <p class="rh-ltr text-center font-mono text-3xl font-bold tracking-wider text-ink">{code}</p>
+        <Seal>
+          <p class={`rh-ltr rh-num font-mono font-bold tracking-wider text-ink ${code.length > 6 ? 'text-xl' : 'text-3xl'}`}>{code}</p>
+        </Seal>
       ) : null}
       <p class="text-center text-base text-ink-muted">{t('track_code_hint')}</p>
       <div class="flex justify-center">

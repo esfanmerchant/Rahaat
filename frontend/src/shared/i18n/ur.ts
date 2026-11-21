@@ -38,7 +38,7 @@ export const ur: Dict = {
   login_phone_title: 'آپ کا فون نمبر',
   login_phone_hint: 'نمبر والے بٹن دبا کر اپنا نمبر لکھیں۔',
   login_phone_label: 'فون نمبر',
-  login_phone_invalid: '0999 کے بعد ساتوں ہندسے لکھیں۔',
+  login_phone_invalid: '+92 999 کے بعد ساتوں ہندسے لکھیں۔',
   login_pin_title: 'آپ کا خفیہ پن کوڈ',
   login_pin_hint: 'اپنا پن کوڈ لکھیں۔ اس میں چار سے چھ ہندسے ہیں۔ یہ کسی کو نہ دکھائیں۔',
   login_pin_label: 'پن کوڈ',

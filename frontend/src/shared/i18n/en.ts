@@ -40,7 +40,7 @@ export const en = {
   login_phone_title: 'Your phone number',
   login_phone_hint: 'Type your number with the number buttons.',
   login_phone_label: 'Phone number',
-  login_phone_invalid: 'Type all 7 numbers after 0999.',
+  login_phone_invalid: 'Type all 7 numbers after +92 999.',
   login_pin_title: 'Your secret PIN',
   login_pin_hint: 'Type your PIN. It has 4 to 6 numbers. Do not show it to anyone.',
   login_pin_label: 'PIN',

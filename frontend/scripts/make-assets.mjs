@@ -10,33 +10,34 @@ import { crc32, deflateSync } from 'node:zlib';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pub = join(root, 'public');
 
-const GREEN = [0x0d, 0x5c, 0x3d];
-const WHITE = [0xff, 0xff, 0xff];
+const NIGHT = [0x0b, 0x10, 0x26];
+const GOLD = [0xff, 0xd3, 0x6e];
+const EMERALD = [0x4e, 0xe6, 0xa6];
 
-// The mark, in a 512 unit box (same geometry as src/shared/components/RahatMark.tsx).
-const ROOF = [
-  [120, 250],
-  [256, 130],
-  [392, 250],
-];
-const ROOF_HALF_WIDTH = 22;
-const HEAD = { x: 256, y: 262, r: 44 };
-const BODY = { cx: 256, cy: 392, rx: 100, ry: 76 };
+// The Noor emblem in a 512 unit box (same geometry as src/shared/components/Emblem.tsx, scaled 4.2 about the
+// centre): two squares make the eight-point star, a lamp at the centre, eight homes around it.
+const K = 4.2;
+const STROKE_HALF = 2.25 * K;
+const SQUARE_HALF = 28 * K;
+const DIAMOND_HALF_DIAGONAL = 39.6 * K;
+const LAMP_R = 8.5 * K;
+const HOME_R = 3.4 * K;
+const HOME_ORBIT = 44 * K;
 
-function distToSegment(px, py, [ax, ay], [bx, by]) {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)));
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
-}
-
+/** 0 = background, 1 = gold (star and lamp), 2 = emerald (homes). */
 function inMark(x, y) {
-  if (distToSegment(x, y, ROOF[0], ROOF[1]) <= ROOF_HALF_WIDTH) return true;
-  if (distToSegment(x, y, ROOF[1], ROOF[2]) <= ROOF_HALF_WIDTH) return true;
-  if (Math.hypot(x - HEAD.x, y - HEAD.y) <= HEAD.r) return true;
-  const ex = (x - BODY.cx) / BODY.rx;
-  const ey = (y - BODY.cy) / BODY.ry;
-  return y <= BODY.cy && ex * ex + ey * ey <= 1;
+  const dx = x - 256;
+  const dy = y - 256;
+  if (Math.hypot(dx, dy) <= LAMP_R) return 1;
+  for (let k = 0; k < 8; k += 1) {
+    const angle = ((22.5 + k * 45) * Math.PI) / 180;
+    if (Math.hypot(dx - HOME_ORBIT * Math.cos(angle), dy - HOME_ORBIT * Math.sin(angle)) <= HOME_R) return 2;
+  }
+  const square = Math.max(Math.abs(dx), Math.abs(dy)); // 0 at the centre, SQUARE_HALF on the edge
+  if (Math.abs(square - SQUARE_HALF) <= STROKE_HALF) return 1;
+  const diamond = Math.abs(dx) + Math.abs(dy); // DIAMOND_HALF_DIAGONAL on the edge
+  if (Math.abs(diamond - DIAMOND_HALF_DIAGONAL) <= STROKE_HALF * Math.SQRT2) return 1;
+  return 0;
 }
 
 function inRoundedSquare(x, y, size, radius) {
@@ -57,7 +58,8 @@ function renderIcon(size, { maskable }) {
   for (let py = 0; py < size; py += 1) {
     for (let px = 0; px < size; px += 1) {
       let bg = 0;
-      let mark = 0;
+      let gold = 0;
+      let emerald = 0;
       for (let sy = 0; sy < S; sy += 1) {
         for (let sx = 0; sx < S; sx += 1) {
           const x = px + (sx + 0.5) / S;
@@ -67,13 +69,16 @@ function renderIcon(size, { maskable }) {
           // map pixel to the 512 mark box, scaled about the centre
           const u = ((x / size - 0.5) / markScale + 0.5) * 512;
           const v = ((y / size - 0.5) / markScale + 0.5) * 512;
-          if (inMark(u, v)) mark += 1;
+          const hit = inMark(u, v);
+          if (hit === 1) gold += 1;
+          else if (hit === 2) emerald += 1;
         }
       }
       const i = (py * size + px) * 4;
       const coverage = bg / (S * S);
-      const m = bg === 0 ? 0 : mark / bg;
-      for (let c = 0; c < 3; c += 1) rgba[i + c] = Math.round(GREEN[c] * (1 - m) + WHITE[c] * m);
+      const g = bg === 0 ? 0 : gold / bg;
+      const e = bg === 0 ? 0 : emerald / bg;
+      for (let c = 0; c < 3; c += 1) rgba[i + c] = Math.round(NIGHT[c] * (1 - g - e) + GOLD[c] * g + EMERALD[c] * e);
       rgba[i + 3] = Math.round(coverage * 255);
     }
   }
@@ -119,11 +124,18 @@ function silentMp3(frames = 20) {
   return Buffer.concat(Array.from({ length: frames }, () => frame));
 }
 
+const HOMES = Array.from({ length: 8 }, (_, k) => {
+  const angle = ((22.5 + k * 45) * Math.PI) / 180;
+  return `<circle cx="${(256 + HOME_ORBIT * Math.cos(angle)).toFixed(1)}" cy="${(256 + HOME_ORBIT * Math.sin(angle)).toFixed(1)}" r="${HOME_R.toFixed(1)}" fill="#4ee6a6"/>`;
+}).join(' ');
 const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0d5c3d"/>
-  <path d="M120 250L256 130l136 120" fill="none" stroke="#ffffff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="256" cy="262" r="44" fill="#ffffff"/>
-  <path d="M156 392a100 76 0 0 1 200 0z" fill="#ffffff"/>
+  <rect width="512" height="512" rx="96" fill="#0b1026"/>
+  <g fill="none" stroke="#ffd36e" stroke-width="${(STROKE_HALF * 2).toFixed(1)}" stroke-linejoin="round">
+    <rect x="${256 - SQUARE_HALF}" y="${256 - SQUARE_HALF}" width="${SQUARE_HALF * 2}" height="${SQUARE_HALF * 2}"/>
+    <path d="M256 ${256 - DIAMOND_HALF_DIAGONAL}L${256 + DIAMOND_HALF_DIAGONAL} 256L256 ${256 + DIAMOND_HALF_DIAGONAL}L${256 - DIAMOND_HALF_DIAGONAL} 256z"/>
+  </g>
+  <circle cx="256" cy="256" r="${LAMP_R.toFixed(1)}" fill="#ffd36e"/>
+  ${HOMES}
 </svg>
 `;
 

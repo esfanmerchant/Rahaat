@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { buzz, celebrate, chime } from '../../shared/feedback';
 import type { ScamCertainty, ScamCheckOut, ScamReview, ScamUrl } from '../../shared/api/types';
+import { Seal } from '../../shared/components/Seal';
 import { CrossedPictogram, Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { dirOf, isLang, lang, t, type Lang, type MessageKey } from '../../shared/i18n';
 import { formatDate } from '../result/data';
@@ -221,8 +222,10 @@ export function Verified({ answer }: { answer: ScamCheckOut }) {
   const ui = lang.value;
   return (
     <section aria-labelledby="scam-real" class="flex flex-col gap-3 rounded-lg border-4 border-primary bg-primary-soft p-4 text-primary-strong">
-      <h2 id="scam-real" class="flex items-center gap-3 text-xl font-bold">
-        <Pictogram name="shield-ok" size={48} />
+      <Seal>
+        <Pictogram name="shield-ok" size={56} />
+      </Seal>
+      <h2 id="scam-real" class="text-center text-xl font-bold">
         {t('scam_real_title')}
       </h2>
       <dl class="flex flex-col gap-2 text-ink">

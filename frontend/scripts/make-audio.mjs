@@ -40,10 +40,10 @@ const SPOKEN = {
     income_15k_30k: 'پندرہ ہزار سے تیس ہزار روپے',
     income_30k_50k: 'تیس ہزار سے پچاس ہزار روپے',
     income_over_50k: 'پچاس ہزار روپے سے زیادہ',
-    login_phone_invalid: 'صفر نو نو نو کے بعد ساتوں ہندسے لکھیں۔',
+    login_phone_invalid: 'پلس نو دو، نو نو نو کے بعد ساتوں ہندسے لکھیں۔',
   },
   en: {
-    login_phone_invalid: 'Type all seven numbers after zero nine nine nine.',
+    login_phone_invalid: 'Type all seven numbers after plus nine two, nine nine nine.',
     income_under_15k: 'Less than fifteen thousand rupees',
     income_15k_30k: 'Fifteen thousand to thirty thousand rupees',
     income_30k_50k: 'Thirty thousand to fifty thousand rupees',
