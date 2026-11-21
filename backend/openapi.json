@@ -3785,6 +3785,43 @@
         "title": "PaymentOut",
         "type": "object"
       },
+      "PaymentSettingsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "four_eyes_limit_pkr": {
+            "maximum": 1000000.0,
+            "minimum": 0.0,
+            "title": "Four Eyes Limit Pkr",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "four_eyes_limit_pkr",
+          "reason"
+        ],
+        "title": "PaymentSettingsIn",
+        "type": "object"
+      },
+      "PaymentSettingsOut": {
+        "properties": {
+          "four_eyes_limit_pkr": {
+            "description": "Payments above this amount need a second officer to release them",
+            "title": "Four Eyes Limit Pkr",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "four_eyes_limit_pkr"
+        ],
+        "title": "PaymentSettingsOut",
+        "type": "object"
+      },
       "PersonOut": {
         "properties": {
           "district": {
@@ -5489,6 +5526,78 @@
         "summary": "What the mock SMS gateway delivered (numbers masked)",
         "tags": [
           "admin: mock services"
+        ]
+      }
+    },
+    "/v1/admin/payment-settings": {
+      "get": {
+        "operationId": "read_settings_v1_admin_payment_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "The department's payment settings",
+        "tags": [
+          "payments",
+          "payments"
+        ]
+      },
+      "put": {
+        "operationId": "change_settings_v1_admin_payment_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Change the four-eyes limit (audited)",
+        "tags": [
+          "payments",
+          "payments"
         ]
       }
     },

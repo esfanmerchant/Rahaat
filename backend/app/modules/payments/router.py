@@ -91,3 +91,8 @@ def decide(
     approval = service.decide_approval(db, principal, approval_id, approve=body.approve, reason=body.reason)
     db.commit()
     return approval_out(approval)
+
+
+from app.modules.payments.settings_router import router as _settings_router  # noqa: E402
+
+router.include_router(_settings_router)

@@ -107,6 +107,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/payment-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The department's payment settings */
+        get: operations["read_settings_v1_admin_payment_settings_get"];
+        /** Change the four-eyes limit (audited) */
+        put: operations["change_settings_v1_admin_payment_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/applications": {
         parameters: {
             query?: never;
@@ -2472,6 +2490,21 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** PaymentSettingsIn */
+        PaymentSettingsIn: {
+            /** Four Eyes Limit Pkr */
+            four_eyes_limit_pkr: number;
+            /** Reason */
+            reason: string;
+        };
+        /** PaymentSettingsOut */
+        PaymentSettingsOut: {
+            /**
+             * Four Eyes Limit Pkr
+             * @description Payments above this amount need a second officer to release them
+             */
+            four_eyes_limit_pkr: number;
+        };
         /** PersonOut */
         PersonOut: {
             /** District */
@@ -3172,6 +3205,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SmsOutboxItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_settings_v1_admin_payment_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsOut"];
+                };
+            };
+        };
+    };
+    change_settings_v1_admin_payment_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsOut"];
                 };
             };
             /** @description Validation Error */
