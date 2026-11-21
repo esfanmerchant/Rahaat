@@ -90,11 +90,17 @@ Track D2
 
 **Gate 3**: every item passes its check or is `HIDDEN`.
 
-## Optional host: Vercel (track/vercel)
+## Hosts
+
+Primary: **https://rahat-zeta.vercel.app** (Vercel, function in bom1 Mumbai, Supabase Postgres 17 in ap-south-1 through the session pooler). Backup: this PC through a Cloudflare quick tunnel on the embedded database (`npm run live:start`; the URL changes when the tunnel restarts).
+
+## Vercel host
 
 - [x] Settings `JOBS_MODE`, `MOCKS_IN_PROCESS`, `CLIENT_IP_HEADER`, `STARTUP_WARMUP`, `CRON_SECRET` (defaults unchanged), tests, anchor flow proven over HTTP in this mode locally
 - [x] `api/index.py`, `vercel.json`, `.vercelignore`, `requirements.txt` generator, `deploy/vercel/` env script and README
-- [ ] Not deployed: no Vercel account used. SIMULATED until the first real deploy (rewrite path handling, bundle size, bom1 to Supabase latency unverified)
+- [x] Deployed Sat 21 Nov 19:18 (commit f315581). Through the public URL: `/healthz`, `/readyz`, `/` and `/docs` 200 with the CSP, HSTS and DENY headers; the anchor flow over HTTPS (Aslam auto-approved and paid with a verify code that checks; Zainab asked for proof, handed to an officer, approved and paid; inline jobs sent every message; audit chain intact); median 152 ms per call over 17 calls, the helper's 40 families in 152 ms. Supabase was then reset to the clean demo state.
+- [x] Uploaded documents in Postgres on Vercel (`DOCUMENT_STORE=db`, migration 0008), because instances share no disk
+- [ ] No OCR on Vercel: the RapidOCR stack does not fit the 500 MB function limit, so the printed-text versus QR check runs only on the PC host; the signed QR is verified on both
 
 ## Integration and submission
 
