@@ -109,3 +109,6 @@ From: Track A (WP-A)   To: Track C (rag, agent)   Status: open
 What: call `app.modules.plans.service.consume_committed(principal.rls(), principal.tenant_id, "ai_calls")` at the top of `rag.service.ask` when a principal is present, and in each agent run. It raises the 429 `plan_limit_reached` problem. Voice routes are already metered in `people.context.acting_person`.
 Why: `POST /v1/ask` is public and takes no department session, so the platform cannot meter it without touching the rag module.
 Until then: only speech and API keys count against `ai_calls` and `api_calls`.
+
+## Staff3 (Command Center)
+- **District on application list rows** (Track A): the Overview hex map can colour provinces by scam reports only. A staff endpoint that returns applications or cases with a `district` (or counts of applications per district) would let it show where applications come from. Until then it says so on screen rather than guessing.

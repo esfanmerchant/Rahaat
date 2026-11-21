@@ -1,3 +1,4 @@
+import { formatPhone } from '../phone';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
@@ -301,7 +302,9 @@ function SmsLog() {
               <tr key={m.message_id}>
                 <td class={`${TD} font-mono text-xs`}>{m.at}</td>
                 <td class={TD}>
-                  <Mono>{m.to}</Mono>
+                  <Mono>
+                    <span class="rh-ltr">{formatPhone(m.to)}</span>
+                  </Mono>
                 </td>
                 <td class={TD}>{m.sender}</td>
                 <td class={TD}>{m.status}</td>

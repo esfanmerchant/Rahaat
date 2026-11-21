@@ -1,3 +1,4 @@
+import { formatPhone } from '../phone';
 import { Badge, ConfBar, humanize, Mono, num, pct, Section, TD, Th, type DecisionTrace, type DocumentCheck, type HandoffPackage } from '../ui';
 
 const ROUTE_TONE = { auto: 'good', ask_more: 'warn', human: 'info' } as const;
@@ -65,7 +66,7 @@ export function HandoffView({ handoff }: { handoff: HandoffPackage | null | unde
                 {unsure.map((f) => (
                   <li key={f.field} class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span class="font-mono text-xs">{f.field}</span>
-                    <span class="st-chip unk">{f.value === null || f.value === undefined ? 'unknown' : String(f.value)}</span>
+                    <span class="st-chip unk">{f.value === null || f.value === undefined ? 'unknown' : f.field === 'phone' ? formatPhone(String(f.value)) : String(f.value)}</span>
                     <ConfBar value={f.confidence} />
                     <span class="st-chip warn">{humanize(f.why)}</span>
                   </li>

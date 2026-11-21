@@ -1,3 +1,4 @@
+import { formatPhone } from '../phone';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ApiFailure } from '../../shared/api/problem';
 import { api } from '../../shared/api/client';
@@ -290,7 +291,7 @@ function FormTable({ detail }: { detail: CaseDetail }) {
           {rows.map(([name, f]) => (
             <tr key={name}>
               <td class={`${TD} font-mono text-xs`}>{name}</td>
-              <td class={TD}>{f.value === null || f.value === undefined ? <span class="text-ink-subtle">unknown</span> : String(f.value)}</td>
+              <td class={TD}>{f.value === null || f.value === undefined ? <span class="text-ink-subtle">unknown</span> : name === 'phone' ? <span class="rh-ltr">{formatPhone(String(f.value))}</span> : String(f.value)}</td>
               <td class={TD}>{f.provenance ?? 'n/a'}</td>
               <td class={TD}>{f.value === null || f.value === undefined ? <span class="text-ink-subtle">n/a</span> : <ConfBar value={f.confidence} />}</td>
               <td class={TD}>{f.verified ? <Badge tone="good">verified</Badge> : <span class="text-ink-subtle">not verified</span>}</td>

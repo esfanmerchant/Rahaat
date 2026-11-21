@@ -80,6 +80,7 @@ const RGB = {
   human: [0.557, 0.635, 1],
   reject: [1, 0.42, 0.506],
   white: [1, 0.97, 0.9],
+  flash: [1, 0.86, 0.9],
 } as const;
 const LANE_RGB: Record<Lane, readonly number[]> = { approve: RGB.approve, ask: RGB.ask, human: RGB.human, reject: RGB.reject };
 
@@ -251,7 +252,13 @@ function hexPoints(radius: number, step: number): number[][] {
   return out;
 }
 
-export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks: SceneHooks): SceneHandle {
+export interface SceneOptions {
+  /** Background mode for /demo: no picking, no labels, slower, one pixel per CSS pixel. */
+  ambient?: boolean;
+}
+
+export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks: SceneHooks, options: SceneOptions = {}): SceneHandle {
+  const ambient = options.ambient === true;
   let renderer: WebGLRenderer;
   try {
     renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
@@ -447,9 +454,9 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   const hex = hexPoints(9, 0.34);
   const shieldStar = starPoints(4.6, 0.34, 'xy');
   const shield = pointSet(hex.length + shieldStar.length + 1, scale, true);
-  hex.forEach((p, i) => setPoint(shield, i, at(p, 0), at(p, 1), at(p, 2), RGB.reject, 0.75, 0.4));
-  shieldStar.forEach((p, i) => setPoint(shield, hex.length + i, at(p, 0), at(p, 1), at(p, 2), RGB.reject, 0.55, 0.3));
-  setPoint(shield, shield.n - 1, 0, 0, 0, RGB.reject, 0.14, 40);
+  hex.forEach((p, i) => setPoint(shield, i, at(p, 0), at(p, 1), at(p, 2), RGB.reject, 1, 0.66));
+  shieldStar.forEach((p, i) => setPoint(shield, hex.length + i, at(p, 0), at(p, 1), at(p, 2), RGB.reject, 0.9, 0.5));
+  setPoint(shield, shield.n - 1, 0, 0, 0, RGB.reject, 0.2, 52);
   shieldGroup.add(shield.points);
   scene.add(shieldGroup);
   disposables.push(shield.geom, shield.mat);
@@ -583,7 +590,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   function resize(): void {
     const w = Math.max(1, host.clientWidth);
     const h = Math.max(1, host.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(ambient ? 1 : Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(w, h, false);
     aspect = w / h;
     camera.aspect = aspect;
@@ -699,13 +706,15 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
     e.preventDefault();
     touch();
   };
-  canvas.addEventListener('pointerdown', onDown);
-  canvas.addEventListener('pointermove', onMove);
-  canvas.addEventListener('pointerup', onUp);
-  canvas.addEventListener('pointercancel', onUp);
-  canvas.addEventListener('pointerleave', onLeave);
-  canvas.addEventListener('wheel', onWheel, { passive: false });
-  canvas.addEventListener('keydown', onKey);
+  if (!ambient) {
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerup', onUp);
+    canvas.addEventListener('pointercancel', onUp);
+    canvas.addEventListener('pointerleave', onLeave);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    canvas.addEventListener('keydown', onKey);
+  }
 
   // ---- the frame loop --------------------------------------------------------------------------------------------------------------------------------
   const labelDefs: { id: string; p: Vector3 }[] = [
@@ -733,14 +742,14 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
     if (!running) return;
     const t0 = perf ? performance.now() : 0;
     const nowS = performance.now() / 1000;
-    const dt = Math.min(0.05, Math.max(0.001, nowS - last));
+    const dt = Math.min(0.05, Math.max(0.001, nowS - last)) * (ambient ? 0.55 : 1);
     last = nowS;
     clock += dt;
     introT += dt;
     const introAlpha = smooth(0.15, 1.6, introT);
 
     // idle drift eases in after 5 s of no interaction
-    drift += ((nowS - lastInteract > 5 ? 1 : 0) - drift) * Math.min(1, dt * 0.8);
+    drift += ((ambient || nowS - lastInteract > 5 ? 1 : 0) - drift) * Math.min(1, dt * 0.8);
     placeCamera(clock);
 
     let gateHits = 0;
@@ -894,12 +903,13 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
         a = 0.95 * (1 - smooth(0.55, 1, s));
         if (s < 0.57) strikes++;
       }
-      setPoint(sparks, i, x, y, z, RGB.reject, a, at(sparkP, o + 9) * (s >= 0.55 && s < 0.6 ? 2.6 : 1));
+      const hit = s >= 0.55 && s < 0.64;
+      setPoint(sparks, i, x, y, z, hit ? RGB.flash : RGB.reject, hit ? 1 : a, at(sparkP, o + 9) * (hit ? 7 : 1));
     }
     sparks.geom.attributes.position!.needsUpdate = true;
     sparks.geom.attributes.aColor!.needsUpdate = true;
     sparks.geom.attributes.aSize!.needsUpdate = true;
-    shield.col[(shield.n - 1) * 4 + 3] = 0.1 + Math.min(0.3, strikes * 0.05) + 0.03 * Math.sin(clock * 2);
+    shield.col[(shield.n - 1) * 4 + 3] = 0.16 + Math.min(0.5, strikes * 0.1) + 0.04 * Math.sin(clock * 2);
     shield.geom.attributes.aColor!.needsUpdate = true;
     shieldGroup.rotation.y = 1.25 + Math.sin(clock * 0.3) * 0.06;
     stars.rotation.y = clock * 0.002;

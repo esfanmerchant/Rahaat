@@ -23,6 +23,7 @@ import { JobsPage, MocksPage } from './pages/AdminPages';
 import { HealthPage } from './pages/HealthPage';
 import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
 import { OutboxPage } from './pages/OutboxPage';
+import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
 import { MistakesPage } from './pages/MistakesPage';
 import { ScamMapPage } from './pages/ScamMapPage';
@@ -151,6 +152,8 @@ function StaffSection({ section }: { section?: string }) {
 
 function SectionPage({ item }: { item: NavItem }) {
   switch (item.slug) {
+    case 'overview':
+      return <OverviewPage />;
     case 'queue':
       return <QueuePage />;
     case 'audit':
