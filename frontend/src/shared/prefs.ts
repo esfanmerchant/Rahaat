@@ -4,7 +4,7 @@ import { openDB, type IDBPDatabase } from 'idb';
  * Device preferences in IndexedDB. Not secret, never tokens or personal data:
  * the access token lives in memory only (see api/session.ts).
  */
-export type PrefKey = 'lang' | 'pendingLogout';
+export type PrefKey = 'lang' | 'pendingLogout' | 'muted';
 
 const DB_NAME = 'rahat-prefs';
 const STORE = 'prefs';

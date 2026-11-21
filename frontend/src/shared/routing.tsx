@@ -39,3 +39,23 @@ export function lazyRoute<P>(load: () => Promise<{ default: ComponentType<P> }>)
     }),
   );
 }
+
+type Navigate = (url: string, replace?: boolean) => void;
+
+/**
+ * Navigate with a view transition where the browser has one (a slide in the reading direction: left in
+ * Urdu, right in English; reversed when going back). A browser without it, or a person who asked for less
+ * motion, just swaps. `route` is the function from useLocation().
+ */
+export function go(route: Navigate, path: string, direction: 'forward' | 'back' = 'forward'): void {
+  const doc = document as Document & { startViewTransition?: (update: () => Promise<void>) => unknown };
+  if (!doc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    route(path);
+    return;
+  }
+  document.documentElement.dataset['nav'] = direction;
+  doc.startViewTransition(async () => {
+    route(path);
+    await new Promise<void>((done) => setTimeout(done, 60));
+  });
+}

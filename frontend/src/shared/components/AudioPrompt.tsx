@@ -27,13 +27,15 @@ interface AudioPromptProps {
   /** Visible word next to the speaker; defaults to "Listen". */
   label?: string;
   class?: string;
+  /** `night` for dark surfaces (the start screen, the verdict stage). */
+  tone?: 'paper' | 'night';
 }
 
 /**
  * The speaker button every citizen screen has. Tap to hear the prompt again,
  * tap while it plays to stop. A missing audio file fails silently.
  */
-export function AudioPrompt({ prompt, speech, autoPlay = false, label, class: className = '' }: AudioPromptProps) {
+export function AudioPrompt({ prompt, speech, autoPlay = false, label, class: className = '', tone = 'paper' }: AudioPromptProps) {
   const code = lang.value;
   const resolved: Speech | null = speech ?? (prompt ? speechFor(prompt, code) : null);
   const id = resolved?.id ?? '';
@@ -63,9 +65,13 @@ export function AudioPrompt({ prompt, speech, autoPlay = false, label, class: cl
       aria-label={label ?? t('listen')}
       class={
         'inline-flex min-h-tap min-w-tap items-center justify-center gap-2 rounded-full border-2 px-3 font-semibold ' +
-        (playing
-          ? 'border-primary bg-primary text-white'
-          : 'border-primary bg-paper text-primary-strong hover:bg-primary-soft') +
+        (tone === 'night'
+          ? playing
+            ? 'border-noor bg-noor text-night'
+            : 'border-noor/70 bg-night-2 text-noor hover:bg-night-3'
+          : playing
+            ? 'border-primary bg-primary text-white'
+            : 'border-primary bg-paper text-primary-strong hover:bg-primary-soft') +
         ` ${className}`
       }
     >

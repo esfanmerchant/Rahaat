@@ -9,6 +9,7 @@ import { Button } from '../../shared/components/Button';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { Spinner } from '../../shared/components/Spinner';
 import { lang, t, type Key, type MessageKey } from '../../shared/i18n';
+import { go } from '../../shared/routing';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { CitizenShell } from '../CitizenShell';
 import { draft, fieldState, flush, previousStep, STEPS, stepPath, type SavedField, type SaveState, type StepId } from './flow';
@@ -26,6 +27,27 @@ export function sayKey(key: Key): void {
   playPrompt(key, code, t(key, undefined, code));
 }
 
+/** A small eight-point star: finished steps are filled, the current one is gold with a ring, the next ones are outlined. */
+function MiniStar({ state }: { state: 'done' | 'current' | 'next' }) {
+  const size = state === 'current' ? 26 : 20;
+  return (
+    <span class="relative grid shrink-0 place-items-center" aria-hidden="true">
+      {state === 'current' ? <span class="absolute size-6 rounded-full bg-noor/50 hidden motion-safe:block motion-safe:animate-ring" /> : null}
+      <svg viewBox="0 0 24 24" width={size} height={size} class="relative">
+        <g
+          fill={state === 'done' ? '#0b6a46' : state === 'current' ? '#ffd36e' : 'none'}
+          stroke={state === 'done' ? '#0b6a46' : state === 'current' ? '#b8860b' : '#6c6880'}
+          stroke-width="2"
+          stroke-linejoin="round"
+        >
+          <rect x="5" y="5" width="14" height="14" />
+          <rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)" />
+        </g>
+      </svg>
+    </span>
+  );
+}
+
 export function ProgressDots({ step }: { step: StepId }) {
   const index = STEPS.indexOf(step);
   const total = STEPS.length;
@@ -36,21 +58,10 @@ export function ProgressDots({ step }: { step: StepId }) {
       aria-valuemax={total}
       aria-valuenow={index + 1}
       aria-label={t('apply_progress', { current: index + 1, total })}
-      class="flex items-center justify-center gap-2 py-1"
+      class="flex items-center justify-center gap-1.5 py-1"
     >
       {STEPS.map((id, i) => (
-        <span
-          key={id}
-          aria-hidden="true"
-          class={
-            'block shrink-0 rounded-full ' +
-            (i === index
-              ? 'size-4 bg-primary'
-              : i < index
-                ? 'size-3 bg-primary'
-                : 'size-3 border-2 border-line-strong bg-paper')
-          }
-        />
+        <MiniStar key={id} state={i === index ? 'current' : i < index ? 'done' : 'next'} />
       ))}
     </div>
   );
@@ -74,7 +85,7 @@ export function StepLayout({ step, prompt, speech, icon, title, busy = false, ch
   const d = draft.value;
   const back = (): void => {
     const previous = d ? previousStep(d, step) : null;
-    route(previous ? stepPath(previous) : '/');
+    go(route, previous ? stepPath(previous) : '/', 'back');
   };
   return (
     <CitizenShell onBack={busy ? undefined : back} prompt={prompt} speech={speech} progress={<ProgressDots step={step} />}>
@@ -112,15 +123,15 @@ export function AnswerButton({ icon, label, selected, onSelect, tone = 'text-pri
       class={
         'flex min-h-tap-lg w-full items-center gap-3 rounded-lg border-2 px-3 py-2 text-start text-xl font-semibold ' +
         (selected
-          ? 'border-primary bg-primary-soft text-primary-strong'
-          : 'border-line-strong bg-paper text-ink hover:bg-surface active:bg-surface')
+          ? 'rh-select border-primary bg-primary-soft text-primary-strong'
+          : 'border-line-strong bg-paper text-ink transition-transform duration-100 hover:bg-surface active:scale-[0.97] active:bg-surface')
       }
     >
       <span class="relative shrink-0">
         <Pictogram name={icon} size={56} class={selected ? 'text-primary-strong' : tone} />
         {/* The chosen answer gets a tick on its picture, not only a colour. */}
         {selected ? (
-          <span class="absolute -end-2 -top-2 rounded-full bg-paper text-primary">
+          <span class="absolute -end-2 -top-2 rounded-full bg-paper text-primary motion-safe:animate-pop">
             <Pictogram name="yes" size={26} />
           </span>
         ) : null}

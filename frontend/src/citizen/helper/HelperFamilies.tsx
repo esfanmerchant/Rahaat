@@ -4,6 +4,7 @@ import { api } from '../../shared/api/client';
 import { call, type ApiFailure } from '../../shared/api/problem';
 import type { AuthUser, FamilyOut } from '../../shared/api/types';
 import { Button } from '../../shared/components/Button';
+import { Monogram } from '../../shared/components/Monogram';
 import { Pictogram } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { lang, t, type Key } from '../../shared/i18n';
@@ -55,7 +56,7 @@ function FamilyCard({ family, onPick }: { family: FamilyOut; onPick: () => void 
         class="flex w-full flex-col gap-3 rounded-lg border-2 border-line-strong bg-paper p-3 text-start hover:bg-surface disabled:cursor-not-allowed disabled:bg-sunken"
       >
         <span class="flex items-center gap-3">
-          <Pictogram name="person" size={48} class={live ? 'text-primary' : 'text-ink-muted'} />
+          <Monogram name={names.main} size={52} class={live ? '' : 'opacity-40'} />
           <span class="flex min-w-0 flex-1 flex-col">
             {/* Names are server data: text, each in its own language and direction. */}
             <span class="text-xl font-bold" lang={names.mainLang} dir={names.mainLang === 'ur' ? 'rtl' : 'ltr'}>

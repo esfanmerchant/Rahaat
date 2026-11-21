@@ -1,4 +1,7 @@
+import { useEffect } from 'preact/hooks';
+import { buzz, celebrate, chime } from '../../shared/feedback';
 import type { ScamCertainty, ScamCheckOut, ScamReview, ScamUrl } from '../../shared/api/types';
+import { Seal } from '../../shared/components/Seal';
 import { CrossedPictogram, Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { dirOf, isLang, lang, t, type Lang, type MessageKey } from '../../shared/i18n';
 import { formatDate } from '../result/data';
@@ -68,17 +71,42 @@ export function reasonIcon(code: string): PictogramName {
   return REASON_ICON[code] ?? 'warning';
 }
 
-/** The big answer: picture in a coloured ring, and the server's headline in its own language. */
+const VERDICT_CARD: Record<Tone, string> = {
+  danger: 'bg-danger text-white shadow-glow-madder',
+  warn: 'bg-warning text-night shadow-lift',
+  check: 'bg-info text-white shadow-lift',
+  ok: 'bg-primary text-white shadow-glow-emerald',
+};
+
+/**
+ * The big answer: a solid card in the verdict's colour (madder for a scam, saffron for a warning, indigo for
+ * "not sure", emerald for a message that is really from Rahat), the picture popping into a ring, the server's
+ * headline in its own language. A bell and a short buzz say it too (feedback.ts).
+ */
 export function AnswerHeader({ answer, headingRef }: { answer: ScamCheckOut; headingRef: { current: HTMLHeadingElement | null } }) {
   const spec = certaintyOf(answer.certainty);
   const code = answerLang(answer);
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      if (spec.tone === 'ok') celebrate();
+      else if (spec.tone === 'danger') {
+        chime('warn');
+        buzz([70, 50, 70]);
+      } else chime(spec.tone === 'warn' ? 'warn' : 'soft');
+    }, 450);
+    return () => window.clearTimeout(id);
+  }, [answer.report_id, spec.tone]);
   return (
-    <div class="flex flex-col items-center gap-3 text-center">
-      <span class={`flex size-36 items-center justify-center rounded-full border-4 ${TONE_BOX[spec.tone]}`}>
-        <Pictogram name={spec.icon} size={96} />
+    <div class={`relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl px-4 py-6 text-center motion-safe:animate-rise ${VERDICT_CARD[spec.tone]}`}>
+      <div aria-hidden="true" class="rh-lattice-night absolute inset-0 opacity-60" />
+      <span class="relative grid size-36 place-items-center">
+        {spec.tone === 'danger' ? <span aria-hidden="true" class="absolute size-32 rounded-full border-2 border-white/70 hidden motion-safe:block motion-safe:animate-ring" /> : null}
+        <span class="grid size-36 place-items-center rounded-full bg-white/15 motion-safe:animate-pop" style={{ animationDelay: '150ms' }}>
+          <Pictogram name={spec.icon} size={96} />
+        </span>
       </span>
-      <p class={`rounded-full border-2 px-4 py-1 text-lg font-bold ${TONE_BOX[spec.tone]}`}>{t(spec.key)}</p>
-      <h1 ref={headingRef} tabIndex={-1} lang={code} dir={dirOf(code)} class="text-2xl font-bold">
+      <p class="relative rounded-full border-2 border-current px-4 py-1 text-lg font-bold">{t(spec.key)}</p>
+      <h1 ref={headingRef} tabIndex={-1} lang={code} dir={dirOf(code)} class="relative text-2xl font-extrabold">
         {answer.headline}
       </h1>
     </div>
@@ -194,8 +222,10 @@ export function Verified({ answer }: { answer: ScamCheckOut }) {
   const ui = lang.value;
   return (
     <section aria-labelledby="scam-real" class="flex flex-col gap-3 rounded-lg border-4 border-primary bg-primary-soft p-4 text-primary-strong">
-      <h2 id="scam-real" class="flex items-center gap-3 text-xl font-bold">
-        <Pictogram name="shield-ok" size={48} />
+      <Seal>
+        <Pictogram name="shield-ok" size={56} />
+      </Seal>
+      <h2 id="scam-real" class="text-center text-xl font-bold">
         {t('scam_real_title')}
       </h2>
       <dl class="flex flex-col gap-2 text-ink">

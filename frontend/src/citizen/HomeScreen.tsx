@@ -7,10 +7,15 @@ import { api } from '../shared/api/client';
 import { call } from '../shared/api/problem';
 import type { ApplicationSummary, AuthUser } from '../shared/api/types';
 import { Button } from '../shared/components/Button';
-import { Pictogram } from '../shared/components/Pictogram';
+import { Monogram } from '../shared/components/Monogram';
+import { Pictogram, type PictogramName } from '../shared/components/Pictogram';
+import { SoundToggle } from '../shared/components/SoundToggle';
 import { Spinner } from '../shared/components/Spinner';
 import { lang, LANGUAGES, setLang, t, type Lang, type MessageKey } from '../shared/i18n';
+import { go } from '../shared/routing';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
+import { endActing } from './actingControl';
+import { Journey } from './Journey';
 import { sayKey } from './apply/parts';
 import { draft } from './apply/flow';
 import { OutboxCard } from './apply/OutboxCard';
@@ -78,58 +83,54 @@ export function HomeScreen({ user }: { user: AuthUser }) {
     setLang(code);
   };
 
+  const hour = new Date().getHours();
+  const greeting: MessageKey = hour < 12 ? 'greeting_morning' : hour < 17 ? 'greeting_afternoon' : 'greeting_evening';
+  const latest = items.find((item) => item.status !== 'withdrawn');
+
   return (
     <CitizenShell prompt={hint}>
+      <div class="rh-stagger flex flex-col gap-5">
       <div class="flex items-center gap-4 pt-2">
-        <Pictogram name="person" size={56} class="text-primary" />
+        <Monogram name={shownName} size={64} />
         {/* display_name is rendered as text, never as HTML. */}
-        <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold">
-          {t('home_greeting', { name: shownName })}
+        <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-extrabold">
+          {t(greeting, { name: shownName })}
         </h1>
       </div>
       <p class="text-lg text-ink-muted">{t(hint)}</p>
 
       {hasOpen ? (
-        <Button size="hero" icon="clock" block onClick={() => route('/track')}>
+        <Button size="hero" icon="clock" block onClick={() => go(route, '/track')}>
           {t('home_see_application')}
         </Button>
       ) : (
-        <Button size="hero" icon="document" block onClick={() => route('/apply')}>
+        <Button size="hero" icon="document" block onClick={() => go(route, '/apply')}>
           {t(hasDraft ? 'home_continue' : 'home_apply')}
         </Button>
       )}
 
-      {hasOpen ? null : apps.state === 'loading' ? (
+      {apps.state === 'loading' ? (
         <p role="status" class="flex min-h-tap-lg items-center justify-center gap-2 text-base text-ink-muted">
           <Spinner size={24} />
           {t('state_loading')}
         </p>
-      ) : hasSent ? (
-        <Button size="lg" variant="secondary" icon="clock" block onClick={() => route('/track')}>
-          {t('home_see_application')}
-        </Button>
-      ) : null}
+      ) : (
+        <Journey status={latest?.status ?? null} />
+      )}
 
-      {/* The shopkeeper's scam checker and the consent centre, one tap each. */}
-      <div class="grid grid-cols-1 gap-3">
-        <Button size="lg" variant="secondary" icon="shield" block onClick={() => route('/scam')}>
-          {t('home_scam')}
-        </Button>
-        <Button size="lg" variant="secondary" icon="message" block onClick={() => route('/rules')}>
-          {t('home_rules')}
-        </Button>
-        {isCitizen ? (
-          <Button size="lg" variant="secondary" icon="lock" block onClick={() => route('/my-data')}>
-            {t('home_my_data')}
-          </Button>
-        ) : null}
+      <div class="grid grid-cols-2 gap-3 [&>:last-child:nth-child(odd)]:col-span-2">
+        {hasSent && !hasOpen ? <Tile icon="clock" label={t('home_see_application')} onClick={() => go(route, '/track')} /> : null}
+        <Tile icon="shield" label={t('home_scam')} onClick={() => go(route, '/scam')} />
+        <Tile icon="message" label={t('home_rules')} onClick={() => go(route, '/rules')} />
+        {isCitizen ? <Tile icon="lock" label={t('home_my_data')} onClick={() => go(route, '/my-data')} /> : null}
+        {family ? <Tile icon="person-help" label={t('helper_change')} onClick={() => void endActing('done')} /> : null}
       </div>
 
       <OutboxCard />
 
       <WarningsCard />
 
-      <section aria-labelledby="home-language" class="mt-auto flex flex-col gap-2 pt-4">
+      <section aria-labelledby="home-language" class="flex flex-col gap-2 pt-4">
         <h2 id="home-language" class="text-center text-base font-semibold text-ink-muted">
           {t('home_language')}
         </h2>
@@ -157,6 +158,7 @@ export function HomeScreen({ user }: { user: AuthUser }) {
             );
           })}
         </div>
+        <SoundToggle />
         {family ? null : confirmLeave ? (
           <div role="alert" class="flex flex-col gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
             <p class="flex items-center gap-2 text-lg font-bold">
@@ -187,6 +189,21 @@ export function HomeScreen({ user }: { user: AuthUser }) {
           </div>
         )}
       </section>
+      </div>
     </CitizenShell>
+  );
+}
+
+/** A big action tile: one pictogram, one word, at least 112 px tall. */
+function Tile({ icon, label, onClick }: { icon: PictogramName; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      class="flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border-2 border-line bg-paper p-3 text-center text-lg font-bold text-ink shadow-lift transition-transform duration-100 active:scale-[0.96]"
+    >
+      <Pictogram name={icon} size={52} class="text-info" />
+      {label}
+    </button>
   );
 }

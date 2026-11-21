@@ -239,9 +239,16 @@ export function ScamCheckScreen() {
         </Notice>
       ) : null}
       {busy ? (
-        <p role="status" class="text-center text-lg text-ink-muted">
-          {t('scam_checking')}
-        </p>
+        <div role="status" class="rh-night-sky flex items-center gap-4 overflow-hidden rounded-xl p-4 shadow-glow">
+          <span class="relative block h-24 w-20 shrink-0 overflow-hidden">
+            <svg viewBox="0 0 48 48" width="80" height="96" class="text-noor" aria-hidden="true" focusable="false">
+              <path d="M24 4l16 6v12c0 11-7 18-16 22C15 40 8 33 8 22V10z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" />
+              <path d="M17 18h14M17 24h14M17 30h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".6" />
+            </svg>
+            <span aria-hidden="true" class="rh-sweep absolute inset-x-0 top-0 h-0.5 bg-noor shadow-glow" />
+          </span>
+          <p class="text-lg font-semibold text-night-ink">{t('scam_checking')}</p>
+        </div>
       ) : null}
 
       <div class="mt-auto flex flex-col gap-3">

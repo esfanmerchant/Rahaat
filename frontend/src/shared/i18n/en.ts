@@ -40,7 +40,7 @@ export const en = {
   login_phone_title: 'Your phone number',
   login_phone_hint: 'Type your number with the number buttons.',
   login_phone_label: 'Phone number',
-  login_phone_invalid: 'Type all 7 numbers after 0999.',
+  login_phone_invalid: 'Type all 7 numbers after +92 999.',
   login_pin_title: 'Your secret PIN',
   login_pin_hint: 'Type your PIN. It has 4 to 6 numbers. Do not show it to anyone.',
   login_pin_label: 'PIN',
@@ -374,6 +374,16 @@ export const en = {
   helper_banner_note: 'This family closes after 3 minutes without a touch.',
   home_rules: 'Ask about the rules',
   voice_say: 'Say your answer',
+  journey_title: 'Where my application is',
+  journey_sent: 'Sent',
+  journey_checked: 'Checked',
+  journey_decided: 'Decided',
+  journey_paid: 'Paid',
+  greeting_morning: 'Good morning, {name}',
+  greeting_afternoon: 'Good afternoon, {name}',
+  greeting_evening: 'Good evening, {name}',
+  sound_on: 'Sound is on',
+  sound_off: 'Sound is off',
 } as const;
 
 export type MessageKey = keyof typeof en;

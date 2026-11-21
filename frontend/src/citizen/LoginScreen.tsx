@@ -14,10 +14,11 @@ import {
   isCompleteLocal,
   isValidPin,
   MOCK_PHONE_LOCAL_DIGITS,
-  MOCK_PHONE_PREFIX,
   mockPhone,
   PIN_MAX,
   PIN_MIN,
+  SHOWN_PHONE_PREFIX,
+  showPhone,
 } from './phone';
 
 type Step = 'phone' | 'pin';
@@ -216,9 +217,9 @@ function PhoneDisplay({ local }: { local: string }) {
       <div
         role="status"
         aria-labelledby="phone-label"
-        class="rh-ltr flex min-h-tap-lg items-center justify-center gap-1 rounded-lg border-2 border-line-strong bg-paper px-3 font-mono text-3xl font-bold"
+        class="rh-ltr flex min-h-tap-lg items-center justify-center gap-0.5 rounded-lg border-2 border-line-strong bg-paper px-2 font-mono text-2xl font-bold"
       >
-        <span class="text-ink-muted">{MOCK_PHONE_PREFIX}-</span>
+        <span class="me-2 whitespace-nowrap rounded-md bg-surface px-2 text-ink-muted">{SHOWN_PHONE_PREFIX}</span>
         {slots.map((digit, index) => (
           <span
             key={index}
@@ -228,7 +229,7 @@ function PhoneDisplay({ local }: { local: string }) {
             {digit || '0'}
           </span>
         ))}
-        <span class="sr-only">{mockPhone(local)}</span>
+        <span class="sr-only">{showPhone(local)}</span>
       </div>
     </div>
   );
@@ -237,7 +238,7 @@ function PhoneDisplay({ local }: { local: string }) {
 function PinDisplay({ length, local }: { length: number; local: string }) {
   return (
     <div class="flex flex-col gap-2">
-      <p class="rh-ltr text-center font-mono text-lg text-ink-muted">{mockPhone(local)}</p>
+      <p class="rh-ltr text-center font-mono text-lg text-ink-muted">{showPhone(local)}</p>
       <div
         role="status"
         aria-label={`${t('login_pin_label')}: ${t('login_pin_progress', { count: length })}`}

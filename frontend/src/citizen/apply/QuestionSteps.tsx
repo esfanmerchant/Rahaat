@@ -3,7 +3,7 @@ import { useLocation } from 'preact-iso';
 import type { IncomeBand } from '../../shared/api/types';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { lang, t, type MessageKey } from '../../shared/i18n';
-import { lazyRoute } from '../../shared/routing';
+import { go, lazyRoute } from '../../shared/routing';
 import { speechInputAvailable } from '../../shared/speechInput';
 import type { VoiceAnswerProps, VoiceValue } from '../voice/VoiceAnswer';
 import { answer, answerName, answerSpoken, draft, nextStep, stepPath, type AnswerField, type StepId, type Tri } from './flow';
@@ -20,7 +20,7 @@ function useNext(step: StepId): () => void {
   const { route } = useLocation();
   return () => {
     const d = draft.peek();
-    if (d) route(stepPath(nextStep(d, step)));
+    if (d) go(route, stepPath(nextStep(d, step)));
   };
 }
 
