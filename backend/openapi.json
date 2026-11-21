@@ -792,6 +792,138 @@
         "title": "Body_upload_document_v1_applications__application_id__documents_post",
         "type": "object"
       },
+      "CampaignList": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "hidden": {
+            "title": "Hidden",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CampaignOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "k": {
+            "title": "K",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "days",
+          "k",
+          "items",
+          "hidden",
+          "note"
+        ],
+        "title": "CampaignList",
+        "type": "object"
+      },
+      "CampaignOut": {
+        "properties": {
+          "districts": {
+            "items": {
+              "$ref": "#/components/schemas/DistrictCount"
+            },
+            "title": "Districts",
+            "type": "array"
+          },
+          "first_seen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Seen"
+          },
+          "hosts": {
+            "description": "Defanged link hosts seen in this campaign",
+            "items": {
+              "type": "string"
+            },
+            "title": "Hosts",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "sample_text": {
+            "description": "Redacted",
+            "title": "Sample Text",
+            "type": "string"
+          },
+          "senders": {
+            "description": "How many different senders, never who",
+            "title": "Senders",
+            "type": "integer"
+          },
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          },
+          "size": {
+            "description": "Reports in this campaign, all time",
+            "title": "Size",
+            "type": "integer"
+          },
+          "size_in_window": {
+            "title": "Size In Window",
+            "type": "integer"
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Trend",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "signature",
+          "size",
+          "size_in_window",
+          "sample_text",
+          "first_seen",
+          "last_seen",
+          "districts",
+          "trend",
+          "hosts",
+          "senders"
+        ],
+        "title": "CampaignOut",
+        "type": "object"
+      },
       "CaseActionIn": {
         "additionalProperties": false,
         "properties": {
@@ -2249,6 +2381,97 @@
         "title": "DiffOut",
         "type": "object"
       },
+      "DisputeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional: why the person thinks the message is real",
+            "title": "Note"
+          }
+        },
+        "title": "DisputeIn",
+        "type": "object"
+      },
+      "DisputeOut": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "disputed": {
+            "title": "Disputed",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "disputed",
+          "case_id",
+          "message"
+        ],
+        "title": "DisputeOut",
+        "type": "object"
+      },
+      "DistrictCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "district": {
+            "title": "District",
+            "type": "string"
+          }
+        },
+        "required": [
+          "district",
+          "count"
+        ],
+        "title": "DistrictCount",
+        "type": "object"
+      },
+      "DistrictLabelCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "district": {
+            "title": "District",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "district",
+          "label",
+          "count"
+        ],
+        "title": "DistrictLabelCount",
+        "type": "object"
+      },
       "DocumentCheck": {
         "properties": {
           "authenticity": {
@@ -3250,6 +3473,35 @@
         "title": "JobRetryIn",
         "type": "object"
       },
+      "LabelIn": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "enum": [
+              "relief_scam",
+              "phishing_link",
+              "advance_fee",
+              "impersonation",
+              "legit_program_message",
+              "unknown"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "reason"
+        ],
+        "title": "LabelIn",
+        "type": "object"
+      },
       "LoginIn": {
         "additionalProperties": false,
         "properties": {
@@ -3286,6 +3538,113 @@
           "secret"
         ],
         "title": "LoginIn",
+        "type": "object"
+      },
+      "MapCell": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "day": {
+            "title": "Day",
+            "type": "string"
+          },
+          "district": {
+            "title": "District",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "district",
+          "label",
+          "day",
+          "count"
+        ],
+        "title": "MapCell",
+        "type": "object"
+      },
+      "MapOut": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/MapCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "district_totals": {
+            "items": {
+              "$ref": "#/components/schemas/DistrictCount"
+            },
+            "title": "District Totals",
+            "type": "array"
+          },
+          "districts": {
+            "items": {
+              "$ref": "#/components/schemas/DistrictLabelCount"
+            },
+            "title": "Districts",
+            "type": "array"
+          },
+          "first_day": {
+            "title": "First Day",
+            "type": "string"
+          },
+          "hidden": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "How many groups of each kind were hidden for having fewer than k reports",
+            "title": "Hidden",
+            "type": "object"
+          },
+          "k": {
+            "title": "K",
+            "type": "integer"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Labels",
+            "type": "array"
+          },
+          "last_day": {
+            "title": "Last Day",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "Asia/Karachi",
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "days",
+          "k",
+          "first_day",
+          "last_day",
+          "labels",
+          "cells",
+          "districts",
+          "district_totals",
+          "hidden",
+          "note"
+        ],
+        "title": "MapOut",
         "type": "object"
       },
       "MeOut": {
@@ -3451,6 +3810,78 @@
           "label"
         ],
         "title": "MocksOut",
+        "type": "object"
+      },
+      "MyReportList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MyReportOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MyReportList",
+        "type": "object"
+      },
+      "MyReportOut": {
+        "properties": {
+          "certainty": {
+            "title": "Certainty",
+            "type": "string"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "disputed": {
+            "title": "Disputed",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewOut"
+          }
+        },
+        "required": [
+          "id",
+          "checked_at",
+          "label",
+          "certainty",
+          "disputed",
+          "review"
+        ],
+        "title": "MyReportOut",
         "type": "object"
       },
       "NotificationList": {
@@ -4004,6 +4435,24 @@
         "title": "ReasonIn",
         "type": "object"
       },
+      "ReasonOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "text"
+        ],
+        "title": "ReasonOut",
+        "type": "object"
+      },
       "RegisterCompleteIn": {
         "additionalProperties": false,
         "properties": {
@@ -4311,6 +4760,47 @@
           "national_id"
         ],
         "title": "RegistryRecord",
+        "type": "object"
+      },
+      "ReviewOut": {
+        "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "confirmed_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed Label"
+          },
+          "status": {
+            "enum": [
+              "none",
+              "waiting",
+              "done"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ReviewOut",
         "type": "object"
       },
       "RuleSetOut": {
@@ -4670,6 +5160,358 @@
         "title": "RuleVersionOut",
         "type": "object"
       },
+      "ScamCheckIn": {
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "default": "text",
+            "enum": [
+              "text",
+              "sms_forward",
+              "voice",
+              "screenshot"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A district name; anything else is dropped",
+            "title": "District"
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The sender name or number shown on the phone, if known",
+            "title": "Sender"
+          },
+          "text": {
+            "description": "The message as received. It is analysed as data and stored redacted.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "ScamCheckIn",
+        "type": "object"
+      },
+      "ScamCheckOut": {
+        "properties": {
+          "audio_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Audio Keys",
+            "type": "array"
+          },
+          "can_dispute": {
+            "title": "Can Dispute",
+            "type": "boolean"
+          },
+          "certainty": {
+            "enum": [
+              "likely_scam",
+              "might_be_scam",
+              "not_sure",
+              "looks_real",
+              "confirmed_real"
+            ],
+            "title": "Certainty",
+            "type": "string"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffDetailOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Staff only"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "enum": [
+                  "relief_scam",
+                  "phishing_link",
+                  "advance_fee",
+                  "impersonation",
+                  "legit_program_message",
+                  "unknown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the checker is not sure",
+            "title": "Label"
+          },
+          "label_text": {
+            "title": "Label Text",
+            "type": "string"
+          },
+          "lang": {
+            "enum": [
+              "ur",
+              "en"
+            ],
+            "title": "Lang",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/ReasonOut"
+            },
+            "maxItems": 3,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewOut"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "ask_more",
+              "human"
+            ],
+            "title": "Route",
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/UrlOut"
+            },
+            "title": "Urls",
+            "type": "array"
+          },
+          "verified": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerifiedOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "what_to_do": {
+            "title": "What To Do",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "label",
+          "label_text",
+          "certainty",
+          "route",
+          "lang",
+          "headline",
+          "reasons",
+          "what_to_do",
+          "urls",
+          "audio_keys",
+          "can_dispute",
+          "review",
+          "checked_at"
+        ],
+        "title": "ScamCheckOut",
+        "type": "object"
+      },
+      "ScamReportList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScamReportOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ScamReportList",
+        "type": "object"
+      },
+      "ScamReportOut": {
+        "properties": {
+          "certainty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certainty"
+          },
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "confirmed_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed Label"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "disputed": {
+            "title": "Disputed",
+            "type": "boolean"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender"
+          },
+          "text_redacted": {
+            "title": "Text Redacted",
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/UrlOut"
+            },
+            "title": "Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "channel",
+          "label",
+          "certainty",
+          "route",
+          "confidence",
+          "district",
+          "sender",
+          "text_redacted",
+          "urls",
+          "cluster_id",
+          "disputed",
+          "confirmed_label",
+          "model_version"
+        ],
+        "title": "ScamReportOut",
+        "type": "object"
+      },
       "ServiceOut": {
         "properties": {
           "breaker": {
@@ -4771,6 +5613,25 @@
         "title": "SessionOut",
         "type": "object"
       },
+      "SignalWeightOut": {
+        "properties": {
+          "signal": {
+            "title": "Signal",
+            "type": "string"
+          },
+          "weight": {
+            "description": "Log-odds this signal adds to the chosen class over `compared_with`",
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "signal",
+          "weight"
+        ],
+        "title": "SignalWeightOut",
+        "type": "object"
+      },
       "SmsOutboxItem": {
         "properties": {
           "at": {
@@ -4808,6 +5669,162 @@
           "at"
         ],
         "title": "SmsOutboxItem",
+        "type": "object"
+      },
+      "StaffDetailOut": {
+        "description": "For officers, admins and auditors only.",
+        "properties": {
+          "abstain_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstain Reason"
+          },
+          "abstained": {
+            "title": "Abstained",
+            "type": "boolean"
+          },
+          "compared_with": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compared With"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "decision_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Decision Reasons",
+            "type": "array"
+          },
+          "fired": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fired",
+            "type": "array"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "p_scam": {
+            "title": "P Scam",
+            "type": "number"
+          },
+          "p_scam_text": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Scam Text"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Probabilities",
+            "type": "object"
+          },
+          "route_costs": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Route Costs",
+            "type": "object"
+          },
+          "script": {
+            "title": "Script",
+            "type": "string"
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender"
+          },
+          "sender_kind": {
+            "title": "Sender Kind",
+            "type": "string"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalWeightOut"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "text_model_weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Log-odds the text model adds to the chosen class over `compared_with`",
+            "title": "Text Model Weight"
+          },
+          "text_probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Text Probabilities",
+            "type": "object"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Thresholds",
+            "type": "object"
+          }
+        },
+        "required": [
+          "probabilities",
+          "confidence",
+          "abstained",
+          "model_version",
+          "p_scam",
+          "p_scam_text",
+          "text_probabilities",
+          "text_model_weight",
+          "compared_with",
+          "signals",
+          "fired",
+          "abstain_reason",
+          "route_costs",
+          "thresholds",
+          "script",
+          "sender_kind",
+          "sender",
+          "decision_reasons"
+        ],
+        "title": "StaffDetailOut",
         "type": "object"
       },
       "SubmitOut": {
@@ -4888,6 +5905,92 @@
           "label_key"
         ],
         "title": "TimelineItem",
+        "type": "object"
+      },
+      "TrendPoint": {
+        "properties": {
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when 1 to k-1 reports are hidden",
+            "title": "Count"
+          },
+          "day": {
+            "title": "Day",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "count"
+        ],
+        "title": "TrendPoint",
+        "type": "object"
+      },
+      "TrendSeries": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "points"
+        ],
+        "title": "TrendSeries",
+        "type": "object"
+      },
+      "TrendsOut": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "k": {
+            "title": "K",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/TrendSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "total": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Total",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "k",
+          "series",
+          "total",
+          "note"
+        ],
+        "title": "TrendsOut",
         "type": "object"
       },
       "TypedDecision_Literal__genuine____suspect___": {
@@ -4989,6 +6092,52 @@
           "why"
         ],
         "title": "UncertainField",
+        "type": "object"
+      },
+      "UrlOut": {
+        "properties": {
+          "flag_texts": {
+            "description": "The flags in plain words, in the caller's language",
+            "items": {
+              "type": "string"
+            },
+            "title": "Flag Texts",
+            "type": "array"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "host": {
+            "title": "Host",
+            "type": "string"
+          },
+          "risk": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Risk",
+            "type": "string"
+          },
+          "url": {
+            "description": "Defanged, never a live link: hxxps://example[.]com",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "host",
+          "risk",
+          "flags",
+          "flag_texts"
+        ],
+        "title": "UrlOut",
         "type": "object"
       },
       "UserOut": {
@@ -5098,6 +6247,52 @@
         "title": "ValidationOut",
         "type": "object"
       },
+      "VerifiedOut": {
+        "properties": {
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "genuine": {
+            "title": "Genuine",
+            "type": "boolean"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template"
+          }
+        },
+        "required": [
+          "genuine"
+        ],
+        "title": "VerifiedOut",
+        "type": "object"
+      },
       "VerifyIn": {
         "additionalProperties": false,
         "properties": {
@@ -5171,6 +6366,171 @@
           "genuine"
         ],
         "title": "VerifyOut",
+        "type": "object"
+      },
+      "WarningIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body_en": {
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Body En",
+            "type": "string"
+          },
+          "body_ur": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 5,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Ur"
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 5,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body_en"
+        ],
+        "title": "WarningIn",
+        "type": "object"
+      },
+      "WarningList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WarningOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "WarningList",
+        "type": "object"
+      },
+      "WarningOut": {
+        "properties": {
+          "body_en": {
+            "title": "Body En",
+            "type": "string"
+          },
+          "body_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Ur"
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body_en",
+          "body_ur",
+          "district",
+          "cluster_id",
+          "status",
+          "published_at"
+        ],
+        "title": "WarningOut",
         "type": "object"
       }
     },
@@ -8625,6 +9985,944 @@
         "summary": "Check a stored version",
         "tags": [
           "rules"
+        ]
+      }
+    },
+    "/v1/scam/campaigns": {
+      "get": {
+        "operationId": "scam_campaigns_v1_scam_campaigns_get",
+        "parameters": [
+          {
+            "description": "The last N calendar days, Pakistan time",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 14,
+              "description": "The last N calendar days, Pakistan time",
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "The largest campaigns (same message, many reports)",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/check": {
+      "post": {
+        "operationId": "check_message_v1_scam_check_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScamCheckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScamCheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Is this message a scam? Never opens links; may answer 'not sure'",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/map": {
+      "get": {
+        "operationId": "scam_map_v1_scam_map_get",
+        "parameters": [
+          {
+            "description": "The last N calendar days, Pakistan time",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 14,
+              "description": "The last N calendar days, Pakistan time",
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "'scam': the four scam kinds (default); 'all': every label",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "scam",
+              "description": "'scam': the four scam kinds (default); 'all': every label",
+              "enum": [
+                "scam",
+                "all"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reports by district, kind and day; groups under 5 are hidden",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/reports": {
+      "get": {
+        "operationId": "list_reports_v1_scam_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "label",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "relief_scam",
+                    "phishing_link",
+                    "advance_fee",
+                    "impersonation",
+                    "legit_program_message",
+                    "unknown"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Label"
+            }
+          },
+          {
+            "in": "query",
+            "name": "disputed",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Disputed"
+            }
+          },
+          {
+            "in": "query",
+            "name": "route",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "auto",
+                    "ask_more",
+                    "human"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route"
+            }
+          },
+          {
+            "in": "query",
+            "name": "district",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "District"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cluster_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScamReportList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "The department's reports, redacted, newest first",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/reports/mine": {
+      "get": {
+        "operationId": "my_reports_v1_scam_reports_mine_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyReportList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My checks, newest first",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/reports/{report_id}": {
+      "get": {
+        "operationId": "get_report_v1_scam_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScamCheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "One check: your own, or any of the department's for staff",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/reports/{report_id}/dispute": {
+      "post": {
+        "operationId": "dispute_report_v1_scam_reports__report_id__dispute_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DisputeIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "This is real, ask a person (opens a scam_review case)",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/reports/{report_id}/label": {
+      "post": {
+        "operationId": "label_report_v1_scam_reports__report_id__label_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScamReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm what the message really was",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/status": {
+      "get": {
+        "operationId": "classifier_status_v1_scam_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Classifier Status V1 Scam Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Which scam classifier is running (for the system health screen)",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/trends": {
+      "get": {
+        "operationId": "scam_trends_v1_scam_trends_get",
+        "parameters": [
+          {
+            "description": "The last N calendar days, Pakistan time",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 14,
+              "description": "The last N calendar days, Pakistan time",
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "'scam': the four scam kinds (default); 'all': every label",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "scam",
+              "description": "'scam': the four scam kinds (default); 'all': every label",
+              "enum": [
+                "scam",
+                "all"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reports per day and kind; days with 1 to 4 reports are hidden",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/warnings": {
+      "get": {
+        "operationId": "list_warnings_v1_scam_warnings_get",
+        "parameters": [
+          {
+            "description": "Also include warnings for this district",
+            "in": "query",
+            "name": "district",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Also include warnings for this district",
+              "title": "District"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarningList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Public scam warnings of your department, newest first",
+        "tags": [
+          "scam"
+        ]
+      },
+      "post": {
+        "operationId": "publish_warning_v1_scam_warnings_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarningIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarningOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Publish a public warning for a campaign or district",
+        "tags": [
+          "scam"
+        ]
+      }
+    },
+    "/v1/scam/warnings/{warning_id}/withdraw": {
+      "post": {
+        "operationId": "withdraw_warning_v1_scam_warnings__warning_id__withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "warning_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Warning Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarningOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Withdraw a public warning",
+        "tags": [
+          "scam"
         ]
       }
     },

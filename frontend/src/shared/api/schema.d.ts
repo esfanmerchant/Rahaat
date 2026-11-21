@@ -929,6 +929,211 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/scam/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The largest campaigns (same message, many reports) */
+        get: operations["scam_campaigns_v1_scam_campaigns_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Is this message a scam? Never opens links; may answer 'not sure' */
+        post: operations["check_message_v1_scam_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reports by district, kind and day; groups under 5 are hidden */
+        get: operations["scam_map_v1_scam_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The department's reports, redacted, newest first */
+        get: operations["list_reports_v1_scam_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/reports/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My checks, newest first */
+        get: operations["my_reports_v1_scam_reports_mine_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One check: your own, or any of the department's for staff */
+        get: operations["get_report_v1_scam_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/reports/{report_id}/dispute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** This is real, ask a person (opens a scam_review case) */
+        post: operations["dispute_report_v1_scam_reports__report_id__dispute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/reports/{report_id}/label": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm what the message really was */
+        post: operations["label_report_v1_scam_reports__report_id__label_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Which scam classifier is running (for the system health screen) */
+        get: operations["classifier_status_v1_scam_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reports per day and kind; days with 1 to 4 reports are hidden */
+        get: operations["scam_trends_v1_scam_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/warnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public scam warnings of your department, newest first */
+        get: operations["list_warnings_v1_scam_warnings_get"];
+        put?: never;
+        /** Publish a public warning for a campaign or district */
+        post: operations["publish_warning_v1_scam_warnings_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scam/warnings/{warning_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a public warning */
+        post: operations["withdraw_warning_v1_scam_warnings__warning_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/system/health": {
         parameters: {
             query?: never;
@@ -1286,6 +1491,61 @@ export interface components {
              * @enum {string}
              */
             kind: "rahat_id" | "income_proof" | "other";
+        };
+        /** CampaignList */
+        CampaignList: {
+            /** Days */
+            days: number;
+            /** Hidden */
+            hidden: number;
+            /** Items */
+            items: components["schemas"]["CampaignOut"][];
+            /** K */
+            k: number;
+            /** Note */
+            note: string;
+        };
+        /** CampaignOut */
+        CampaignOut: {
+            /** Districts */
+            districts: components["schemas"]["DistrictCount"][];
+            /** First Seen */
+            first_seen: string | null;
+            /**
+             * Hosts
+             * @description Defanged link hosts seen in this campaign
+             */
+            hosts: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Last Seen */
+            last_seen: string | null;
+            /**
+             * Sample Text
+             * @description Redacted
+             */
+            sample_text: string;
+            /**
+             * Senders
+             * @description How many different senders, never who
+             */
+            senders: number;
+            /** Signature */
+            signature: string;
+            /**
+             * Size
+             * @description Reports in this campaign, all time
+             */
+            size: number;
+            /** Size In Window */
+            size_in_window: number;
+            /** Trend */
+            trend: components["schemas"]["TrendPoint"][];
         };
         /** CaseActionIn */
         CaseActionIn: {
@@ -1832,6 +2092,47 @@ export interface components {
              */
             version_id: string;
         };
+        /** DisputeIn */
+        DisputeIn: {
+            /**
+             * Note
+             * @description Optional: why the person thinks the message is real
+             */
+            note?: string | null;
+        };
+        /** DisputeOut */
+        DisputeOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Disputed */
+            disputed: boolean;
+            /** Message */
+            message: string;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+        };
+        /** DistrictCount */
+        DistrictCount: {
+            /** Count */
+            count: number;
+            /** District */
+            district: string;
+        };
+        /** DistrictLabelCount */
+        DistrictLabelCount: {
+            /** Count */
+            count: number;
+            /** District */
+            district: string;
+            /** Label */
+            label: string;
+        };
         /** DocumentCheck */
         DocumentCheck: {
             authenticity: components["schemas"]["TypedDecision_Literal__genuine____suspect___"];
@@ -2280,6 +2581,16 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** LabelIn */
+        LabelIn: {
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "relief_scam" | "phishing_link" | "advance_fee" | "impersonation" | "legit_program_message" | "unknown";
+            /** Reason */
+            reason: string;
+        };
         /** LoginIn */
         LoginIn: {
             /**
@@ -2297,6 +2608,50 @@ export interface components {
              * @description Pick a department when the account has several
              */
             tenant_slug?: string | null;
+        };
+        /** MapCell */
+        MapCell: {
+            /** Count */
+            count: number;
+            /** Day */
+            day: string;
+            /** District */
+            district: string;
+            /** Label */
+            label: string;
+        };
+        /** MapOut */
+        MapOut: {
+            /** Cells */
+            cells: components["schemas"]["MapCell"][];
+            /** Days */
+            days: number;
+            /** District Totals */
+            district_totals: components["schemas"]["DistrictCount"][];
+            /** Districts */
+            districts: components["schemas"]["DistrictLabelCount"][];
+            /** First Day */
+            first_day: string;
+            /**
+             * Hidden
+             * @description How many groups of each kind were hidden for having fewer than k reports
+             */
+            hidden: {
+                [key: string]: number;
+            };
+            /** K */
+            k: number;
+            /** Labels */
+            labels: string[];
+            /** Last Day */
+            last_day: string;
+            /** Note */
+            note: string;
+            /**
+             * Timezone
+             * @default Asia/Karachi
+             */
+            timezone: string;
         };
         /** MeOut */
         MeOut: {
@@ -2360,6 +2715,30 @@ export interface components {
             };
             /** Transport */
             transport: string;
+        };
+        /** MyReportList */
+        MyReportList: {
+            /** Items */
+            items: components["schemas"]["MyReportOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** MyReportOut */
+        MyReportOut: {
+            /** Certainty */
+            certainty: string;
+            /** Checked At */
+            checked_at: string;
+            /** Disputed */
+            disputed: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string | null;
+            review: components["schemas"]["ReviewOut"];
         };
         /** NotificationList */
         NotificationList: {
@@ -2578,6 +2957,13 @@ export interface components {
              */
             reason: string;
         };
+        /** ReasonOut */
+        ReasonOut: {
+            /** Code */
+            code: string;
+            /** Text */
+            text: string;
+        };
         /** RegisterCompleteIn */
         RegisterCompleteIn: {
             /** Code */
@@ -2690,6 +3076,18 @@ export interface components {
              * @description None when the registry has no income record
              */
             verified_income_pkr?: number | null;
+        };
+        /** ReviewOut */
+        ReviewOut: {
+            /** Case Id */
+            case_id?: string | null;
+            /** Confirmed Label */
+            confirmed_label?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "none" | "waiting" | "done";
         };
         /** RuleSetOut */
         RuleSetOut: {
@@ -2811,6 +3209,121 @@ export interface components {
             /** Version No */
             version_no: number;
         };
+        /** ScamCheckIn */
+        ScamCheckIn: {
+            /**
+             * Channel
+             * @default text
+             * @enum {string}
+             */
+            channel: "text" | "sms_forward" | "voice" | "screenshot";
+            /**
+             * District
+             * @description A district name; anything else is dropped
+             */
+            district?: string | null;
+            /**
+             * Sender
+             * @description The sender name or number shown on the phone, if known
+             */
+            sender?: string | null;
+            /**
+             * Text
+             * @description The message as received. It is analysed as data and stored redacted.
+             */
+            text: string;
+        };
+        /** ScamCheckOut */
+        ScamCheckOut: {
+            /** Audio Keys */
+            audio_keys: string[];
+            /** Can Dispute */
+            can_dispute: boolean;
+            /**
+             * Certainty
+             * @enum {string}
+             */
+            certainty: "likely_scam" | "might_be_scam" | "not_sure" | "looks_real" | "confirmed_real";
+            /** Checked At */
+            checked_at: string;
+            /** @description Staff only */
+            detail?: components["schemas"]["StaffDetailOut"] | null;
+            /** Headline */
+            headline: string;
+            /**
+             * Label
+             * @description None when the checker is not sure
+             */
+            label: ("relief_scam" | "phishing_link" | "advance_fee" | "impersonation" | "legit_program_message" | "unknown") | null;
+            /** Label Text */
+            label_text: string;
+            /**
+             * Lang
+             * @enum {string}
+             */
+            lang: "ur" | "en";
+            /** Reasons */
+            reasons: components["schemas"]["ReasonOut"][];
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+            review: components["schemas"]["ReviewOut"];
+            /**
+             * Route
+             * @enum {string}
+             */
+            route: "auto" | "ask_more" | "human";
+            /** Urls */
+            urls: components["schemas"]["UrlOut"][];
+            verified?: components["schemas"]["VerifiedOut"] | null;
+            /** What To Do */
+            what_to_do: string;
+        };
+        /** ScamReportList */
+        ScamReportList: {
+            /** Items */
+            items: components["schemas"]["ScamReportOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** ScamReportOut */
+        ScamReportOut: {
+            /** Certainty */
+            certainty: string | null;
+            /** Channel */
+            channel: string;
+            /** Cluster Id */
+            cluster_id: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Confirmed Label */
+            confirmed_label: string | null;
+            /** Created At */
+            created_at: string;
+            /** Disputed */
+            disputed: boolean;
+            /** District */
+            district: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Model Version */
+            model_version: string | null;
+            /** Route */
+            route: string;
+            /** Sender */
+            sender: string | null;
+            /** Text Redacted */
+            text_redacted: string;
+            /** Urls */
+            urls: components["schemas"]["UrlOut"][];
+        };
         /** ServiceOut */
         ServiceOut: {
             /** Breaker */
@@ -2853,6 +3366,16 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** SignalWeightOut */
+        SignalWeightOut: {
+            /** Signal */
+            signal: string;
+            /**
+             * Weight
+             * @description Log-odds this signal adds to the chosen class over `compared_with`
+             */
+            weight: number;
+        };
         /** SmsOutboxItem */
         SmsOutboxItem: {
             /** At */
@@ -2870,6 +3393,59 @@ export interface components {
              * @description Masked
              */
             to: string;
+        };
+        /**
+         * StaffDetailOut
+         * @description For officers, admins and auditors only.
+         */
+        StaffDetailOut: {
+            /** Abstain Reason */
+            abstain_reason: string | null;
+            /** Abstained */
+            abstained: boolean;
+            /** Compared With */
+            compared_with: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Decision Reasons */
+            decision_reasons: string[];
+            /** Fired */
+            fired: string[];
+            /** Model Version */
+            model_version: string;
+            /** P Scam */
+            p_scam: number;
+            /** P Scam Text */
+            p_scam_text: number | null;
+            /** Probabilities */
+            probabilities: {
+                [key: string]: number;
+            };
+            /** Route Costs */
+            route_costs: {
+                [key: string]: number;
+            };
+            /** Script */
+            script: string;
+            /** Sender */
+            sender: string | null;
+            /** Sender Kind */
+            sender_kind: string;
+            /** Signals */
+            signals: components["schemas"]["SignalWeightOut"][];
+            /**
+             * Text Model Weight
+             * @description Log-odds the text model adds to the chosen class over `compared_with`
+             */
+            text_model_weight: number | null;
+            /** Text Probabilities */
+            text_probabilities: {
+                [key: string]: number;
+            };
+            /** Thresholds */
+            thresholds: {
+                [key: string]: number;
+            };
         };
         /** SubmitOut */
         SubmitOut: {
@@ -2898,6 +3474,36 @@ export interface components {
             label_key: string;
             /** Status */
             status: string;
+        };
+        /** TrendPoint */
+        TrendPoint: {
+            /**
+             * Count
+             * @description None when 1 to k-1 reports are hidden
+             */
+            count: number | null;
+            /** Day */
+            day: string;
+        };
+        /** TrendSeries */
+        TrendSeries: {
+            /** Label */
+            label: string;
+            /** Points */
+            points: components["schemas"]["TrendPoint"][];
+        };
+        /** TrendsOut */
+        TrendsOut: {
+            /** Days */
+            days: number;
+            /** K */
+            k: number;
+            /** Note */
+            note: string;
+            /** Series */
+            series: components["schemas"]["TrendSeries"][];
+            /** Total */
+            total: components["schemas"]["TrendPoint"][];
         };
         /** TypedDecision[Literal['genuine', 'suspect']] */
         TypedDecision_Literal__genuine____suspect___: {
@@ -2947,6 +3553,28 @@ export interface components {
              */
             why: string;
         };
+        /** UrlOut */
+        UrlOut: {
+            /**
+             * Flag Texts
+             * @description The flags in plain words, in the caller's language
+             */
+            flag_texts: string[];
+            /** Flags */
+            flags: string[];
+            /** Host */
+            host: string;
+            /**
+             * Risk
+             * @enum {string}
+             */
+            risk: "high" | "medium" | "low";
+            /**
+             * Url
+             * @description Defanged, never a live link: hxxps://example[.]com
+             */
+            url: string;
+        };
         /** UserOut */
         UserOut: {
             /** Display Name */
@@ -2988,6 +3616,17 @@ export interface components {
             /** Valid */
             valid: boolean;
         };
+        /** VerifiedOut */
+        VerifiedOut: {
+            /** Department */
+            department?: string | null;
+            /** Genuine */
+            genuine: boolean;
+            /** Sent At */
+            sent_at?: string | null;
+            /** Template */
+            template?: string | null;
+        };
         /** VerifyIn */
         VerifyIn: {
             /**
@@ -3011,6 +3650,48 @@ export interface components {
             sent_at?: string | null;
             /** Template */
             template?: string | null;
+        };
+        /** WarningIn */
+        WarningIn: {
+            /** Body En */
+            body_en: string;
+            /** Body Ur */
+            body_ur?: string | null;
+            /** Cluster Id */
+            cluster_id?: string | null;
+            /** District */
+            district?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** WarningList */
+        WarningList: {
+            /** Items */
+            items: components["schemas"]["WarningOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** WarningOut */
+        WarningOut: {
+            /** Body En */
+            body_en: string;
+            /** Body Ur */
+            body_ur: string | null;
+            /** Cluster Id */
+            cluster_id: string | null;
+            /** District */
+            district: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Published At */
+            published_at: string | null;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
         };
     };
     responses: never;
@@ -4908,6 +5589,439 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValidationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scam_campaigns_v1_scam_campaigns_get: {
+        parameters: {
+            query?: {
+                /** @description The last N calendar days, Pakistan time */
+                days?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_message_v1_scam_check_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "accept-language"?: string | null;
+                "Idempotency-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScamCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScamCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scam_map_v1_scam_map_get: {
+        parameters: {
+            query?: {
+                /** @description The last N calendar days, Pakistan time */
+                days?: number;
+                /** @description 'scam': the four scam kinds (default); 'all': every label */
+                kind?: "scam" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MapOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reports_v1_scam_reports_get: {
+        parameters: {
+            query?: {
+                label?: ("relief_scam" | "phishing_link" | "advance_fee" | "impersonation" | "legit_program_message" | "unknown") | null;
+                disputed?: boolean | null;
+                route?: ("auto" | "ask_more" | "human") | null;
+                district?: string | null;
+                cluster_id?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScamReportList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_reports_v1_scam_reports_mine_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyReportList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_report_v1_scam_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "accept-language"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScamCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dispute_report_v1_scam_reports__report_id__dispute_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "accept-language"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DisputeIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisputeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    label_report_v1_scam_reports__report_id__label_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScamReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    classifier_status_v1_scam_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    scam_trends_v1_scam_trends_get: {
+        parameters: {
+            query?: {
+                /** @description The last N calendar days, Pakistan time */
+                days?: number;
+                /** @description 'scam': the four scam kinds (default); 'all': every label */
+                kind?: "scam" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_warnings_v1_scam_warnings_get: {
+        parameters: {
+            query?: {
+                /** @description Also include warnings for this district */
+                district?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarningList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_warning_v1_scam_warnings_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarningIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarningOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_warning_v1_scam_warnings__warning_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                warning_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarningOut"];
                 };
             };
             /** @description Validation Error */

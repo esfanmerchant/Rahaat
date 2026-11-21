@@ -354,7 +354,8 @@ def _squash(text: str) -> str:
 
 @lru_cache(maxsize=1)
 def _template_patterns() -> tuple[tuple[str, str, re.Pattern[str]], ...]:
-    slot = {"tracking_code": "[A-Za-z0-9-]{0,32}", "amount": "[0-9,]{0,20}", "rail_ref": "[A-Za-z0-9-]{0,32}"}
+    slot = {"tracking_code": "[A-Za-z0-9-]{0,32}", "amount": "[0-9,]{0,20}", "rail_ref": "[A-Za-z0-9-]{0,32}",
+            "code": "[0-9]{0,8}"}  # the one-time sign-up code in registration messages
     patterns = []
     for name, by_lang in templates.TEMPLATES.items():
         for lang, template in by_lang.items():

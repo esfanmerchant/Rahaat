@@ -59,14 +59,20 @@ def _database_ok() -> bool:
         return False
 
 
-def _providers() -> dict[str, str]:
-    providers = {"ocr_tesseract": "available" if shutil.which("tesseract") else "missing"}
+def _providers() -> dict[str, Any]:
+    providers: dict[str, Any] = {"ocr_tesseract": "available" if shutil.which("tesseract") else "missing"}
     try:
         from app.modules.docs_ai.service import providers as document_providers
 
         providers.update(document_providers())
     except Exception:  # noqa: BLE001
         log.exception("could not read the document-AI providers")
+    try:
+        from app.modules.scam.service import provider_status as scam_providers
+
+        providers["scam_classifier"] = scam_providers()
+    except Exception:  # noqa: BLE001
+        log.exception("could not read the scam classifier status")
     return providers
 
 

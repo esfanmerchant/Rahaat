@@ -604,7 +604,9 @@ def pick_sender(rng: random.Random, slots: Slots, mix: str) -> str | None:
 def _program_messages(rng: random.Random, slots: Slots) -> list[dict[str, Any]]:
     """Real Rahat messages, rendered by the same code that sends them. Most carry their verify code."""
     rows: list[dict[str, Any]] = []
-    for template in templates.TEMPLATES:
+    # Sign-up messages were added after the corpus was frozen; they carry no verify code and are left out so the
+    # committed corpus, the model trained on it and its reported evaluation stay exactly reproducible.
+    for template in (t for t in templates.TEMPLATES if t not in templates.ONE_TIME_TEMPLATES):
         for lang in ("en", "ur"):
             for i in range(40):
                 payload = {

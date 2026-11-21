@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 15:05 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
+Last updated: Sat 21 Nov 2026, 15:45 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -55,7 +55,7 @@ Track B
 Track C
 - [x] C1 Mock issuer (Ed25519), specimen cards with SPECIMEN marks, 9 photo variants per demo citizen with expected outcomes
 - [x] C2 `check_document()`: quality gate with spoken retake hints, signed QR, OCR-free print check, ELA and metadata signals; held-out: 99.2% of forgeries flagged, 2.1% false alarms on genuine cards, median 0.35 s
-- [ ] C3 Scam corpus, classifier, URL and sender analysis
+- [x] C3 Scam checker: 3,840 synthetic messages in English, Urdu and Roman Urdu (82 families, split by family), calibrated classifier with string-only link and sender signals and verify codes; held-out: 95.5% of scams caught, 0 called real, 2.4% false alarms (0 on Rahat's own messages)
 
 Track D1
 - [x] D1.1 Tokens, pictograms, audio player, i18n (Urdu and English)
@@ -74,9 +74,9 @@ Track D2
 
 - [ ] A9 API keys  - [ ] A10 Rate limiting  - [ ] A11 Consent centre API  - [ ] A12 Helper delegations  - [ ] A13 Sync endpoint  - [ ] A14 Security test suite
 - [ ] B7 Threshold analysis  - [ ] B8 Name matching and dedupe  - [ ] B9 Handoff package and cheapest question  - [ ] B10 Golden tests  - [ ] B11 Replay
-- [ ] C4 Voice  - [ ] C5 Audio assets  - [ ] C6 Forgery depth and metrics  - [ ] C7 Scam reports, aggregates, clustering  - [ ] C8 Scam checker by screenshot and voice
+- [ ] C4 Voice  - [ ] C5 Audio assets  - [ ] C6 Forgery depth and metrics  - [x] C7 Scam reports (redacted), campaigns by MinHash, Scam Map data with k-anonymity (k=5), public warnings, disputes open a case  - [ ] C8 Scam checker by screenshot and voice
 - [ ] D1.5 PWA offline  - [ ] D1.6 Voice answers  - [ ] D1.7 Consent centre  - [ ] D1.8 Scam checker  - [ ] D1.9 Helper Mode
-- [ ] D2.4 Rule editor  - [ ] D2.5 Cost of being wrong  - [ ] D2.6 Challenge Lab  - [ ] D2.7 Audit explorer
+- [x] D2.4 Rule editor (two admins, four-eyes publish shown)  - [ ] D2.5 Cost of being wrong  - [ ] D2.6 Challenge Lab  - [x] D2.7 Audit explorer
 
 **Gate 2**: all eight Challenge Lab cards pass on the live URL.
 
