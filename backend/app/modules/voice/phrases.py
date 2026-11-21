@@ -66,13 +66,16 @@ class SpeechClip(BaseModel):
 
 
 class Spoken(BaseModel):
+    """A sentence to show and to play. `audio` is the clip sequence; `audio_keys` the same keys alone."""
+
     text: str
     lang: str
     audio: list[SpeechClip]
+    audio_keys: list[str]
 
-    @property
-    def audio_keys(self) -> list[str]:
-        return [c.key for c in self.audio]
+    @classmethod
+    def of(cls, clips: list[SpeechClip], text: str, lang: str) -> Spoken:
+        return cls(text=text, lang=lang, audio=clips, audio_keys=[c.key for c in clips])
 
 
 def _lang(lang: str) -> str:
@@ -115,7 +118,7 @@ def readback(expected: str, choice: str, lang: str) -> Spoken | None:
     else:
         answer = [_clip("answer_yes" if choice == "yes" else "answer_no", lang)]
     clips = [_clip("voice_you_said", lang), *answer, _clip("voice_is_that_right", lang)]
-    return Spoken(text=_join(clips, lang), lang=lang, audio=clips)
+    return Spoken.of(clips, _join(clips, lang), lang)
 
 
 _ONE_ANSWER = frozenset({"two_different_numbers", "mixed_answers", "sum_of_numbers", "counted_in_parts", "range_spans_bands",
@@ -136,4 +139,4 @@ def ask_again(reasons: list[str], lang: str, attempt: int) -> tuple[Spoken, str]
     else:
         key, fallback = "voice_say_again", "say_again"
     clip = _clip(key, lang)
-    return Spoken(text=clip.text, lang=lang, audio=[clip]), fallback
+    return Spoken.of([clip], clip.text, lang), fallback

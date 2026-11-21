@@ -22,6 +22,7 @@ from typing import Final, Literal
 from app.contracts.common import IncomeBand, Route
 from app.modules.guardrails.input_guard import check_input
 from app.modules.guardrails.textnorm import skeleton, tokens
+from app.modules.guardrails.verdict import GuardVerdict
 from app.modules.voice import lexicon as L
 from app.modules.voice.parse import Item, Mention, Parsed, numbers, parse
 
@@ -95,6 +96,7 @@ class Interpretation:
     probabilities: dict[str, float] = field(default_factory=dict)
     guard: dict[str, object] = field(default_factory=dict)
     redacted_transcript: str = ""
+    guard_verdict: GuardVerdict | None = None
 
 
 @dataclass(slots=True)
@@ -484,7 +486,7 @@ def interpret(
     floor = CONFIDENCE_FLOOR if floor is None else floor
     guard = check_input(transcript, "transcript")
     result = Interpretation(question_key=question_key, expected=expected, choice=None, value=None,
-                            guard=guard.summary(), redacted_transcript=guard.redacted_text or "")  # fmt: skip
+                            guard=guard.summary(), redacted_transcript=guard.redacted_text or "", guard_verdict=guard)  # fmt: skip
     if guard.blocked:
         result.reasons = ["guardrail_blocked", *guard.codes]
         result.probabilities = _probabilities(expected, None, 0.0)
