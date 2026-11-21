@@ -1,6 +1,5 @@
 import './shared/styles.css';
 import { render } from 'preact';
-import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { restoreSession } from './shared/api/auth';
 import { loadSystemInfo } from './shared/api/system';
@@ -18,9 +17,28 @@ void initLang().finally(() => {
   render(<App />, root);
 });
 
-// Service worker: production only, registered from bundled code (no inline
-// script, CSP-safe). autoUpdate + skipWaiting + clientsClaim reload the page
-// onto a new deploy instead of serving a stale shell.
-if (import.meta.env.PROD) {
-  registerSW({ immediate: true });
+// Service worker: production only, registered from bundled code (no inline script, CSP-safe).
+// The generated worker calls skipWaiting and clientsClaim (vite.config.ts), so a new deploy takes over
+// at once. The page then reloads once onto the new shell, but never while a text field has the focus:
+// it waits until the field is left. A first install (no controller yet) never reloads.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const sw = navigator.serviceWorker;
+  let hadController = sw.controller !== null;
+  let reloading = false;
+  const reload = (): void => {
+    const el = document.activeElement;
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      el.addEventListener('blur', reload, { once: true });
+      return;
+    }
+    if (!reloading) {
+      reloading = true;
+      location.reload();
+    }
+  };
+  sw.addEventListener('controllerchange', () => {
+    if (hadController) reload();
+    hadController = true;
+  });
+  void sw.register('/sw.js');
 }

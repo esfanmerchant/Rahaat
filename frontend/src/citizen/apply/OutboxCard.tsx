@@ -18,6 +18,8 @@ const KIND_LABEL: Record<Exclude<OpKind, 'patch'>, MessageKey> = {
   create: 'outbox_start',
   upload: 'outbox_photo',
   submit: 'outbox_submit',
+  appeal: 'appeal_ask',
+  complaint: 'home_report',
 };
 
 function labels(kind: OpKind, fields: readonly string[]): MessageKey[] {

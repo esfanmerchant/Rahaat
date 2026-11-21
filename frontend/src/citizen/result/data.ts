@@ -1,3 +1,4 @@
+import { signal } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import { api } from '../../shared/api/client';
 import { call, type ApiFailure, type Result } from '../../shared/api/problem';
@@ -5,6 +6,9 @@ import type { ApplicationOut, ApplicationStatus, ApplicationSummary } from '../.
 import type { PictogramName } from '../../shared/components/Pictogram';
 import { messageKeyFor, type Lang, type MessageKey } from '../../shared/i18n';
 import { lastSubmit } from '../apply/flow';
+
+/** True while an appeal star is the current step on the tracker, so the star before it is not gold too. */
+export const appealNow = signal(false);
 
 export type Loaded =
   | { state: 'loading' }

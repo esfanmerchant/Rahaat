@@ -140,6 +140,7 @@ export function HomeScreen({ user }: { user: AuthUser }) {
         {hasSent && !hasOpen ? <Tile icon="clock" tone="primary" label={t('home_see_application')} onClick={() => go(route, '/track')} /> : null}
         <Tile icon="shield" tone="primary" label={t('home_scam')} onClick={() => go(route, '/scam')} />
         <Tile icon="message" tone="info" label={t('home_rules')} onClick={() => go(route, '/rules')} />
+        <Tile icon="warning" tone="info" label={t('home_report')} onClick={() => go(route, '/report')} />
         {isCitizen ? <Tile icon="lock" tone="saffron" label={t('home_my_data')} onClick={() => go(route, '/my-data')} /> : null}
         {family ? <Tile icon="person-help" tone="info" label={t('helper_change')} onClick={() => void endActing('done')} /> : null}
       </div>

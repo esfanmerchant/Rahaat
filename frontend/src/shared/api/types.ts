@@ -72,3 +72,11 @@ export type AskOut = Json<paths['/v1/ask']['post']['responses'][200]>;
 export type AccessLogPage = Json<paths['/v1/me/access-log']['get']['responses'][200]>;
 export type AccessEntry = AccessLogPage['items'][number];
 export type DataRequestOut = Json<paths['/v1/me/data-requests']['get']['responses'][200]>[number];
+
+// Appeals and complaints (backend/app/modules/appeals).
+export type AppealOut = Json<paths['/v1/appeals']['post']['responses'][201]>;
+export type AppealStatusKey = AppealOut['status_key'];
+export type AppealList = Json<paths['/v1/me/appeals']['get']['responses'][200]>;
+export type ComplaintOut = Json<paths['/v1/complaints']['post']['responses'][201]>;
+export type ComplaintCategory = ComplaintOut['category'];
+export type ComplaintList = Json<paths['/v1/me/complaints']['get']['responses'][200]>;

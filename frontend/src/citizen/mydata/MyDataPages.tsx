@@ -22,12 +22,14 @@ import { ConsentCard, knownScopes, SCOPE_ICON, scopeKey, ScopeChips } from './pa
 
 // The access log, corrections, export, erasure and helpers: a second lazy chunk, so consents load first.
 const MoreData = lazyRoute<{ parts: readonly string[] }>(() => import('./MoreData'));
+const ReportPages = lazyRoute<{ view: 'complaints' }>(() => import('../report/ReportPages'));
 
 const MORE_LINKS: ReadonlyArray<{ path: string; icon: PictogramName; label: Key; ownOnly: boolean }> = [
   { path: 'access', icon: 'lock', label: 'mydata_open_access', ownOnly: false },
   { path: 'fix', icon: 'edit', label: 'mydata_open_fix', ownOnly: false },
   { path: 'download', icon: 'document', label: 'mydata_open_download', ownOnly: false },
   { path: 'requests', icon: 'clock', label: 'mydata_open_requests', ownOnly: false },
+  { path: 'complaints', icon: 'message', label: 'cp_list_title', ownOnly: false },
   { path: 'helpers', icon: 'person-help', label: 'mydata_open_helpers', ownOnly: true },
   { path: 'delete', icon: 'delete', label: 'mydata_open_delete', ownOnly: true },
 ];
@@ -173,6 +175,9 @@ function MyDataList() {
       ) : null}
 
       <MoreSection />
+      <Button size="md" variant="secondary" icon="warning" block onClick={() => route('/report')}>
+        {t('home_report')}
+      </Button>
 
       <Button size="md" variant="quiet" icon="home" block onClick={() => route('/')} class="mt-auto">
         {t('go_home')}
@@ -431,6 +436,7 @@ function AgainScreen({ consent }: { consent: ConsentOut }) {
 export default function MyDataPages({ parts }: { parts: readonly string[] }) {
   const [id, action, ...extra] = parts;
   if (id === undefined) return <MyDataList />;
+  if (id === 'complaints') return <ReportPages view="complaints" />;
   if (id === 'access' || id === 'fix' || id === 'download' || id === 'requests' || id === 'helpers' || id === 'delete') {
     return <MoreData parts={parts} />;
   }

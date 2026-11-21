@@ -48,7 +48,6 @@ export const ur: Dict = {
   login_checking: 'جانچ ہو رہی ہے۔ تھوڑا انتظار کریں۔',
   login_wrong: 'فون نمبر یا پن کوڈ درست نہیں ہے۔ دوبارہ کوشش کریں۔',
   login_locked: 'بہت بار غلط ہو گیا۔ تھوڑی دیر بعد کوشش کریں، یا کسی مددگار سے پوچھیں۔',
-  login_change_phone: 'نمبر بدلیں',
   keypad_delete: 'مٹائیں',
   keypad_done: 'ٹھیک ہے',
   keypad_label: 'نمبر والے بٹن',
@@ -226,6 +225,8 @@ export const ur: Dict = {
   sym_kite: 'پتنگ',
   sym_bell: 'گھنٹی',
 
+  home_report: 'ہمیں مسئلہ بتائیں',
+  appeal_ask: 'کسی شخص سے دوبارہ دیکھنے کو کہیں',
   home_scam: 'پیغام چیک کریں',
   home_my_data: 'میری معلومات',
   warn_title: 'خبردار رہیں',

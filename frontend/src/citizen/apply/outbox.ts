@@ -71,7 +71,20 @@ export interface SubmitOp extends OpBase {
   kind: 'submit';
   key: string;
 }
-export type Op = ConsentOp | CreateOp | PatchOp | UploadOp | SubmitOp;
+/** A request to look at a rejected application again (WP-F). `app` is the application; `text` the reason as staff read it. */
+export interface AppealOp extends OpBase {
+  kind: 'appeal';
+  key: string;
+  text: string;
+}
+/** A complaint or report. */
+export interface ComplaintOp extends OpBase {
+  kind: 'complaint';
+  key: string;
+  category: 'service' | 'staff' | 'scam_attempt' | 'payment' | 'other';
+  text: string;
+}
+export type Op = ConsentOp | CreateOp | PatchOp | UploadOp | SubmitOp | AppealOp | ComplaintOp;
 export type OpKind = Op['kind'];
 
 export type Outcome =
@@ -183,6 +196,11 @@ export function enqueueUpload(app: string | null, docKind: DocumentKind, photo: 
 export function enqueueSubmit(app: string | null, key: string): SubmitOp {
   const existing = ops.peek().find((op): op is SubmitOp => op.kind === 'submit' && op.app === app);
   return existing ?? (enqueue({ ...base(app), kind: 'submit', key }) as SubmitOp);
+}
+
+/** An appeal or a complaint. Its own Idempotency-Key is made by the caller once, so every try is the same request. */
+export function enqueueReport(op: Omit<AppealOp, keyof OpBase> | Omit<ComplaintOp, keyof OpBase>, app: string | null): Op {
+  return enqueue({ ...base(app), ...op } as Op);
 }
 
 /** Point waiting ops at the application once the create op has made it. */

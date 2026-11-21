@@ -50,7 +50,6 @@ export const en = {
   login_checking: 'Checking. Please wait.',
   login_wrong: 'The phone number or PIN is not right. Please try again.',
   login_locked: 'Too many wrong tries. Wait a little and try again, or ask a helper.',
-  login_change_phone: 'Change number',
   keypad_delete: 'Delete',
   keypad_done: 'Done',
   keypad_label: 'Number buttons',
@@ -228,6 +227,8 @@ export const en = {
   sym_kite: 'kite',
   sym_bell: 'bell',
 
+  home_report: 'Tell us about a problem',
+  appeal_ask: 'Ask a person to look again',
   home_scam: 'Check a message',
   home_my_data: 'My information',
   warn_title: 'Be careful',

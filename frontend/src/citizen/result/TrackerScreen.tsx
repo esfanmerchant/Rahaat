@@ -1,4 +1,5 @@
-import type { ComponentChildren } from 'preact';
+import type { ComponentChildren, ComponentType } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import type { ApplicationOut, DocumentView } from '../../shared/api/types';
 import { Button } from '../../shared/components/Button';
@@ -11,12 +12,12 @@ import { PaperStar, SectionTitle } from '../JourneyPath';
 import { PhotoButtons, PhotoPreview } from '../apply/PhotoParts';
 import { usePhotoUpload } from '../apply/usePhotoUpload';
 import { CitizenShell } from '../CitizenShell';
-import { formatDate, statusIcon, statusKey, useApplication, type Loaded } from './data';
+import { appealNow, formatDate, statusIcon, statusKey, useApplication, type Loaded } from './data';
 import { ExplanationText, proofKindFor } from './ResultScreen';
 import { TrackingCode } from './TrackingCode';
 
 /** Loading, error and empty states shared by the screens that show one application. */
-function WithApplication({ loaded, reload, children }: { loaded: Loaded; reload: () => void; children: (app: ApplicationOut) => ComponentChildren }) {
+export function WithApplication({ loaded, reload, children }: { loaded: Loaded; reload: () => void; children: (app: ApplicationOut) => ComponentChildren }) {
   const { route } = useLocation();
   if (loaded.state === 'ready') return <>{children(loaded.app)}</>;
   return (
@@ -32,6 +33,15 @@ function WithApplication({ loaded, reload, children }: { loaded: Loaded; reload:
       ) : null}
     </CitizenShell>
   );
+}
+
+/** An appeal's status as a star, or the way to ask again. Its chunk loads after the tracker, never before it. */
+function AppealSection({ app }: { app: ApplicationOut }) {
+  const [Part, setPart] = useState<ComponentType<{ app: ApplicationOut }> | null>(null);
+  useEffect(() => {
+    void import('../report/ReportPages').then((m) => setPart(() => m.TrackAppeal)).catch(() => undefined);
+  }, []);
+  return Part ? <Part app={app} /> : null;
 }
 
 /** Tracker (PLAN D1.4): the tracking code, the status timeline and the latest explanation. */
@@ -86,7 +96,7 @@ function Tracker({ app }: { app: ApplicationOut }) {
               return (
                 <li key={`${item.at}-${index}`} class="flex gap-4" aria-current={last ? 'step' : undefined}>
                   <div class="flex flex-col items-center">
-                    <PaperStar now={last}>
+                    <PaperStar now={last && !appealNow.value}>
                       <Pictogram name={statusIcon(item.status)} size={26} />
                     </PaperStar>
                     {last ? null : <span class="min-h-4 w-1 flex-1 rounded-full bg-primary/40" aria-hidden="true" />}
@@ -103,6 +113,8 @@ function Tracker({ app }: { app: ApplicationOut }) {
           </ol>
         </section>
       ) : null}
+
+      {app.status === 'rejected' || app.status === 'approved' || app.status === 'paid' ? <AppealSection app={app} /> : null}
 
       <div class="mt-auto flex flex-col gap-3">
         {app.status === 'needs_proof' ? (
