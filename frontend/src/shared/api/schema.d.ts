@@ -1983,6 +1983,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Appeal a rejection (within 30 days, once per decision); opens a case for a different officer */
+        post: operations["create_appeal_v1_appeals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** File a complaint about service, staff, a payment or a scam attempt; opens a case */
+        post: operations["create_complaint_v1_complaints_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My appeals, newest first, with keyed text in English and Urdu */
+        get: operations["my_appeals_v1_me_appeals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My complaints and where each one stands */
+        get: operations["my_complaints_v1_me_complaints_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6529,6 +6597,108 @@ export interface components {
             /** Reject */
             reject: number;
         };
+        AppealCreate: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /**
+             * Reason
+             * @description Why the person disagrees, in their own words (a few sentences)
+             */
+            reason: string;
+        };
+        AppealList: {
+            /** Items */
+            items: components["schemas"]["AppealOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        AppealOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Created At */
+            created_at: string;
+            /** Due At */
+            due_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** @description Keyed text in English and Urdu; the app also plays the matching audio */
+            message: components["schemas"]["KeyedText"];
+            /** Reason */
+            reason?: string | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "upheld" | "overturned" | "withdrawn";
+            /**
+             * Status Key
+             * @enum {string}
+             */
+            status_key: "being_checked" | "first_answer_stays" | "approved_after_appeal" | "withdrawn";
+            /** Tracking Code */
+            tracking_code?: string | null;
+        };
+        ComplaintCreate: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "service" | "staff" | "scam_attempt" | "payment" | "other";
+            /**
+             * Details
+             * @description Optional: what happened, in a few sentences
+             */
+            details?: string | null;
+        };
+        ComplaintList: {
+            /** Items */
+            items: components["schemas"]["ComplaintOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        ComplaintOut: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "service" | "staff" | "scam_attempt" | "payment" | "other";
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            message: components["schemas"]["KeyedText"];
+            /** Outcome */
+            outcome?: ("resolved" | "closed") | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "received" | "being_checked" | "resolved";
+        };
+        KeyedText: {
+            /** En */
+            en: string;
+            /** Key */
+            key: string;
+            /** Ur */
+            ur: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -10565,6 +10735,160 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    create_appeal_v1_appeals_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A repeat with the same key returns the first result */
+                "Idempotency-Key"?: string | null;
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_complaint_v1_complaints_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A repeat with the same key returns the first result */
+                "Idempotency-Key"?: string | null;
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_appeals_v1_me_appeals_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_complaints_v1_me_complaints_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
