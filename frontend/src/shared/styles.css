@@ -227,3 +227,18 @@
     }
   }
 }
+
+/* The scam shield's scanning line sweeps top to bottom and back. */
+@layer components {
+  .rh-sweep {
+    animation: rh-sweep 1.4s var(--ease-in-out) infinite alternate;
+  }
+  @keyframes rh-sweep {
+    from {
+      transform: translateY(4px);
+    }
+    to {
+      transform: translateY(88px);
+    }
+  }
+}
