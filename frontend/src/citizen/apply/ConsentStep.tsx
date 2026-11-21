@@ -4,6 +4,7 @@ import type { ApiFailure } from '../../shared/api/problem';
 import { Button } from '../../shared/components/Button';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { t, type MessageKey } from '../../shared/i18n';
+import { go } from '../../shared/routing';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { CitizenShell } from '../CitizenShell';
 import { consentNeeded, draft, firstOpenStep, giveConsent, stepPath } from './flow';
@@ -41,7 +42,7 @@ export function ConsentStep() {
     // the consent waits on the phone and is sent first when the network is back.
     if (result.data.queued) sayKey('outbox_stored');
     const d = draft.peek();
-    route(stepPath(d ? firstOpenStep(d) : 'card'));
+    go(route, stepPath(d ? firstOpenStep(d) : 'card'));
   };
 
   return (

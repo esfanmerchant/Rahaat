@@ -2,6 +2,7 @@ import { useLocation } from 'preact-iso';
 import { Button } from '../../shared/components/Button';
 import { Pictogram } from '../../shared/components/Pictogram';
 import { t, type MessageKey } from '../../shared/i18n';
+import { go } from '../../shared/routing';
 import { cardPhotoStored, documentMessage, draft, MAX_CARD_TRIES, nextStep, stepPath } from './flow';
 import { InlineFailure, NextButton, Notice, sayKey, StepLayout } from './parts';
 import { PhotoButtons, PhotoPreview } from './PhotoParts';
@@ -38,7 +39,7 @@ export function CardStep() {
   const card = d?.card ?? 'none';
   const next = (): void => {
     const current = draft.peek();
-    if (current) route(stepPath(nextStep(current, 'card')));
+    if (current) go(route, stepPath(nextStep(current, 'card')));
   };
   const take = (file: File | undefined): void => void upload.choose(file);
 

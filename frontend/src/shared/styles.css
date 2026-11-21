@@ -53,9 +53,22 @@
     color: var(--color-ink-muted);
   }
 
-  /* Route changes cross-fade with a small rise (View Transitions API; browsers without it just swap). */
+  /* Route changes slide in the reading direction (View Transitions API; browsers without it just swap).
+     --rh-sign is +1 for forward in English, -1 in Urdu, and flips when going back. */
+  :root {
+    --rh-sign: 1;
+  }
+  :root[dir="rtl"] {
+    --rh-sign: -1;
+  }
+  :root[data-nav="back"] {
+    --rh-sign: -1;
+  }
+  :root[dir="rtl"][data-nav="back"] {
+    --rh-sign: 1;
+  }
   ::view-transition-old(root) {
-    animation: rh-vt-out 180ms var(--ease-in-out) both;
+    animation: rh-vt-out 200ms var(--ease-in-out) both;
   }
   ::view-transition-new(root) {
     animation: rh-vt-in 380ms var(--ease-out) both;
@@ -63,13 +76,13 @@
   @keyframes rh-vt-out {
     to {
       opacity: 0;
-      transform: translateY(-6px);
+      transform: translateX(calc(var(--rh-sign) * -28px));
     }
   }
   @keyframes rh-vt-in {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateX(calc(var(--rh-sign) * 28px));
     }
   }
 
@@ -193,6 +206,24 @@
     to {
       opacity: 1;
       transform: scale(1);
+    }
+  }
+}
+
+/* A chosen answer springs up and shows a ring. */
+@layer components {
+  .rh-select {
+    animation: rh-select 480ms var(--ease-spring) both;
+    box-shadow: 0 0 0 4px rgb(11 106 70 / 0.22);
+  }
+  @keyframes rh-select {
+    from {
+      transform: scale(0.94);
+      box-shadow: 0 0 0 0 rgb(11 106 70 / 0.5);
+    }
+    to {
+      transform: none;
+      box-shadow: 0 0 0 4px rgb(11 106 70 / 0.22);
     }
   }
 }

@@ -12,6 +12,7 @@ import { Pictogram, type PictogramName } from '../shared/components/Pictogram';
 import { SoundToggle } from '../shared/components/SoundToggle';
 import { Spinner } from '../shared/components/Spinner';
 import { lang, LANGUAGES, setLang, t, type Lang, type MessageKey } from '../shared/i18n';
+import { go } from '../shared/routing';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
 import { endActing } from './actingControl';
 import { Journey } from './Journey';
@@ -99,11 +100,11 @@ export function HomeScreen({ user }: { user: AuthUser }) {
       <p class="text-lg text-ink-muted">{t(hint)}</p>
 
       {hasOpen ? (
-        <Button size="hero" icon="clock" block onClick={() => route('/track')}>
+        <Button size="hero" icon="clock" block onClick={() => go(route, '/track')}>
           {t('home_see_application')}
         </Button>
       ) : (
-        <Button size="hero" icon="document" block onClick={() => route('/apply')}>
+        <Button size="hero" icon="document" block onClick={() => go(route, '/apply')}>
           {t(hasDraft ? 'home_continue' : 'home_apply')}
         </Button>
       )}
@@ -118,10 +119,10 @@ export function HomeScreen({ user }: { user: AuthUser }) {
       )}
 
       <div class="grid grid-cols-2 gap-3 [&>:last-child:nth-child(odd)]:col-span-2">
-        {hasSent && !hasOpen ? <Tile icon="clock" label={t('home_see_application')} onClick={() => route('/track')} /> : null}
-        <Tile icon="shield" label={t('home_scam')} onClick={() => route('/scam')} />
-        <Tile icon="message" label={t('home_rules')} onClick={() => route('/rules')} />
-        {isCitizen ? <Tile icon="lock" label={t('home_my_data')} onClick={() => route('/my-data')} /> : null}
+        {hasSent && !hasOpen ? <Tile icon="clock" label={t('home_see_application')} onClick={() => go(route, '/track')} /> : null}
+        <Tile icon="shield" label={t('home_scam')} onClick={() => go(route, '/scam')} />
+        <Tile icon="message" label={t('home_rules')} onClick={() => go(route, '/rules')} />
+        {isCitizen ? <Tile icon="lock" label={t('home_my_data')} onClick={() => go(route, '/my-data')} /> : null}
         {family ? <Tile icon="person-help" label={t('helper_change')} onClick={() => void endActing('done')} /> : null}
       </div>
 
