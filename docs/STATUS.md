@@ -90,6 +90,12 @@ Track D2
 
 **Gate 3**: every item passes its check or is `HIDDEN`.
 
+## Optional host: Vercel (track/vercel)
+
+- [x] Settings `JOBS_MODE`, `MOCKS_IN_PROCESS`, `CLIENT_IP_HEADER`, `STARTUP_WARMUP`, `CRON_SECRET` (defaults unchanged), tests, anchor flow proven over HTTP in this mode locally
+- [x] `api/index.py`, `vercel.json`, `.vercelignore`, `requirements.txt` generator, `deploy/vercel/` env script and README
+- [ ] Not deployed: no Vercel account used. SIMULATED until the first real deploy (rewrite path handling, bundle size, bom1 to Supabase latency unverified)
+
 ## Integration and submission
 
 - [ ] E1 Merge loop running  - [ ] E2 Demo fixtures and reset  - [ ] E3 End-to-end tests  - [ ] E4 Docs and reports

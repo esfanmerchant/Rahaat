@@ -47,6 +47,8 @@ class IntegrationSettings(BaseSettings):
     def transport_effective(self) -> Literal["inprocess", "http"]:
         if self.transport != "auto":
             return self.transport
+        if get_settings().mocks_in_process:
+            return "inprocess"
         return "inprocess" if get_settings().defaults_allowed else "http"
 
     def timeout_for(self, service: str) -> float:

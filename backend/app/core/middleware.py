@@ -7,11 +7,13 @@ import time
 import uuid
 from typing import Any
 
+from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core import metrics
-from app.core.context import client_ip_var, request_id_var
+from app.core.config import get_settings
+from app.core.context import client_ip_var, jobs_holder_var, request_id_var
 from app.core.errors import mark_logged, problem
 from app.core.logging import get_logger
 
@@ -35,6 +37,19 @@ _NO_CACHE_FILES = ("/", "/index.html", "/sw.js", "/registerSW.js", "/manifest.we
 
 class _BodyTooLarge(Exception):
     pass
+
+
+def _client_ip(headers: dict[str, str], client: Any, header_name: str | None) -> str:
+    """The ASGI peer address, unless CLIENT_IP_HEADER names a header the hosting platform sets itself.
+
+    Only set it where the platform overwrites that header on every request (Vercel does for x-vercel-forwarded-for,
+    x-real-ip and x-forwarded-for). Anywhere else a client could send its own value and dodge the per-address limits.
+    """
+    if header_name:
+        value = headers.get(header_name.strip().lower(), "").split(",")[0].strip()
+        if value and len(value) <= 64:
+            return value
+    return str(client[0]) if client else ""
 
 
 def _cache_control(path: str) -> str | None:
@@ -61,8 +76,12 @@ class RequestContextMiddleware:
         inbound = headers.get("x-request-id", "")
         request_id = inbound if _SAFE_REQUEST_ID.match(inbound) else uuid.uuid4().hex[:20]
         client = scope.get("client")
+        settings = get_settings()
         rid_token = request_id_var.set(request_id)
-        ip_token = client_ip_var.set(client[0] if client else "")
+        ip_token = client_ip_var.set(_client_ip(headers, client, settings.client_ip_header))
+        # Inline jobs: a sync endpoint cannot set a context variable for us, so it marks this shared holder instead.
+        holder: dict[str, bool] | None = {"enqueued": False} if settings.jobs_inline else None
+        holder_token = jobs_holder_var.set(holder)
 
         path: str = scope["path"]
         method: str = scope["method"]
@@ -87,6 +106,13 @@ class RequestContextMiddleware:
                 cache = _cache_control(path)
                 if cache and "cache-control" not in out:
                     out["Cache-Control"] = cache
+            elif holder is not None and holder["enqueued"] and message["type"] == "http.response.body" and not message.get("more_body"):
+                # Serverless: the endpoint has committed, so run what it queued before the last byte leaves. A function
+                # may be frozen once the response is complete, and the platform documents no way to run work after it.
+                holder["enqueued"] = False
+                from app.modules.jobs.inline import drain
+
+                await run_in_threadpool(drain)
             await send(message)
 
         received = 0
@@ -128,3 +154,4 @@ class RequestContextMiddleware:
             )
             request_id_var.reset(rid_token)
             client_ip_var.reset(ip_token)
+            jobs_holder_var.reset(holder_token)

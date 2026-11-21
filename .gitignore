@@ -45,3 +45,6 @@ AI_Hackathon_*.pdf
 .wt/
 # live demo on this PC: release worktree, database, logs, secrets (deploy/local/live.ps1)
 .live/
+
+# vercel
+.vercel/

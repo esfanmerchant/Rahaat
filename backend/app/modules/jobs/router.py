@@ -2,26 +2,30 @@
 
 from __future__ import annotations
 
+import hmac
 import uuid
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select, tuple_
 from sqlalchemy.orm import Session
 
 from app.contracts.common import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, Page, Strict
 from app.core import audit
+from app.core.config import get_settings
 from app.core.deps import Principal, get_db
-from app.core.errors import Conflict, NotFound
-from app.core.policy import Policy
+from app.core.errors import Conflict, NotFound, Unauthorized
+from app.core.policy import Policy, Public
 from app.db import models
 from app.modules.cases import paging
-from app.modules.jobs import service
+from app.modules.jobs import inline, service
 
 router = APIRouter(prefix="/v1/admin/jobs", tags=["admin: jobs"])
 _read = Policy("jobs:read", ["admin"], description="The background job queue of this department")
 _retry = Policy("jobs:retry", ["admin"], description="Give a dead job a fresh set of attempts (audited)")
+
+_drain = Public("Vercel Cron: the bearer CRON_SECRET is the credential; the endpoint is off while CRON_SECRET is unset")
 
 JobStatus = Literal["queued", "running", "done", "failed", "dead", "cancelled"]
 
@@ -94,3 +98,18 @@ def retry_job(job_id: uuid.UUID, body: JobRetryIn, principal: Principal = Depend
                 object_type="job", object_id=job.id, reason=body.reason, details={"kind": job.kind})  # fmt: skip
     db.commit()
     return _out(job)
+
+
+class DrainOut(BaseModel):
+    ran: int = Field(description="Jobs run by this call")
+
+
+@router.get("/drain", response_model=DrainOut, summary="Run due jobs now (Vercel Cron; bearer CRON_SECRET)")
+def drain_jobs(authorization: str | None = Header(default=None), _: None = Depends(_drain)) -> DrainOut:
+    secret = get_settings().cron_secret
+    if not secret:
+        raise NotFound()  # the endpoint does not exist unless a cron secret is configured
+    expected = f"Bearer {secret}".encode()
+    if not authorization or not hmac.compare_digest(authorization.encode(), expected):
+        raise Unauthorized()
+    return DrainOut(ran=inline.drain())

@@ -48,6 +48,9 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
         # Stay up so /healthz answers and /readyz can report the real problem.
         log.exception("startup bootstrap failed; is the database migrated and reachable?")
     hooks = _lifecycle_modules()
+    if not get_settings().startup_warmup:
+        # Serverless cold start: models, OCR and the corpus load on first use instead of delaying the first request.
+        hooks = [(name, module) for name, module in hooks if name == "jobs"]
     for name, module in hooks:
         try:
             getattr(module, "startup", lambda: None)()
