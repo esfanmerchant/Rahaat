@@ -169,7 +169,7 @@ export function LoginScreen() {
         </p>
       ) : null}
 
-      {isPhone ? <PhoneDisplay local={local} /> : <PinDisplay length={pin.length} local={local} />}
+      {isPhone ? <PhoneDisplay local={local} noted={notice?.key === 'phone_not_mock'} /> : <PinDisplay length={pin.length} local={local} />}
 
       {notice ? (
         <div role="alert" class="flex items-start gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
@@ -208,7 +208,7 @@ export function LoginScreen() {
   );
 }
 
-function PhoneDisplay({ local }: { local: string }) {
+function PhoneDisplay({ local, noted }: { local: string; noted: boolean }) {
   const refused = checkPhone(local) === 'not_mock';
   return (
     <div class="flex flex-col gap-2">
@@ -216,7 +216,7 @@ function PhoneDisplay({ local }: { local: string }) {
         {t('login_phone_label')}
       </p>
       <PhoneSlots digits={local} labelledBy="phone-label" invalid={refused} />
-      {refused ? (
+      {refused && !noted ? (
         <p class="flex items-center gap-2 text-base font-semibold text-danger">
           <Pictogram name="warning" size={24} />
           {t('phone_not_mock')}

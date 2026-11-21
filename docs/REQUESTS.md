@@ -90,3 +90,9 @@ From: Track D2   To: Track A (cases)   Status: open
 What: (1) `GET /v1/cases?q=` matching the application's tracking code (`R-12345`), the case id prefix and the subject name; `CaseSummary` would carry `tracking_code`. (2) optional `total` (an exact count) on the case, decision, payment and scam-report lists, or a small `GET /v1/stats/today`.
 Why: the command palette promises "open a case by id or tracking code", but staff cannot see a tracking code today, so it matches id, application id and name from the first 100 cases only. The pulse strip counts one page of up to 100 rows and shows a plus sign beyond that.
 Until then: the palette and pulse use the existing list endpoints and say so in their hints.
+
+## Paid application: the amount and the verify code as fields
+From: Track D1   To: Track A (cases, payments)   Status: open
+What: `ApplicationOut` (and `ApplicationSummary`) would carry, once paid, `payment: { amount_pkr, paid_at, verify_code }` (null before). Today the citizen app reads `GET /v1/notifications`, takes the `payment_sent` message, finds its `verify_code` and reads the amount as the first number in the message text.
+Why: parsing a sentence is fragile (a changed template breaks the "Paid" card on home) and the citizen cannot call `/v1/payments`.
+Until then: the Paid card shows the amount only when that number is found, never a guessed one.

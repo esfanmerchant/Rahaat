@@ -90,8 +90,8 @@ export function StepLayout({ step, prompt, speech, icon, title, busy = false, ch
   return (
     <CitizenShell onBack={busy ? undefined : back} prompt={prompt} speech={speech} progress={<ProgressDots step={step} />} pane={{ kind: 'apply', step }}>
       <div class="flex items-center gap-4">
-        <span class="grid size-20 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-          <Pictogram name={icon} size={56} />
+        <span class="grid size-16 shrink-0 place-items-center rounded-full bg-primary/10 text-primary lg:size-20">
+          <Pictogram name={icon} size={48} />
         </span>
         <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold lg:text-[1.75rem]">
           {title}

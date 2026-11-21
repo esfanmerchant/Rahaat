@@ -85,12 +85,14 @@ export function ContextPane({ spec }: { spec: PaneSpec }) {
   const signedIn = now.status === 'signed-in';
   const family = acting.value;
   const name = now.status !== 'signed-in' ? '' : family ? (lang.value === 'ur' && family.nameUr ? family.nameUr : family.name) : now.user.display_name;
+  // A helper has no application of their own: the journey and the questions belong to the family they act for.
+  const ownJourney = now.status === 'signed-in' && (now.active.role !== 'helper' || family !== null);
   const status = journeyStatus.value;
   const offline = !online.value;
 
   useEffect(() => {
-    if (signedIn) void ensureJourney();
-  }, [signedIn, family?.personId]);
+    if (ownJourney) void ensureJourney();
+  }, [ownJourney, family?.personId]);
 
   const hour = new Date().getHours();
   const greeting: MessageKey = hour < 12 ? 'greeting_morning' : hour < 17 ? 'greeting_afternoon' : 'greeting_evening';
@@ -127,11 +129,13 @@ export function ContextPane({ spec }: { spec: PaneSpec }) {
           <p class="max-w-sm text-xl text-night-muted">{t('program_tagline')}</p>
         )}
 
-        {signedIn && spec.kind === 'journey' ? (
+        {signedIn && !ownJourney ? <p class="max-w-sm text-xl text-night-muted">{t('program_tagline')}</p> : null}
+
+        {ownJourney && spec.kind === 'journey' ? (
           <StarPath items={JOURNEY_STEPS.map((s) => ({ key: s.key, label: s.key }))} done={shownDone} stopped={stopped} title="journey_title" />
         ) : null}
 
-        {signedIn && spec.kind === 'apply' ? (
+        {ownJourney && spec.kind === 'apply' ? (
           <>
             <div class="flex items-center gap-5">
               <span class="grid size-36 shrink-0 place-items-center rounded-full border-2 border-noor/60 bg-night-2 text-noor shadow-glow">
