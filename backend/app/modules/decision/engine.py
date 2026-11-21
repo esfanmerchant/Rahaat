@@ -149,6 +149,16 @@ def _settled_fact(fact: Fact, floor: float) -> bool:
     return fact.known and fact.verified and fact.confidence >= floor
 
 
+def identity_confirmed(facts: Mapping[str, Fact]) -> bool:
+    """Required for any automatic outcome, whatever the rule version says: we must know whose case it is."""
+    identity = facts.get("identity_verified", F.UNKNOWN_FACT)
+    return identity.known and identity.value is True and identity.verified
+
+
+def _approvable(scored: _Scored, floor: float) -> bool:
+    return identity_confirmed(scored.facts) and all(e.settled("pass", floor) for e in scored.evals if e.trace.hard)
+
+
 def _blocking_proof(inp: DecisionInput, scored: _Scored, floor: float) -> str | None:
     """The single document that would settle every hard rule standing in the way, or None."""
     needed: set[str] = set()
@@ -177,13 +187,16 @@ def silent_guess_violations(result: DecisionResult, floor: float | None = None) 
     problems: list[str] = []
     if result.guards:
         problems.append("guard_active")
+    if not identity_confirmed(result.facts):
+        problems.append("identity_not_verified")
     hard = [t for t in result.rule_trace if t.hard]
+    tolerance = 0.5 * 10**-PRECISION  # thresholds and probabilities are both rounded to PRECISION decimals
 
     def below_floor(trace_vars: Sequence[str]) -> bool:
         return any(result.facts.get(v, F.UNKNOWN_FACT).confidence < floor for v in trace_vars)
 
     if result.outcome == "approved":
-        if result.p_ok < result.thresholds.get("approve", 1.0):
+        if result.p_ok < result.thresholds.get("approve", 1.0) - tolerance:
             problems.append("below_approve_threshold")
         if any(t.result != "pass" or not t.verified_inputs for t in hard):
             problems.append("hard_rule_not_verified_pass")
@@ -194,10 +207,7 @@ def silent_guess_violations(result: DecisionResult, floor: float | None = None) 
                    and not below_floor([v for v in t.values_used if not v.startswith("param.")])]  # fmt: skip
         if not failing:
             problems.append("reject_without_verified_failure")
-        identity = result.facts.get("identity_verified", F.UNKNOWN_FACT)
-        if not (identity.known and identity.value is True and identity.verified):
-            problems.append("reject_identity_not_verified")
-        if round(1 - result.p_eligible, PRECISION) < result.thresholds.get("reject", 1.0):
+        if round(1 - result.p_eligible, PRECISION) < result.thresholds.get("reject", 1.0) - tolerance:
             problems.append("below_reject_threshold")
     else:
         problems.append("auto_without_outcome")
@@ -205,7 +215,10 @@ def silent_guess_violations(result: DecisionResult, floor: float | None = None) 
 
 
 def _reasons(action: str, guards: Sequence[str], evals: Sequence[RuleEvaluation], floor: float, approve_allowed: bool,
-             reject_allowed: bool, proof: str | None, p_ok: float, thresholds: Mapping[str, float]) -> list[str]:  # fmt: skip
+             reject_allowed: bool, proof: str | None, p_ok: float, thresholds: Mapping[str, float],
+             identity_ok: bool) -> list[str]:  # fmt: skip
+    # When no hard rule reads identity_verified, say so explicitly if it is what blocks an automatic outcome.
+    identity_confirmed_by_rules = identity_ok or any(e.trace.hard and "identity_verified" in e.variables for e in evals)
     rules: list[str] = []
     for e in evals:
         if not e.trace.hard or e.settled("pass", floor):
@@ -220,6 +233,8 @@ def _reasons(action: str, guards: Sequence[str], evals: Sequence[RuleEvaluation]
         else:
             rules.append(f"rule_failed.{e.rule_id}")
     out = [f"guard.{g}" for g in guards]
+    if not identity_confirmed_by_rules and action != "approve":
+        out.append("engine.identity_not_verified")
     if action == "approve":
         out += ["rules.all_hard_verified_pass", "cost.approve_cheapest"]
     elif action == "reject":
@@ -277,10 +292,9 @@ def decide(inp: DecisionInput, rules: RuleSetSnapshot, costs: CostMatrix, model:
     }
 
     hard = [e for e in scored.evals if e.trace.hard]
-    approve_allowed = all(e.settled("pass", floor) for e in hard)
+    approve_allowed = _approvable(scored, floor)
     failing = [e for e in hard if e.settled("fail", floor)]
-    identity = scored.facts["identity_verified"]
-    reject_allowed = bool(failing) and identity.known and identity.value is True and identity.verified
+    reject_allowed = bool(failing) and identity_confirmed(scored.facts)
 
     expected: dict[str, float] = {"human": human}
     if approve_allowed:
@@ -291,8 +305,7 @@ def decide(inp: DecisionInput, rules: RuleSetSnapshot, costs: CostMatrix, model:
     ask_detail: dict[str, float] = {}
     if proof is not None:
         cf = _score(counterfactual(inp, proof, params), dsl, model)
-        cf_approve = all(e.settled("pass", floor) for e in cf.evals if e.trace.hard)
-        after = min(_r((1 - cf.p_ok) * costs.wrong_approve), human) if cf_approve else human
+        after = min(_r((1 - cf.p_ok) * costs.wrong_approve), human) if _approvable(cf, floor) else human
         q = _r(min(1.0, p_ok / cf.p_ok)) if cf.p_ok > 0 else 0.0
         expected["ask_proof"] = _r(costs.ask_proof + costs.delay_per_day * proof_days + q * after + (1 - q) * human)
         ask_detail = {"p_ok_if_confirmed": cf.p_ok, "q_confirms": q}
@@ -303,7 +316,9 @@ def decide(inp: DecisionInput, rules: RuleSetSnapshot, costs: CostMatrix, model:
         action = "human"
     route, outcome = ROUTES[action]
     ask_proof = proof if action == "ask_proof" else None
-    reasons = _reasons(action, guards, scored.evals, floor, approve_allowed, reject_allowed, proof, p_ok, thresholds)
+    reasons = _reasons(
+        action, guards, scored.evals, floor, approve_allowed, reject_allowed, proof, p_ok, thresholds, identity_confirmed(scored.facts)
+    )
     blockers = [e for e in hard if not e.settled("pass", floor)]
 
     def build(route_: str, outcome_: str, reasons_: list[str], ask_: str | None) -> DecisionResult:

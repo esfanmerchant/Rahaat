@@ -301,3 +301,15 @@ def test_rule_change_changes_the_outcome_of_the_same_input() -> None:
     v2 = decide(inp, rules_with(income_cap=20_000), CostMatrix(), model)
     assert v1.outcome == "approved" and v2.outcome != "approved"
     assert {t.rule_id: t.result for t in v2.rule_trace}["income_cap"] == "fail"
+
+
+def test_no_automatic_outcome_without_a_confirmed_identity_even_if_the_rules_forget_it() -> None:
+    dsl = copy.deepcopy(RULES_V1)
+    dsl["all"] = [r for r in dsl["all"] if r["id"] != "identity_verified"]
+    rules = RuleSetSnapshot(rule_version_id="no-identity-rule", version_no=3, dsl=dsl)
+    unconfirmed = base_input(identity=IdentityCheck(status="partial", name_score=0.7))
+    result = decide(unconfirmed, rules, CostMatrix(), FixedModel(0.999, 0.999))
+    assert result.route == "human" and "engine.identity_not_verified" in result.reasons
+    over_cap = base_input(identity=None, registry=registry(verified_income_pkr=90_000))
+    assert decide(over_cap, rules, CostMatrix(), FixedModel(0.0, 0.999)).outcome != "rejected"
+    assert decide(base_input(), rules, CostMatrix(), FixedModel(0.999, 0.999)).outcome == "approved"
