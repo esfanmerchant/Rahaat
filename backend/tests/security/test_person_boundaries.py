@@ -13,7 +13,7 @@ from sqlalchemy import select
 
 from app.core import apikeys
 from app.core.db import system_session
-from app.core.security import decode_access_token
+from app.core.security import decode_access_token, hash_secret
 from app.db import models
 from app.modules.cases import testing as case_data
 from tests.security import support
@@ -31,7 +31,17 @@ def neighbour(world: World) -> dict[str, Any]:
     with system_session() as db:
         consent_id = db.scalar(select(models.Consent.id).where(models.Consent.person_id == account.person_id))
     session_id = decode_access_token(world.factory.login(world.client, account)["access_token"]).session_id
-    ids = {"application_id": application_id, "consent_id": consent_id, "session_id": session_id}
+    helper = world.factory.account(world.a.tenant, "helper")
+    with system_session() as db:
+        report = models.ScamReport(id=uuid.uuid4(), tenant_id=world.a.tenant_id, reporter_person_id=account.person_id, channel="text",
+                                   text_redacted="[neighbour's report]", text_hash="1" * 64, label="unknown", confidence=0.5,
+                                   route="human", classification={"source": "security"})  # fmt: skip
+        delegation = models.HelperDelegation(id=uuid.uuid4(), tenant_id=world.a.tenant_id, helper_user_id=helper.user_id,
+                                             person_id=account.person_id, scopes=["track"], pin_hash=hash_secret(support.FAMILY_PIN),
+                                             expires_at=datetime.now(UTC) + timedelta(days=1))  # fmt: skip
+        db.add_all([report, delegation])
+    ids = {"application_id": application_id, "consent_id": consent_id, "session_id": session_id, "report_id": report.id,
+           "delegation_id": delegation.id}
     return {"account": account, "ids": ids, "markers": {str(v) for v in ids.values()} | {str(account.person_id)}}
 
 
@@ -48,6 +58,7 @@ def test_a_citizen_cannot_reach_another_persons_records(world: World, neighbour:
 
 
 def test_a_helper_reaches_only_the_families_that_delegated_to_them(world: World, neighbour: dict[str, Any]) -> None:
+    # A real ticket for the family that did delegate, pointed at the neighbour's person: the delegation check comes first.
     helper = {**world.headers(world.a, "helper"), "X-Acting-For": str(neighbour["account"].person_id)}
     heads = support.audit_heads(world.a)
     for method, path in (("GET", "/v1/me/person"), ("GET", "/v1/applications"), ("GET", "/v1/consents"),
@@ -61,6 +72,9 @@ def test_a_helper_reaches_only_the_families_that_delegated_to_them(world: World,
 
     own_family = world.client.get("/v1/me/person", headers=world.headers(world.a, "helper"))
     assert own_family.status_code == 200, "the helper still reaches the family that did delegate"
+    no_ticket = {k: v for k, v in world.headers(world.a, "helper").items() if k != "X-Helper-Ticket"}
+    refused = world.client.get("/v1/me/person", headers=no_ticket)
+    assert refused.status_code == 403 and refused.json()["code"] == "ticket_required", "a delegation alone is not enough: the PIN comes first"
 
 
 def test_withdrawal_stops_officers_helpers_and_api_keys_on_the_next_request(client: TestClient, factory: Any) -> None:
@@ -70,13 +84,17 @@ def test_withdrawal_stops_officers_helpers_and_api_keys_on_the_next_request(clie
     raw, prefix, digest = apikeys.generate()
     with system_session() as db:
         db.add(models.HelperDelegation(tenant_id=tenant.id, helper_user_id=helper.user_id, person_id=citizen.person_id,
-                                       scopes=["track", "apply", "upload"], expires_at=datetime.now(UTC) + timedelta(days=1)))  # fmt: skip
+                                       scopes=["track", "apply", "upload"], pin_hash=hash_secret(support.FAMILY_PIN),
+                                       expires_at=datetime.now(UTC) + timedelta(days=1)))  # fmt: skip
         db.add(models.ApiKey(id=uuid.uuid4(), tenant_id=tenant.id, name="NGO sync", prefix=prefix, key_hash=digest, scopes=["cases:read"],
                              rate_limit_per_min=100, expires_at=datetime.now(UTC) + timedelta(days=1)))  # fmt: skip
         consent_id = db.scalar(select(models.Consent.id).where(models.Consent.person_id == citizen.person_id))
+    helper_headers = factory.headers(client, helper)
+    switched = client.post("/v1/helper/switch", json={"person_id": str(citizen.person_id), "pin": support.FAMILY_PIN}, headers=helper_headers)
+    assert switched.status_code == 200, switched.text
     readers = {
         "officer": ("GET", f"/v1/cases/{case['case_id']}", factory.headers(client, officer)),
-        "helper": ("GET", "/v1/me/person", {**factory.headers(client, helper), "X-Acting-For": str(citizen.person_id)}),
+        "helper": ("GET", "/v1/me/person", {**helper_headers, "X-Acting-For": str(citizen.person_id), "X-Helper-Ticket": switched.json()["ticket"]}),
     }
     for who, (method, path, headers) in readers.items():
         assert client.request(method, path, headers=headers).status_code == 200, f"{who} reads while consent is active"
