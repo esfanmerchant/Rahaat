@@ -275,22 +275,29 @@ function Start-CloudflareTunnel {
     Initialize-Cloudflared
     $log = Join-Path $Logs 'tunnel.err.log'
     if (Test-Path $log) { Remove-Item $log -Force }
-    $tunnelId = Start-Background 'tunnel' $Cloudflared "tunnel --no-autoupdate --url http://127.0.0.1:$Port" $Live
-    $deadline = (Get-Date).AddSeconds(90)
-    $url = $null
-    while ((Get-Date) -lt $deadline) {
-        $text = Read-SharedText $log
-        $match = [regex]::Match($text, 'https://[a-z0-9-]+\.trycloudflare\.com')
-        if ($match.Success) { $url = $match.Value }
-        if ($url -and $text -match 'Registered tunnel connection') { break }
-        if (-not (Test-Alive $tunnelId)) { break }
-        Start-Sleep -Seconds 2
+    # The quick-tunnel service sometimes times out. Try a few times; an error message that names
+    # api.trycloudflare.com is not a tunnel URL, and a URL counts only once a connection is registered.
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        if (Test-Path $log) { Remove-Item $log -Force }
+        $tunnelId = Start-Background 'tunnel' $Cloudflared "tunnel --no-autoupdate --url http://127.0.0.1:$Port" $Live
+        $deadline = (Get-Date).AddSeconds(90)
+        $url = $null
+        $registered = $false
+        while ((Get-Date) -lt $deadline) {
+            $text = Read-SharedText $log
+            $match = [regex]::Match($text, 'https://(?!api\.)[a-z0-9-]+\.trycloudflare\.com')
+            if ($match.Success) { $url = $match.Value }
+            if ($url -and $text -match 'Registered tunnel connection') { $registered = $true; break }
+            if (-not (Test-Alive $tunnelId)) { break }
+            Start-Sleep -Seconds 2
+        }
+        if ($registered) { return @{ pid = $tunnelId; url = $url } }
+        if (Test-Alive $tunnelId) { Stop-ProcessTree $tunnelId }
+        Say "the tunnel did not come up (attempt $attempt of 3)"
+        Start-Sleep -Seconds (5 * $attempt)
     }
-    if (-not $url) {
-        Read-SharedText $log | Write-Host
-        throw 'the Cloudflare tunnel did not start; see .live\logs\tunnel.err.log'
-    }
-    return @{ pid = $tunnelId; url = $url }
+    Read-SharedText $log | Write-Host
+    throw 'the Cloudflare tunnel did not start; see .live\logs\tunnel.err.log'
 }
 
 function Start-TailscaleTunnel {

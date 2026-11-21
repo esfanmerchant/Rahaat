@@ -42,7 +42,14 @@ jobs:
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run mypy
-      - run: uv run pytest -q
+      - name: Tests
+        run: |
+          set -o pipefail
+          uv run pytest -q -rfE --tb=short 2>&1 | tee pytest.log
+      # Raw job logs need a signed-in GitHub account; annotations do not. Name the failing tests there.
+      - name: Name failing tests
+        if: failure()
+        run: grep -E "^(FAILED|ERROR) " pytest.log | head -10 | cut -c1-400 | sed 's/^/::error title=pytest::/' || true
 
   frontend:
     runs-on: ubuntu-latest

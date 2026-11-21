@@ -43,7 +43,7 @@ class VoiceSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), env_file_encoding="utf-8", extra="ignore", env_ignore_empty=True)
 
     gemini_api_key: str | None = None
-    gemini_stt_model: str = "gemini-2.5-flash"
+    gemini_stt_model: str = "gemini-3.8-flash"  # the id in Google's current generateContent audio examples (Nov 2026); override with GEMINI_STT_MODEL
     groq_api_key: str | None = None
     groq_stt_model: str = "whisper-large-v3"
     voice_max_audio_bytes: int = 1_000_000
