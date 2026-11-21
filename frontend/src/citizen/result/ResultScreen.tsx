@@ -153,6 +153,11 @@ export function ResultScreen() {
             {t('home_see_application')}
           </Button>
         )}
+        {outcome === 'rejected' && app.status === 'rejected' ? (
+          <Button size="lg" variant="secondary" icon="person-help" block onClick={() => route('/appeal')}>
+            {t('appeal_ask')}
+          </Button>
+        ) : null}
         {decision?.explanation.ask_a_person !== false ? (
           <Button size="lg" variant="secondary" icon="person-help" block onClick={() => route('/ask')}>
             {t('ask_person')}

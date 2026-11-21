@@ -24,6 +24,8 @@ const MyDataPages = lazyRoute<{ parts: readonly string[] }>(() => import('./myda
 // Helper Mode (the family list and the family PIN) and "ask about the rules" are lazy too.
 const HelperFamilies = lazyRoute<{ user: AuthUser }>(() => import('./helper/HelperFamilies'));
 const RulesScreen = lazyRoute<Record<string, never>>(() => import('./ask/RulesScreen'));
+// Ask a person to look again, and tell us about a problem: one lazy chunk (also used by "My complaints").
+const ReportPages = lazyRoute<{ view: 'appeal' | 'report' }>(() => import('./report/ReportPages'));
 
 function Restoring() {
   return (
@@ -80,6 +82,9 @@ function citizenPage(path: string) {
   switch (first) {
     case 'rules':
       return <RulesScreen />;
+    case 'appeal':
+    case 'report':
+      return <ReportPages view={first} />;
     case 'result':
       return <ResultScreen />;
     case 'track':

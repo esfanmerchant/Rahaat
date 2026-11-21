@@ -228,6 +228,8 @@ export const en = {
   sym_kite: 'kite',
   sym_bell: 'bell',
 
+  home_report: 'Tell us about a problem',
+  appeal_ask: 'Ask a person to look again',
   home_scam: 'Check a message',
   home_my_data: 'My information',
   warn_title: 'Be careful',
@@ -356,6 +358,8 @@ export const en = {
   outbox_start: 'Starting the application',
   outbox_submit: 'Sending the application',
   outbox_photo_saved: 'The photo is saved on this phone. It will be sent when the internet is back. You can go on.',
+  outbox_appeal: 'Asking a person to look again',
+  outbox_complaint: 'Your report',
   outbox_submit_saved: 'Your application is saved on this phone. It will be sent when the internet is back.',
 
   unlock_title: 'Type your PIN',

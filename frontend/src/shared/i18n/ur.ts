@@ -226,6 +226,8 @@ export const ur: Dict = {
   sym_kite: 'پتنگ',
   sym_bell: 'گھنٹی',
 
+  home_report: 'ہمیں مسئلہ بتائیں',
+  appeal_ask: 'کسی شخص سے دوبارہ دیکھنے کو کہیں',
   home_scam: 'پیغام چیک کریں',
   home_my_data: 'میری معلومات',
   warn_title: 'خبردار رہیں',
@@ -354,6 +356,8 @@ export const ur: Dict = {
   outbox_start: 'درخواست شروع کرنا',
   outbox_submit: 'درخواست بھیجنا',
   outbox_photo_saved: 'تصویر اس فون میں محفوظ ہے۔ انٹرنیٹ آتے ہی بھیج دی جائے گی۔ آپ آگے جا سکتے ہیں۔',
+  outbox_appeal: 'دوبارہ دیکھنے کی درخواست',
+  outbox_complaint: 'آپ کی شکایت',
   outbox_submit_saved: 'آپ کی درخواست اس فون میں محفوظ ہے۔ انٹرنیٹ آتے ہی بھیج دی جائے گی۔',
 
   unlock_title: 'اپنا پن کوڈ لکھیں',

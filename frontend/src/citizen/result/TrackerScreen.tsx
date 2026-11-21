@@ -1,4 +1,5 @@
-import type { ComponentChildren } from 'preact';
+import type { ComponentChildren, ComponentType } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import type { ApplicationOut, DocumentView } from '../../shared/api/types';
 import { Button } from '../../shared/components/Button';
@@ -32,6 +33,15 @@ function WithApplication({ loaded, reload, children }: { loaded: Loaded; reload:
       ) : null}
     </CitizenShell>
   );
+}
+
+/** An appeal's status as a star, or the way to ask again. Its chunk loads after the tracker, never before it. */
+function AppealSection({ app }: { app: ApplicationOut }) {
+  const [Part, setPart] = useState<ComponentType<{ app: ApplicationOut }> | null>(null);
+  useEffect(() => {
+    void import('../report/ReportPages').then((m) => setPart(() => m.TrackAppeal)).catch(() => undefined);
+  }, []);
+  return Part ? <Part app={app} /> : null;
 }
 
 /** Tracker (PLAN D1.4): the tracking code, the status timeline and the latest explanation. */
@@ -103,6 +113,8 @@ function Tracker({ app }: { app: ApplicationOut }) {
           </ol>
         </section>
       ) : null}
+
+      {app.status === 'rejected' || app.status === 'approved' || app.status === 'paid' ? <AppealSection app={app} /> : null}
 
       <div class="mt-auto flex flex-col gap-3">
         {app.status === 'needs_proof' ? (
