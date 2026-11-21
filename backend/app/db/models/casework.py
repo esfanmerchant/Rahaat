@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Boolean, Float, Index, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, Float, Index, Integer, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, CreatedMixin, IdMixin, TenantMixin, UpdatedMixin, fk, json_dict, ts
@@ -30,6 +30,8 @@ class Application(Base, IdMixin, TenantMixin, CreatedMixin, UpdatedMixin):
     __table_args__ = (
         UniqueConstraint("tenant_id", "client_op_id", name="uq_application_client_op"),
         Index("ix_applications_tenant_status", "tenant_id", "status"),
+        Index("uq_applications_tracking_code", "tenant_id", "tracking_code", unique=True,
+              postgresql_where=text("tracking_code IS NOT NULL")),
     )
     program_id: Mapped[uuid.UUID] = fk("programs.id")
     person_id: Mapped[uuid.UUID] = fk("persons.id", ondelete="CASCADE")

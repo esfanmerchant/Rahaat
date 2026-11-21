@@ -49,6 +49,32 @@
         "title": "ActiveOut",
         "type": "object"
       },
+      "AnomalyEvidence": {
+        "description": "Result of anomaly detection (Phase 3). A flagged case is a guard.",
+        "properties": {
+          "flagged": {
+            "title": "Flagged",
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "score",
+          "flagged"
+        ],
+        "title": "AnomalyEvidence",
+        "type": "object"
+      },
       "ApplicationCreate": {
         "additionalProperties": false,
         "properties": {
@@ -745,6 +771,7 @@
         "properties": {
           "file": {
             "contentMediaType": "application/octet-stream",
+            "description": "The photo. Its name and declared type are ignored.",
             "title": "File",
             "type": "string"
           },
@@ -1391,6 +1418,31 @@
         "title": "ConsentCreate",
         "type": "object"
       },
+      "ConsentNarrow": {
+        "additionalProperties": false,
+        "properties": {
+          "field_scopes": {
+            "items": {
+              "enum": [
+                "identity",
+                "contact",
+                "household",
+                "income",
+                "documents"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Field Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "field_scopes"
+        ],
+        "title": "ConsentNarrow",
+        "type": "object"
+      },
       "ConsentOut": {
         "properties": {
           "expires_at": {
@@ -1512,6 +1564,291 @@
           }
         },
         "title": "CostMatrix",
+        "type": "object"
+      },
+      "DecisionInput": {
+        "description": "Everything the engine may look at. Stored with the decision, hashed, and replayed bit for bit.",
+        "properties": {
+          "anomaly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnomalyEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "application_id": {
+            "title": "Application Id",
+            "type": "string"
+          },
+          "consent_ok": {
+            "default": true,
+            "title": "Consent Ok",
+            "type": "boolean"
+          },
+          "decided_at": {
+            "description": "Supplied by the caller. The engine never reads the clock.",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCheck"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "duplicate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DuplicateEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "form": {
+            "$ref": "#/components/schemas/ApplicationFormV1"
+          },
+          "identity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IdentityCheck"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when no identity check was attempted"
+          },
+          "lang": {
+            "default": "ur",
+            "enum": [
+              "en",
+              "ur",
+              "sd"
+            ],
+            "title": "Lang",
+            "type": "string"
+          },
+          "program_slug": {
+            "title": "Program Slug",
+            "type": "string"
+          },
+          "queue_days": {
+            "default": 1.0,
+            "description": "Expected wait for a human, from the live queue",
+            "minimum": 0.0,
+            "title": "Queue Days",
+            "type": "number"
+          },
+          "registry": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RegistryRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "registry_status": {
+            "default": "unavailable",
+            "enum": [
+              "found",
+              "not_found",
+              "unavailable"
+            ],
+            "title": "Registry Status",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_id",
+          "program_slug",
+          "form",
+          "decided_at"
+        ],
+        "title": "DecisionInput",
+        "type": "object"
+      },
+      "DecisionResult": {
+        "properties": {
+          "ask_proof": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The one proof to ask for when route is ask_more",
+            "title": "Ask Proof"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "expected_costs": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Expected cost of each action that was allowed",
+            "title": "Expected Costs",
+            "type": "object"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/Explanation"
+          },
+          "facts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "object"
+          },
+          "guards": {
+            "description": "Hard guards that forced a human, e.g. identity_mismatch",
+            "items": {
+              "type": "string"
+            },
+            "title": "Guards",
+            "type": "array"
+          },
+          "handoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HandoffPackage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "approved",
+              "rejected",
+              "needs_proof",
+              "needs_human"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "p_eligible": {
+            "title": "P Eligible",
+            "type": "number"
+          },
+          "p_genuine": {
+            "title": "P Genuine",
+            "type": "number"
+          },
+          "p_ok": {
+            "title": "P Ok",
+            "type": "number"
+          },
+          "payment_pkr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Amount from the rule version, when approved",
+            "title": "Payment Pkr"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Probabilities",
+            "type": "object"
+          },
+          "reasons": {
+            "description": "Reason codes. The first one is the main reason.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "result_hash": {
+            "description": "Hash of everything above. A replay must reproduce it exactly.",
+            "title": "Result Hash",
+            "type": "string"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "ask_more",
+              "human"
+            ],
+            "title": "Route",
+            "type": "string"
+          },
+          "rule_trace": {
+            "items": {
+              "$ref": "#/components/schemas/RuleTraceItem"
+            },
+            "title": "Rule Trace",
+            "type": "array"
+          },
+          "rule_version_id": {
+            "title": "Rule Version Id",
+            "type": "string"
+          },
+          "rule_version_no": {
+            "title": "Rule Version No",
+            "type": "integer"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Thresholds",
+            "type": "object"
+          }
+        },
+        "required": [
+          "route",
+          "outcome",
+          "p_eligible",
+          "p_genuine",
+          "p_ok",
+          "probabilities",
+          "expected_costs",
+          "thresholds",
+          "facts",
+          "rule_trace",
+          "reasons",
+          "explanation",
+          "model_version",
+          "engine_version",
+          "rule_version_id",
+          "rule_version_no",
+          "input_hash",
+          "result_hash"
+        ],
+        "title": "DecisionResult",
         "type": "object"
       },
       "DecisionTrace": {
@@ -1760,6 +2097,22 @@
         "title": "DecisionUserView",
         "type": "object"
       },
+      "DecisionView": {
+        "properties": {
+          "trace": {
+            "$ref": "#/components/schemas/DecisionTrace"
+          },
+          "user_view": {
+            "$ref": "#/components/schemas/DecisionUserView"
+          }
+        },
+        "required": [
+          "user_view",
+          "trace"
+        ],
+        "title": "DecisionView",
+        "type": "object"
+      },
       "DemoAccountOut": {
         "properties": {
           "identifier": {
@@ -1824,6 +2177,78 @@
         "title": "DemoAccountsOut",
         "type": "object"
       },
+      "DiffChange": {
+        "properties": {
+          "kind": {
+            "description": "added | removed | changed | reordered",
+            "title": "Kind",
+            "type": "string"
+          },
+          "new": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New"
+          },
+          "old": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind"
+        ],
+        "title": "DiffChange",
+        "type": "object"
+      },
+      "DiffOut": {
+        "properties": {
+          "against_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Against Version Id"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/DiffChange"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_id",
+          "against_version_id",
+          "changes"
+        ],
+        "title": "DiffOut",
+        "type": "object"
+      },
       "DocumentCheck": {
         "properties": {
           "authenticity": {
@@ -1858,7 +2283,8 @@
               "blurry",
               "glare",
               "cropped",
-              "not_a_card"
+              "not_a_card",
+              "unchecked"
             ],
             "title": "Quality",
             "type": "string"
@@ -1924,7 +2350,8 @@
               "blurry",
               "glare",
               "cropped",
-              "not_a_card"
+              "not_a_card",
+              "unchecked"
             ],
             "title": "Quality",
             "type": "string"
@@ -1993,6 +2420,188 @@
         "title": "DocumentSignal",
         "type": "object"
       },
+      "DraftCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description_en": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "description_ur": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ur"
+          },
+          "dsl": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit to copy the parent's rules unchanged",
+            "title": "Dsl"
+          },
+          "parent_version_id": {
+            "description": "The version this draft starts from",
+            "format": "uuid",
+            "title": "Parent Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parent_version_id"
+        ],
+        "title": "DraftCreate",
+        "type": "object"
+      },
+      "DraftUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description_en": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "description_ur": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ur"
+          },
+          "dsl": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dsl"
+          }
+        },
+        "title": "DraftUpdate",
+        "type": "object"
+      },
+      "DryRunIn": {
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "$ref": "#/components/schemas/DecisionInput"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "title": "DryRunIn",
+        "type": "object"
+      },
+      "DryRunOut": {
+        "properties": {
+          "note": {
+            "default": "Dry run: nothing was stored, sent or paid.",
+            "title": "Note",
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/DecisionResult"
+          },
+          "rule_version_id": {
+            "format": "uuid",
+            "title": "Rule Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_version_id",
+          "result"
+        ],
+        "title": "DryRunOut",
+        "type": "object"
+      },
+      "DslIn": {
+        "additionalProperties": false,
+        "properties": {
+          "dsl": {
+            "additionalProperties": true,
+            "title": "Dsl",
+            "type": "object"
+          }
+        },
+        "required": [
+          "dsl"
+        ],
+        "title": "DslIn",
+        "type": "object"
+      },
+      "DuplicateEvidence": {
+        "description": "Result of dedupe (Phase 2). `possible` is a guard: the case goes to a human, never to a merge.",
+        "properties": {
+          "band": {
+            "enum": [
+              "same",
+              "possible",
+              "distinct"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "other_person_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Person Ref"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "band",
+          "score"
+        ],
+        "title": "DuplicateEvidence",
+        "type": "object"
+      },
       "Explanation": {
         "description": "The citizen's view: one to three short sentences from templates, keyed by reason code.",
         "properties": {
@@ -2057,6 +2666,53 @@
           "sentences"
         ],
         "title": "Explanation",
+        "type": "object"
+      },
+      "Fact": {
+        "description": "One rule variable as the engine resolved it from the input.",
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "known": {
+            "default": false,
+            "title": "Known",
+            "type": "boolean"
+          },
+          "source": {
+            "default": "none",
+            "enum": [
+              "form",
+              "registry",
+              "document",
+              "identity",
+              "derived",
+              "none"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verified": {
+            "default": false,
+            "description": "True only when the value came from a signed QR or the registry",
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "title": "Fact",
         "type": "object"
       },
       "FieldValue_Literal__under_15k____15k_30k____30k_50k____over_50k___": {
@@ -2356,6 +3012,52 @@
           "probability"
         ],
         "title": "Hypothesis",
+        "type": "object"
+      },
+      "IdentityCheck": {
+        "description": "The (mock) identity service's answer to: do this ID, name and date of birth belong to one record?",
+        "properties": {
+          "checked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked At"
+          },
+          "name_score": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Name similarity reported by the service",
+            "title": "Name Score"
+          },
+          "status": {
+            "enum": [
+              "match",
+              "partial",
+              "mismatch",
+              "not_found",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "IdentityCheck",
         "type": "object"
       },
       "InfoOut": {
@@ -3248,6 +3950,391 @@
         "title": "QrResult",
         "type": "object"
       },
+      "ReasonIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Stored in the audit log",
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReasonIn",
+        "type": "object"
+      },
+      "RegisterCompleteIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "dob": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dob"
+          },
+          "full_name": {
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Full Name",
+            "type": "string"
+          },
+          "full_name_ur": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name Ur"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "female",
+                  "male",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "pin": {
+            "maxLength": 6,
+            "minLength": 4,
+            "title": "Pin",
+            "type": "string"
+          },
+          "registration_id": {
+            "format": "uuid",
+            "title": "Registration Id",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "maxLength": 64,
+            "minLength": 2,
+            "title": "Tenant Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_slug",
+          "registration_id",
+          "code",
+          "full_name",
+          "pin"
+        ],
+        "title": "RegisterCompleteIn",
+        "type": "object"
+      },
+      "RegisterCompleteOut": {
+        "properties": {
+          "message_key": {
+            "default": "register_done_sign_in",
+            "title": "Message Key",
+            "type": "string"
+          },
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "registered": {
+            "default": true,
+            "title": "Registered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "person_id"
+        ],
+        "title": "RegisterCompleteOut",
+        "type": "object"
+      },
+      "RegisterStartIn": {
+        "additionalProperties": false,
+        "properties": {
+          "lang": {
+            "default": "ur",
+            "enum": [
+              "ur",
+              "en"
+            ],
+            "title": "Lang",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Mock phone, 0999-NNNNNNN",
+            "maxLength": 16,
+            "minLength": 10,
+            "title": "Phone",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "maxLength": 64,
+            "minLength": 2,
+            "title": "Tenant Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_slug",
+          "phone"
+        ],
+        "title": "RegisterStartIn",
+        "type": "object"
+      },
+      "RegisterStartOut": {
+        "properties": {
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "message_key": {
+            "default": "register_code_sent",
+            "description": "Same for every number, registered or not",
+            "title": "Message Key",
+            "type": "string"
+          },
+          "registration_id": {
+            "format": "uuid",
+            "title": "Registration Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "registration_id",
+          "expires_in"
+        ],
+        "title": "RegisterStartOut",
+        "type": "object"
+      },
+      "RegistryRecord": {
+        "description": "What the (mock) data-exchange registry holds about a person. Verified, but possibly missing or stale.",
+        "properties": {
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "dob": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dob"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "has_disability": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Disability"
+          },
+          "household_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Size"
+          },
+          "income_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO date of the income record; old records are less certain",
+            "title": "Income As Of"
+          },
+          "is_widow": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Widow"
+          },
+          "national_id": {
+            "title": "National Id",
+            "type": "string"
+          },
+          "receives_other_aid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Receives Other Aid"
+          },
+          "record_version": {
+            "default": "1",
+            "title": "Record Version",
+            "type": "string"
+          },
+          "verified_income_pkr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the registry has no income record",
+            "title": "Verified Income Pkr"
+          }
+        },
+        "required": [
+          "national_id"
+        ],
+        "title": "RegistryRecord",
+        "type": "object"
+      },
+      "RuleSetOut": {
+        "properties": {
+          "active_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Version Id"
+          },
+          "active_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Version No"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "program_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Slug"
+          }
+        },
+        "required": [
+          "id",
+          "program_id",
+          "name"
+        ],
+        "title": "RuleSetOut",
+        "type": "object"
+      },
       "RuleTraceItem": {
         "properties": {
           "hard": {
@@ -3366,6 +4453,184 @@
           "version_no"
         ],
         "title": "RuleVersionBrief",
+        "type": "object"
+      },
+      "RuleVersionList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RuleVersionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "RuleVersionList",
+        "type": "object"
+      },
+      "RuleVersionOut": {
+        "properties": {
+          "approved_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "description_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ur"
+          },
+          "dsl": {
+            "additionalProperties": true,
+            "title": "Dsl",
+            "type": "object"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "parent_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Version Id"
+          },
+          "pending_approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Approval Id"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "rule_set_id": {
+            "format": "uuid",
+            "title": "Rule Set Id",
+            "type": "string"
+          },
+          "status": {
+            "description": "draft | pending_approval | published | retired",
+            "title": "Status",
+            "type": "string"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          },
+          "version_no": {
+            "title": "Version No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "rule_set_id",
+          "version_no",
+          "status",
+          "is_active",
+          "dsl",
+          "created_at",
+          "valid"
+        ],
+        "title": "RuleVersionOut",
         "type": "object"
       },
       "ServiceOut": {
@@ -3751,6 +5016,49 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "code",
+          "message"
+        ],
+        "title": "ValidationIssue",
+        "type": "object"
+      },
+      "ValidationOut": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid"
+        ],
+        "title": "ValidationOut",
         "type": "object"
       },
       "VerifyIn": {
@@ -4186,7 +5494,56 @@
     },
     "/v1/applications": {
       "get": {
-        "operationId": "applications_v1_applications_get",
+        "operationId": "list_applications_v1_applications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -4197,6 +5554,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -4204,13 +5571,33 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] My applications",
+        "summary": "My applications, newest first",
         "tags": [
-          "stubs (dev only)"
+          "applications"
         ]
       },
       "post": {
         "operationId": "create_application_v1_applications_post",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4248,9 +5635,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Start an application",
+        "summary": "Start an application (the same client_op_id returns the same application)",
         "tags": [
-          "stubs (dev only)"
+          "applications"
         ]
       }
     },
@@ -4266,6 +5653,24 @@
               "format": "uuid",
               "title": "Application Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
             }
           }
         ],
@@ -4296,9 +5701,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] One application with its timeline",
+        "summary": "One application with documents, decision and timeline",
         "tags": [
-          "stubs (dev only)"
+          "applications"
         ]
       },
       "patch": {
@@ -4312,6 +5717,24 @@
               "format": "uuid",
               "title": "Application Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
             }
           }
         ],
@@ -4352,9 +5775,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Save answers",
+        "summary": "Save answers (optimistic lock on base_version)",
         "tags": [
-          "stubs (dev only)"
+          "applications"
         ]
       }
     },
@@ -4370,6 +5793,24 @@
               "format": "uuid",
               "title": "Application Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
             }
           }
         ],
@@ -4410,9 +5851,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Upload an ID or proof",
+        "summary": "Upload a photo of an ID or proof (JPEG, PNG or WebP, at most 5 MB)",
         "tags": [
-          "stubs (dev only)"
+          "documents"
         ]
       }
     },
@@ -4428,6 +5869,24 @@
               "format": "uuid",
               "title": "Application Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
             }
           }
         ],
@@ -4458,9 +5917,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Submit and get the decision",
+        "summary": "Submit and get the decision (repeat submits return the first result)",
         "tags": [
-          "stubs (dev only)"
+          "applications"
         ]
       }
     },
@@ -5452,7 +6911,27 @@
     },
     "/v1/consents": {
       "get": {
-        "operationId": "consents_v1_consents_get",
+        "operationId": "list_consents_v1_consents_get",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5461,12 +6940,22 @@
                   "items": {
                     "$ref": "#/components/schemas/ConsentOut"
                   },
-                  "title": "Response Consents V1 Consents Get",
+                  "title": "Response List Consents V1 Consents Get",
                   "type": "array"
                 }
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -5474,13 +6963,33 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Who has my data",
+        "summary": "Who has my data, for what, until when",
         "tags": [
-          "stubs (dev only)"
+          "consent"
         ]
       },
       "post": {
         "operationId": "grant_consent_v1_consents_post",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5518,9 +7027,85 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Share my data for a purpose",
+        "summary": "Share my data with this department for a purpose",
         "tags": [
-          "stubs (dev only)"
+          "consent"
+        ]
+      }
+    },
+    "/v1/consents/{consent_id}": {
+      "patch": {
+        "operationId": "narrow_consent_v1_consents__consent_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "consent_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Consent Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentNarrow"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Share less: remove field scopes from a consent",
+        "tags": [
+          "consent"
         ]
       }
     },
@@ -5536,6 +7121,24 @@
               "format": "uuid",
               "title": "Consent Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
             }
           }
         ],
@@ -5566,9 +7169,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Take my data back",
+        "summary": "Take my data back; stops access on the next request",
         "tags": [
-          "stubs (dev only)"
+          "consent"
         ]
       }
     },
@@ -5592,18 +7195,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/components/schemas/DecisionUserView"
-                      },
-                      {
-                        "$ref": "#/components/schemas/DecisionTrace"
-                      }
-                    ]
-                  },
-                  "title": "Response Get Decision V1 Decisions  Decision Id  Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/DecisionView"
                 }
               }
             },
@@ -5625,9 +7217,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] A decision: the citizen's reason and the auditor's trace",
+        "summary": "A decision: the citizen's reason and the auditor's trace",
         "tags": [
-          "stubs (dev only)"
+          "decisions"
         ]
       }
     },
@@ -5652,9 +7244,78 @@
         ]
       }
     },
+    "/v1/documents/{document_id}/content": {
+      "get": {
+        "operationId": "document_content_v1_documents__document_id__content_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/jpeg": {},
+              "image/png": {},
+              "image/webp": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "The stored, re-encoded image (officers only)",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
     "/v1/me/person": {
       "get": {
         "operationId": "my_person_v1_me_person_get",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5665,6 +7326,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -5672,9 +7343,9 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] My person record",
+        "summary": "My person record (or the person a helper acts for)",
         "tags": [
-          "stubs (dev only)"
+          "people"
         ]
       }
     },
@@ -6019,9 +7690,91 @@
         ]
       }
     },
+    "/v1/people/register/complete": {
+      "post": {
+        "operationId": "register_complete_v1_people_register_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterCompleteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register: confirm the code, set a PIN, then sign in",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/v1/people/register/start": {
+      "post": {
+        "operationId": "register_start_v1_people_register_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterStartIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterStartOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register: send a one-time code to a mock phone (same answer whether or not it is registered)",
+        "tags": [
+          "people"
+        ]
+      }
+    },
     "/v1/programs": {
       "get": {
-        "operationId": "programs_v1_programs_get",
+        "operationId": "list_programs_v1_programs_get",
         "responses": {
           "200": {
             "content": {
@@ -6030,7 +7783,7 @@
                   "items": {
                     "$ref": "#/components/schemas/ProgramOut"
                   },
-                  "title": "Response Programs V1 Programs Get",
+                  "title": "Response List Programs V1 Programs Get",
                   "type": "array"
                 }
               }
@@ -6043,9 +7796,726 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "[stub] Programs in this department",
+        "summary": "Programs in this department, with the active rule version",
         "tags": [
-          "stubs (dev only)"
+          "applications"
+        ]
+      }
+    },
+    "/v1/rules/sets": {
+      "get": {
+        "operationId": "list_sets_v1_rules_sets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RuleSetOut"
+                  },
+                  "title": "Response List Sets V1 Rules Sets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rule sets of this department and their active version",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/validate": {
+      "post": {
+        "operationId": "validate_dsl_v1_rules_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DslIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Check rules without saving them",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions": {
+      "get": {
+        "operationId": "list_versions_v1_rules_versions_get",
+        "parameters": [
+          {
+            "description": "Defaults to the department's first rule set",
+            "in": "query",
+            "name": "rule_set_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defaults to the department's first rule set",
+              "title": "Rule Set Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Return versions numbered below this",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Return versions numbered below this",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Versions of a rule set, newest first",
+        "tags": [
+          "rules"
+        ]
+      },
+      "post": {
+        "operationId": "create_draft_v1_rules_versions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create a draft from a parent version",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}": {
+      "get": {
+        "operationId": "get_version_v1_rules_versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "One rule version with its validation result",
+        "tags": [
+          "rules"
+        ]
+      },
+      "patch": {
+        "operationId": "update_draft_v1_rules_versions__version_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Edit a draft (published versions never change)",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/diff": {
+      "get": {
+        "operationId": "diff_v1_rules_versions__version_id__diff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Defaults to the active version",
+            "in": "query",
+            "name": "against",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defaults to the active version",
+              "title": "Against"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiffOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "What changed against the active version (or another one)",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/dry-run": {
+      "post": {
+        "operationId": "dry_run_v1_rules_versions__version_id__dry_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DryRunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DryRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Decide one supplied case with this version; stores nothing",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/publish": {
+      "post": {
+        "operationId": "publish_v1_rules_versions__version_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Publish (second admin only); applies to the next decision",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/reject": {
+      "post": {
+        "operationId": "reject_v1_rules_versions__version_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Send a pending version back to draft (second admin only)",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/request-approval": {
+      "post": {
+        "operationId": "request_approval_v1_rules_versions__version_id__request_approval_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Freeze a valid draft and ask a second admin",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/rollback": {
+      "post": {
+        "operationId": "rollback_v1_rules_versions__version_id__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "New version copying an earlier published one; needs a second admin to publish",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/v1/rules/versions/{version_id}/validate": {
+      "post": {
+        "operationId": "validate_version_v1_rules_versions__version_id__validate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Check a stored version",
+        "tags": [
+          "rules"
         ]
       }
     },

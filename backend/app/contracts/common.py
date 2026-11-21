@@ -27,7 +27,7 @@ CaseStatus = Literal["open", "assigned", "in_review", "waiting_proof", "escalate
 CaseAction = Literal["approve", "reject", "request_proof", "escalate"]
 
 DocumentKind = Literal["rahat_id", "income_proof", "other"]
-DocumentQuality = Literal["ok", "blurry", "glare", "cropped", "not_a_card"]
+DocumentQuality = Literal["ok", "blurry", "glare", "cropped", "not_a_card", "unchecked"]
 
 ScamLabel = Literal[
     "relief_scam", "phishing_link", "advance_fee", "impersonation", "legit_program_message", "unknown"

@@ -128,6 +128,8 @@ def write_independent(**fields: Any) -> None:
     """
     try:
         with system_session() as db:
+            # If the caller's own transaction holds this tenant's audit lock, give up instead of waiting forever.
+            db.execute(text("SET LOCAL lock_timeout = '2s'"))
             write(db, **fields)
     except Exception:  # noqa: BLE001
         log.exception("could not write independent audit row for action %s", fields.get("action"))

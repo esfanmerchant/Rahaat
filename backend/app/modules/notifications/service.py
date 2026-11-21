@@ -72,7 +72,13 @@ def notify(
     lang: str | None = None,
     channels: Iterable[str] = CHANNELS,
 ) -> list[models.Notification]:
-    """Write outbox rows for one message in the caller's transaction; SMS goes out through a job."""
+    """Write outbox rows for one message in the caller's transaction; SMS goes out through a job.
+
+    Sign-up messages (`templates.ONE_TIME_TEMPLATES`) are the exception: see `_send_one_time`.
+    """
+    if template in templates.ONE_TIME_TEMPLATES:
+        sent = _send_one_time(db, tenant_id=tenant_id, person_id=person_id, template=template, payload=dict(payload or {}), lang=lang)
+        return [sent] if sent is not None else []
     payload = _clean_payload(dict(payload or {}))
     wanted = [c for c in dict.fromkeys(channels) if c in CHANNELS]
     person = db.get(models.Person, person_id) if person_id else None  # RLS: None when this caller may not read them
@@ -112,6 +118,42 @@ def notify(
             details={"template": template, "lang": chosen, "channels": [r.channel for r in created], "ids": [str(r.id) for r in created]},
         )  # fmt: skip
     return created
+
+
+def _send_one_time(
+    db: Session, *, tenant_id: uuid.UUID, person_id: uuid.UUID | None, template: str, payload: dict[str, Any], lang: str | None
+) -> models.Notification | None:
+    """A sign-up message, sent now to the number the person typed.
+
+    The person asked for it, and a worker could not send it later: workers need a consent that a person who is
+    still signing up cannot have yet. No verify code is appended, so the message carries one code only, and the
+    stored copy hides the code.
+    """
+    person = db.get(models.Person, person_id) if person_id else None
+    phone = _phone(db, tenant_id, person) if person is not None else None
+    if phone is None:
+        log.info("no sign-up message %s: no readable phone number", template)
+        return None
+    chosen = templates.choose_lang(lang, person.lang if person else None)
+    text = templates.render(template, chosen, payload)
+    code = templates.render(template, chosen, {**payload, "code": ""})
+    stored = text if code == text else templates.render(template, chosen, {**payload, "code": "000000"}).replace("000000", "••••••")
+    from app.modules.integrations.service import send_sms
+
+    result = send_sms(phone, text)
+    now = datetime.now(UTC)
+    row = models.Notification(
+        id=uuid.uuid4(), tenant_id=tenant_id, person_id=person_id, user_id=person.user_id if person else None, channel="sms",
+        template=template, lang=chosen, payload={"_to": mask_identifier(phone)}, body=stored, body_hash=templates.body_hash(text),
+        verify_code=None, attempts=1, destination_hash=blind_index(phone, scope=str(tenant_id)),
+        status="sent" if result.status == "sent" else "failed", last_error=None if result.status == "sent" else result.status,
+        sent_at=now if result.status == "sent" else None, created_at=now,
+    )  # fmt: skip
+    db.add(row)
+    db.flush()
+    audit.write(db, tenant_id=tenant_id, action="notification.sent_one_time", actor_type="system", object_type="notification",
+                object_id=row.id, result="ok" if result.status == "sent" else "failed", details={"template": template})  # fmt: skip
+    return row
 
 
 # --- SMS delivery job -----------------------------------------------------------------------------------

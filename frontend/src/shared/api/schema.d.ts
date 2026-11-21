@@ -114,10 +114,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] My applications */
-        get: operations["applications_v1_applications_get"];
+        /** My applications, newest first */
+        get: operations["list_applications_v1_applications_get"];
         put?: never;
-        /** [stub] Start an application */
+        /** Start an application (the same client_op_id returns the same application) */
         post: operations["create_application_v1_applications_post"];
         delete?: never;
         options?: never;
@@ -132,14 +132,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] One application with its timeline */
+        /** One application with documents, decision and timeline */
         get: operations["get_application_v1_applications__application_id__get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** [stub] Save answers */
+        /** Save answers (optimistic lock on base_version) */
         patch: operations["patch_application_v1_applications__application_id__patch"];
         trace?: never;
     };
@@ -152,7 +152,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** [stub] Upload an ID or proof */
+        /** Upload a photo of an ID or proof (JPEG, PNG or WebP, at most 5 MB) */
         post: operations["upload_document_v1_applications__application_id__documents_post"];
         delete?: never;
         options?: never;
@@ -169,7 +169,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** [stub] Submit and get the decision */
+        /** Submit and get the decision (repeat submits return the first result) */
         post: operations["submit_application_v1_applications__application_id__submit_post"];
         delete?: never;
         options?: never;
@@ -490,15 +490,32 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] Who has my data */
-        get: operations["consents_v1_consents_get"];
+        /** Who has my data, for what, until when */
+        get: operations["list_consents_v1_consents_get"];
         put?: never;
-        /** [stub] Share my data for a purpose */
+        /** Share my data with this department for a purpose */
         post: operations["grant_consent_v1_consents_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/v1/consents/{consent_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Share less: remove field scopes from a consent */
+        patch: operations["narrow_consent_v1_consents__consent_id__patch"];
         trace?: never;
     };
     "/v1/consents/{consent_id}/withdraw": {
@@ -510,7 +527,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** [stub] Take my data back */
+        /** Take my data back; stops access on the next request */
         post: operations["withdraw_consent_v1_consents__consent_id__withdraw_post"];
         delete?: never;
         options?: never;
@@ -525,7 +542,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] A decision: the citizen's reason and the auditor's trace */
+        /** A decision: the citizen's reason and the auditor's trace */
         get: operations["get_decision_v1_decisions__decision_id__get"];
         put?: never;
         post?: never;
@@ -552,6 +569,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/documents/{document_id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The stored, re-encoded image (officers only) */
+        get: operations["document_content_v1_documents__document_id__content_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me/person": {
         parameters: {
             query?: never;
@@ -559,7 +593,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] My person record */
+        /** My person record (or the person a helper acts for) */
         get: operations["my_person_v1_me_person_get"];
         put?: never;
         post?: never;
@@ -637,6 +671,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/people/register/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register: confirm the code, set a PIN, then sign in */
+        post: operations["register_complete_v1_people_register_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/people/register/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register: send a one-time code to a mock phone (same answer whether or not it is registered) */
+        post: operations["register_start_v1_people_register_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/programs": {
         parameters: {
             query?: never;
@@ -644,10 +712,199 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] Programs in this department */
-        get: operations["programs_v1_programs_get"];
+        /** Programs in this department, with the active rule version */
+        get: operations["list_programs_v1_programs_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rule sets of this department and their active version */
+        get: operations["list_sets_v1_rules_sets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check rules without saving them */
+        post: operations["validate_dsl_v1_rules_validate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versions of a rule set, newest first */
+        get: operations["list_versions_v1_rules_versions_get"];
+        put?: never;
+        /** Create a draft from a parent version */
+        post: operations["create_draft_v1_rules_versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One rule version with its validation result */
+        get: operations["get_version_v1_rules_versions__version_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft (published versions never change) */
+        patch: operations["update_draft_v1_rules_versions__version_id__patch"];
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What changed against the active version (or another one) */
+        get: operations["diff_v1_rules_versions__version_id__diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide one supplied case with this version; stores nothing */
+        post: operations["dry_run_v1_rules_versions__version_id__dry_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish (second admin only); applies to the next decision */
+        post: operations["publish_v1_rules_versions__version_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a pending version back to draft (second admin only) */
+        post: operations["reject_v1_rules_versions__version_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/request-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Freeze a valid draft and ask a second admin */
+        post: operations["request_approval_v1_rules_versions__version_id__request_approval_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** New version copying an earlier published one; needs a second admin to publish */
+        post: operations["rollback_v1_rules_versions__version_id__rollback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/rules/versions/{version_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check a stored version */
+        post: operations["validate_version_v1_rules_versions__version_id__validate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -727,6 +984,18 @@ export interface components {
             tenant_name: string;
             /** Tenant Slug */
             tenant_slug: string;
+        };
+        /**
+         * AnomalyEvidence
+         * @description Result of anomaly detection (Phase 3). A flagged case is a guard.
+         */
+        AnomalyEvidence: {
+            /** Flagged */
+            flagged: boolean;
+            /** Reasons */
+            reasons?: string[];
+            /** Score */
+            score: number;
         };
         /** ApplicationCreate */
         ApplicationCreate: {
@@ -988,7 +1257,10 @@ export interface components {
         };
         /** Body_upload_document_v1_applications__application_id__documents_post */
         Body_upload_document_v1_applications__application_id__documents_post: {
-            /** File */
+            /**
+             * File
+             * @description The photo. Its name and declared type are ignored.
+             */
             file: string;
             /**
              * Kind
@@ -1186,6 +1458,11 @@ export interface components {
              */
             purpose: string;
         };
+        /** ConsentNarrow */
+        ConsentNarrow: {
+            /** Field Scopes */
+            field_scopes: ("identity" | "contact" | "household" | "income" | "documents")[];
+        };
         /** ConsentOut */
         ConsentOut: {
             /** Expires At */
@@ -1252,6 +1529,134 @@ export interface components {
              * @default 30
              */
             wrong_reject: number;
+        };
+        /**
+         * DecisionInput
+         * @description Everything the engine may look at. Stored with the decision, hashed, and replayed bit for bit.
+         */
+        DecisionInput: {
+            anomaly?: components["schemas"]["AnomalyEvidence"] | null;
+            /** Application Id */
+            application_id: string;
+            /**
+             * Consent Ok
+             * @default true
+             */
+            consent_ok: boolean;
+            /**
+             * Decided At
+             * @description Supplied by the caller. The engine never reads the clock.
+             */
+            decided_at: string;
+            /** Documents */
+            documents?: components["schemas"]["DocumentCheck"][];
+            duplicate?: components["schemas"]["DuplicateEvidence"] | null;
+            form: components["schemas"]["ApplicationFormV1"];
+            /** @description None when no identity check was attempted */
+            identity?: components["schemas"]["IdentityCheck"] | null;
+            /**
+             * Lang
+             * @default ur
+             * @enum {string}
+             */
+            lang: "en" | "ur" | "sd";
+            /** Program Slug */
+            program_slug: string;
+            /**
+             * Queue Days
+             * @description Expected wait for a human, from the live queue
+             * @default 1
+             */
+            queue_days: number;
+            registry?: components["schemas"]["RegistryRecord"] | null;
+            /**
+             * Registry Status
+             * @default unavailable
+             * @enum {string}
+             */
+            registry_status: "found" | "not_found" | "unavailable";
+            /**
+             * Schema Version
+             * @default 1
+             */
+            schema_version: string;
+        };
+        /** DecisionResult */
+        DecisionResult: {
+            /**
+             * Ask Proof
+             * @description The one proof to ask for when route is ask_more
+             */
+            ask_proof?: string | null;
+            /** Engine Version */
+            engine_version: string;
+            /**
+             * Expected Costs
+             * @description Expected cost of each action that was allowed
+             */
+            expected_costs: {
+                [key: string]: number;
+            };
+            explanation: components["schemas"]["Explanation"];
+            /** Facts */
+            facts: {
+                [key: string]: components["schemas"]["Fact"];
+            };
+            /**
+             * Guards
+             * @description Hard guards that forced a human, e.g. identity_mismatch
+             */
+            guards?: string[];
+            handoff?: components["schemas"]["HandoffPackage"] | null;
+            /** Input Hash */
+            input_hash: string;
+            /** Model Version */
+            model_version: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "approved" | "rejected" | "needs_proof" | "needs_human";
+            /** P Eligible */
+            p_eligible: number;
+            /** P Genuine */
+            p_genuine: number;
+            /** P Ok */
+            p_ok: number;
+            /**
+             * Payment Pkr
+             * @description Amount from the rule version, when approved
+             */
+            payment_pkr?: number | null;
+            /** Probabilities */
+            probabilities: {
+                [key: string]: number;
+            };
+            /**
+             * Reasons
+             * @description Reason codes. The first one is the main reason.
+             */
+            reasons: string[];
+            /**
+             * Result Hash
+             * @description Hash of everything above. A replay must reproduce it exactly.
+             */
+            result_hash: string;
+            /**
+             * Route
+             * @enum {string}
+             */
+            route: "auto" | "ask_more" | "human";
+            /** Rule Trace */
+            rule_trace: components["schemas"]["RuleTraceItem"][];
+            /** Rule Version Id */
+            rule_version_id: string;
+            /** Rule Version No */
+            rule_version_no: number;
+            /** Thresholds */
+            thresholds: {
+                [key: string]: number;
+            };
         };
         /**
          * DecisionTrace
@@ -1351,6 +1756,11 @@ export interface components {
             /** Rule Version No */
             rule_version_no: number;
         };
+        /** DecisionView */
+        DecisionView: {
+            trace: components["schemas"]["DecisionTrace"];
+            user_view: components["schemas"]["DecisionUserView"];
+        };
         /** DemoAccountOut */
         DemoAccountOut: {
             /** Identifier */
@@ -1378,6 +1788,32 @@ export interface components {
              */
             notice: string;
         };
+        /** DiffChange */
+        DiffChange: {
+            /**
+             * Kind
+             * @description added | removed | changed | reordered
+             */
+            kind: string;
+            /** New */
+            new?: unknown | null;
+            /** Old */
+            old?: unknown | null;
+            /** Path */
+            path: string;
+        };
+        /** DiffOut */
+        DiffOut: {
+            /** Against Version Id */
+            against_version_id: string | null;
+            /** Changes */
+            changes: components["schemas"]["DiffChange"][];
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+        };
         /** DocumentCheck */
         DocumentCheck: {
             authenticity: components["schemas"]["TypedDecision_Literal__genuine____suspect___"];
@@ -1396,7 +1832,7 @@ export interface components {
              * Quality
              * @enum {string}
              */
-            quality: "ok" | "blurry" | "glare" | "cropped" | "not_a_card";
+            quality: "ok" | "blurry" | "glare" | "cropped" | "not_a_card" | "unchecked";
             /**
              * Retake Hint
              * @description Reason code with audio; poor quality is never a rejection
@@ -1428,7 +1864,7 @@ export interface components {
              * Quality
              * @enum {string}
              */
-            quality: "ok" | "blurry" | "glare" | "cropped" | "not_a_card";
+            quality: "ok" | "blurry" | "glare" | "cropped" | "not_a_card" | "unchecked";
             /** Retake Hint */
             retake_hint?: string | null;
         };
@@ -1452,6 +1888,77 @@ export interface components {
             staff_detail: string;
             /** Weight */
             weight: number;
+        };
+        /** DraftCreate */
+        DraftCreate: {
+            /** Description En */
+            description_en?: string | null;
+            /** Description Ur */
+            description_ur?: string | null;
+            /**
+             * Dsl
+             * @description Omit to copy the parent's rules unchanged
+             */
+            dsl?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Parent Version Id
+             * Format: uuid
+             * @description The version this draft starts from
+             */
+            parent_version_id: string;
+        };
+        /** DraftUpdate */
+        DraftUpdate: {
+            /** Description En */
+            description_en?: string | null;
+            /** Description Ur */
+            description_ur?: string | null;
+            /** Dsl */
+            dsl?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** DryRunIn */
+        DryRunIn: {
+            input: components["schemas"]["DecisionInput"];
+        };
+        /** DryRunOut */
+        DryRunOut: {
+            /**
+             * Note
+             * @default Dry run: nothing was stored, sent or paid.
+             */
+            note: string;
+            result: components["schemas"]["DecisionResult"];
+            /**
+             * Rule Version Id
+             * Format: uuid
+             */
+            rule_version_id: string;
+        };
+        /** DslIn */
+        DslIn: {
+            /** Dsl */
+            dsl: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * DuplicateEvidence
+         * @description Result of dedupe (Phase 2). `possible` is a guard: the case goes to a human, never to a merge.
+         */
+        DuplicateEvidence: {
+            /**
+             * Band
+             * @enum {string}
+             */
+            band: "same" | "possible" | "distinct";
+            /** Other Person Ref */
+            other_person_ref?: string | null;
+            /** Score */
+            score: number;
         };
         /**
          * Explanation
@@ -1478,6 +1985,36 @@ export interface components {
             reason_codes: string[];
             /** Sentences */
             sentences: string[];
+        };
+        /**
+         * Fact
+         * @description One rule variable as the engine resolved it from the input.
+         */
+        Fact: {
+            /**
+             * Confidence
+             * @default 0
+             */
+            confidence: number;
+            /**
+             * Known
+             * @default false
+             */
+            known: boolean;
+            /**
+             * Source
+             * @default none
+             * @enum {string}
+             */
+            source: "form" | "registry" | "document" | "identity" | "derived" | "none";
+            /** Value */
+            value?: unknown | null;
+            /**
+             * Verified
+             * @description True only when the value came from a signed QR or the registry
+             * @default false
+             */
+            verified: boolean;
         };
         /** FieldValue[Literal['under_15k', '15k_30k', '30k_50k', 'over_50k']] */
         FieldValue_Literal__under_15k____15k_30k____30k_50k____over_50k___: {
@@ -1623,6 +2160,24 @@ export interface components {
             label: string;
             /** Probability */
             probability: number;
+        };
+        /**
+         * IdentityCheck
+         * @description The (mock) identity service's answer to: do this ID, name and date of birth belong to one record?
+         */
+        IdentityCheck: {
+            /** Checked At */
+            checked_at?: string | null;
+            /**
+             * Name Score
+             * @description Name similarity reported by the service
+             */
+            name_score?: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "match" | "partial" | "mismatch" | "not_found" | "unavailable";
         };
         /** InfoOut */
         InfoOut: {
@@ -1982,6 +2537,148 @@ export interface components {
              */
             signature_valid?: boolean | null;
         };
+        /** ReasonIn */
+        ReasonIn: {
+            /**
+             * Reason
+             * @description Stored in the audit log
+             */
+            reason: string;
+        };
+        /** RegisterCompleteIn */
+        RegisterCompleteIn: {
+            /** Code */
+            code: string;
+            /** District */
+            district?: string | null;
+            /** Dob */
+            dob?: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Full Name Ur */
+            full_name_ur?: string | null;
+            /** Gender */
+            gender?: ("female" | "male" | "other") | null;
+            /** Pin */
+            pin: string;
+            /**
+             * Registration Id
+             * Format: uuid
+             */
+            registration_id: string;
+            /** Tenant Slug */
+            tenant_slug: string;
+        };
+        /** RegisterCompleteOut */
+        RegisterCompleteOut: {
+            /**
+             * Message Key
+             * @default register_done_sign_in
+             */
+            message_key: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /**
+             * Registered
+             * @default true
+             */
+            registered: boolean;
+        };
+        /** RegisterStartIn */
+        RegisterStartIn: {
+            /**
+             * Lang
+             * @default ur
+             * @enum {string}
+             */
+            lang: "ur" | "en";
+            /**
+             * Phone
+             * @description Mock phone, 0999-NNNNNNN
+             */
+            phone: string;
+            /** Tenant Slug */
+            tenant_slug: string;
+        };
+        /** RegisterStartOut */
+        RegisterStartOut: {
+            /** Expires In */
+            expires_in: number;
+            /**
+             * Message Key
+             * @description Same for every number, registered or not
+             * @default register_code_sent
+             */
+            message_key: string;
+            /**
+             * Registration Id
+             * Format: uuid
+             */
+            registration_id: string;
+        };
+        /**
+         * RegistryRecord
+         * @description What the (mock) data-exchange registry holds about a person. Verified, but possibly missing or stale.
+         */
+        RegistryRecord: {
+            /** District */
+            district?: string | null;
+            /** Dob */
+            dob?: string | null;
+            /** Full Name */
+            full_name?: string | null;
+            /** Gender */
+            gender?: string | null;
+            /** Has Disability */
+            has_disability?: boolean | null;
+            /** Household Size */
+            household_size?: number | null;
+            /**
+             * Income As Of
+             * @description ISO date of the income record; old records are less certain
+             */
+            income_as_of?: string | null;
+            /** Is Widow */
+            is_widow?: boolean | null;
+            /** National Id */
+            national_id: string;
+            /** Receives Other Aid */
+            receives_other_aid?: boolean | null;
+            /**
+             * Record Version
+             * @default 1
+             */
+            record_version: string;
+            /**
+             * Verified Income Pkr
+             * @description None when the registry has no income record
+             */
+            verified_income_pkr?: number | null;
+        };
+        /** RuleSetOut */
+        RuleSetOut: {
+            /** Active Version Id */
+            active_version_id?: string | null;
+            /** Active Version No */
+            active_version_no?: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Program Id
+             * Format: uuid
+             */
+            program_id: string;
+            /** Program Slug */
+            program_slug?: string | null;
+        };
         /** RuleTraceItem */
         RuleTraceItem: {
             /** Hard */
@@ -2023,6 +2720,61 @@ export interface components {
             payment_pkr?: number | null;
             /** Required Docs */
             required_docs?: string[];
+            /** Version No */
+            version_no: number;
+        };
+        /** RuleVersionList */
+        RuleVersionList: {
+            /** Items */
+            items: components["schemas"]["RuleVersionOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** RuleVersionOut */
+        RuleVersionOut: {
+            /** Approved By */
+            approved_by?: string | null;
+            /** Content Hash */
+            content_hash?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Created By */
+            created_by?: string | null;
+            /** Description En */
+            description_en?: string | null;
+            /** Description Ur */
+            description_ur?: string | null;
+            /** Dsl */
+            dsl: {
+                [key: string]: unknown;
+            };
+            /** Errors */
+            errors?: components["schemas"]["ValidationIssue"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Parent Version Id */
+            parent_version_id?: string | null;
+            /** Pending Approval Id */
+            pending_approval_id?: string | null;
+            /** Published At */
+            published_at?: string | null;
+            /**
+             * Rule Set Id
+             * Format: uuid
+             */
+            rule_set_id: string;
+            /**
+             * Status
+             * @description draft | pending_approval | published | retired
+             */
+            status: string;
+            /** Valid */
+            valid: boolean;
             /** Version No */
             version_no: number;
         };
@@ -2186,6 +2938,22 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** ValidationIssue */
+        ValidationIssue: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Path */
+            path: string;
+        };
+        /** ValidationOut */
+        ValidationOut: {
+            /** Errors */
+            errors?: components["schemas"]["ValidationIssue"][];
+            /** Valid */
+            valid: boolean;
         };
         /** VerifyIn */
         VerifyIn: {
@@ -2417,10 +3185,16 @@ export interface operations {
             };
         };
     };
-    applications_v1_applications_get: {
+    list_applications_v1_applications_get: {
         parameters: {
-            query?: never;
-            header?: never;
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2435,12 +3209,24 @@ export interface operations {
                     "application/json": components["schemas"]["ApplicationList"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     create_application_v1_applications_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2473,7 +3259,10 @@ export interface operations {
     get_application_v1_applications__application_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path: {
                 application_id: string;
             };
@@ -2504,7 +3293,10 @@ export interface operations {
     patch_application_v1_applications__application_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path: {
                 application_id: string;
             };
@@ -2539,7 +3331,10 @@ export interface operations {
     upload_document_v1_applications__application_id__documents_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path: {
                 application_id: string;
             };
@@ -2574,7 +3369,10 @@ export interface operations {
     submit_application_v1_applications__application_id__submit_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path: {
                 application_id: string;
             };
@@ -3133,10 +3931,13 @@ export interface operations {
             };
         };
     };
-    consents_v1_consents_get: {
+    list_consents_v1_consents_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3151,12 +3952,24 @@ export interface operations {
                     "application/json": components["schemas"]["ConsentOut"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     grant_consent_v1_consents_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3186,10 +3999,51 @@ export interface operations {
             };
         };
     };
+    narrow_consent_v1_consents__consent_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
+            path: {
+                consent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentNarrow"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     withdraw_consent_v1_consents__consent_id__withdraw_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path: {
                 consent_id: string;
             };
@@ -3234,9 +4088,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: components["schemas"]["DecisionUserView"] | components["schemas"]["DecisionTrace"];
-                    };
+                    "application/json": components["schemas"]["DecisionView"];
                 };
             };
             /** @description Validation Error */
@@ -3270,10 +4122,47 @@ export interface operations {
             };
         };
     };
-    my_person_v1_me_person_get: {
+    document_content_v1_documents__document_id__content_get: {
         parameters: {
             query?: never;
             header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "image/jpeg": unknown;
+                    "image/png": unknown;
+                    "image/webp": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_person_v1_me_person_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3286,6 +4175,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PersonOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3424,7 +4322,73 @@ export interface operations {
             };
         };
     };
-    programs_v1_programs_get: {
+    register_complete_v1_people_register_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterCompleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterCompleteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_start_v1_people_register_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterStartIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_programs_v1_programs_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3440,6 +4404,433 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramOut"][];
+                };
+            };
+        };
+    };
+    list_sets_v1_rules_sets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleSetOut"][];
+                };
+            };
+        };
+    };
+    validate_dsl_v1_rules_validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DslIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_versions_v1_rules_versions_get: {
+        parameters: {
+            query?: {
+                /** @description Defaults to the department's first rule set */
+                rule_set_id?: string | null;
+                limit?: number;
+                /** @description Return versions numbered below this */
+                cursor?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_draft_v1_rules_versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_version_v1_rules_versions__version_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_draft_v1_rules_versions__version_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    diff_v1_rules_versions__version_id__diff_get: {
+        parameters: {
+            query?: {
+                /** @description Defaults to the active version */
+                against?: string | null;
+            };
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dry_run_v1_rules_versions__version_id__dry_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DryRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_v1_rules_versions__version_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_v1_rules_versions__version_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_approval_v1_rules_versions__version_id__request_approval_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rollback_v1_rules_versions__version_id__rollback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_version_v1_rules_versions__version_id__validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

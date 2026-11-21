@@ -42,7 +42,7 @@ def document_status(check: DocumentCheck | None, *, identity_mismatch: bool = Fa
 def citizen_view(document_id: str, kind: DocumentKind, check: DocumentCheck | None, *, identity_mismatch: bool = False) -> DocumentCitizenView:
     if check is None:
         # No checker in this build, or it failed: the upload is kept and a person looks at it.
-        return DocumentCitizenView(document_id=document_id, kind=kind, accepted=True, quality="ok", message_key="doc_person_will_check")
+        return DocumentCitizenView(document_id=document_id, kind=kind, accepted=True, quality="unchecked", message_key="doc_person_will_check")
     if not identity_mismatch and needs_retake(check):
         return DocumentCitizenView(
             document_id=document_id, kind=kind, accepted=False, quality=check.quality,

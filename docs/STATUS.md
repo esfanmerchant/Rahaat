@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 14:25 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
+Last updated: Sat 21 Nov 2026, 14:40 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -35,22 +35,22 @@ Not verified: any deployed host, running the built image, a real phone, slow or 
 ## Phase 1: the spine (T0)
 
 Track A
-- [ ] A1 Persons and registration
-- [ ] A2 Consent grant at registration
-- [ ] A3 Applications: draft, patch, submit
-- [ ] A4 Document upload (hardened)
+- [x] A1 Persons, person context (helpers need a live delegation per person), self-registration with a one-time code
+- [x] A2 Consent: grant, narrow, withdraw (holds applications, cancels jobs, purges memory), scopes gate what a client may write
+- [x] A3 Applications: idempotent create, versioned patch, trust rule (clients cannot mark data verified), submit pipeline wired to the engine, cases, payments and notifications
+- [x] A4 Document upload: magic bytes, size and pixel caps, re-encoded without EXIF, random names, signed card fields merged as verified
 - [x] A5 Cases: state machine, queue with filters and keyset paging, assign, notes, actions with required reasons, reopen, SLA, review time
 - [x] A6 Mock identity, registry, payment and SMS services with keys and failure injection; adapters with timeout, retry and circuit breaker
 - [x] A7 Payments: one per application, released at once up to Rs 15,000, a second officer above it, reconciliation row
 - [x] A8 Notifications in English and Urdu with verify codes; Postgres job queue with retries, dead letter and consent-aware workers
 
 Track B
-- [ ] B1 Rule interpreter with three-valued logic and trace
-- [ ] B2 Rule versions: draft, validate, dry run, approve, publish, rollback, diff
-- [ ] B3 `decide()` with the silent-guess invariant
-- [ ] B4 Explanations: citizen view and auditor trace
-- [ ] B5 Synthetic world (1,200+ persons, 1,000+ labelled cases)
-- [ ] B6 Calibrated evidence model
+- [x] B1 Rule interpreter: allowlisted operators, three-valued logic, limits, repairable validation, trace
+- [x] B2 Rule versions: draft, validate, dry run, diff, request approval, publish by a second admin, rollback; published versions immutable in the database
+- [x] B3 `decide()`: pure, cost-based, guards, silent-guess invariant, replayable hashes
+- [x] B4 Explanations in English and Urdu, handoff package, citizen and auditor views
+- [x] B5 Synthetic world: 1,212 people and 1,843 labelled cases (demo); 3,598 cases for training, split by family
+- [x] B6 Calibrated evidence model (logistic regression with isotonic calibration; ECE 0.028 on p_ok, held-out families)
 
 Track C
 - [ ] C1 Mock issuer, specimen card generator and variants

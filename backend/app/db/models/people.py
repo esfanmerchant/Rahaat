@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import Boolean, Date, Float, Index, Integer, String, Text, Uuid
+from sqlalchemy import Boolean, Date, Float, Index, Integer, String, Text, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, CreatedMixin, IdMixin, TenantMixin, UpdatedMixin, fk, json_dict, json_list, ts
@@ -94,7 +94,12 @@ class Consent(Base, IdMixin, TenantMixin, CreatedMixin):
     """Who may use a person's data, for what, which fields, and until when."""
 
     __tablename__ = "consents"
-    __table_args__ = (Index("ix_consents_person_status", "person_id", "status"),)
+    __table_args__ = (
+        Index("ix_consents_person_status", "person_id", "status"),
+        # One active consent per person, grantee and purpose, even if two requests race.
+        Index("uq_consents_active", "tenant_id", "person_id", "grantee_type", "grantee_id", "purpose", unique=True,
+              postgresql_where=text("status = 'active'")),
+    )
     person_id: Mapped[uuid.UUID] = fk("persons.id", ondelete="CASCADE")
     grantee_type: Mapped[str] = mapped_column(String(16))  # tenant | helper | api_key | partner
     grantee_id: Mapped[uuid.UUID] = mapped_column(Uuid)

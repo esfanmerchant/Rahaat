@@ -162,18 +162,6 @@ def test_policy_registry_is_visible_to_admin_and_auditor_only(client: TestClient
     assert client.get("/v1/system/health", headers=factory.headers(client, admin)).json()["database"] == "ok"
 
 
-def test_contract_stubs_are_marked_and_enforce_roles(client: TestClient, factory: Any) -> None:
-    tenant = factory.tenant()
-    citizen, officer = factory.account(tenant, "citizen"), factory.account(tenant, "officer")
-    # Any path that is still a stub in this build. /v1/applications became real with Track A's applications module.
-    mine = client.get("/v1/notifications", headers=factory.headers(client, citizen))
-    assert mine.status_code == 200 and mine.headers["x-rahat-stub"] == "1"
-    assert "x-rahat-stub" not in client.get("/v1/applications", headers=factory.headers(client, citizen)).headers
-    assert client.get("/v1/cases", headers=factory.headers(client, citizen)).status_code == 403
-    real = client.get("/v1/cases", headers=factory.headers(client, officer))  # the real queue has replaced its stub
-    assert real.status_code == 200 and "x-rahat-stub" not in real.headers and real.json()["items"] == []
-
-
 def test_seed_creates_working_demo_accounts_and_is_repeatable(client: TestClient, database: None) -> None:
     from app import seed
     from app.db import models

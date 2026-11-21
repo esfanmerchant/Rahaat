@@ -160,7 +160,8 @@ class Factory:
                 person_id = person.id
                 db.add(models.Consent(
                     tenant_id=tenant.id, person_id=person.id, grantee_type="tenant", grantee_id=tenant.id,
-                    purpose="relief_application", field_scopes=["identity"], granted_at=datetime.now(UTC),
+                    purpose="relief_application", field_scopes=["identity", "contact", "household", "income", "documents"],
+                    granted_at=datetime.now(UTC),
                     expires_at=datetime.now(UTC) + timedelta(days=30),
                 ))  # fmt: skip
             for member_of in (tenant, *extra_tenants):

@@ -38,6 +38,16 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "en": "Rahat: Rs {amount} has been sent to you. Reference {rail_ref}. We never ask for a fee or your PIN.",
         "ur": "راحت: {amount} روپے آپ کو بھیج دیے گئے ہیں۔ حوالہ {rail_ref}۔ ہم کبھی فیس یا پن نہیں مانگتے۔",
     },
+    # Sign-up messages (sent at once to the number the person typed; see service.notify).
+    "registration_code": {
+        "en": "Rahat: your sign-up code is {code}. It works for 10 minutes. Never share it; we never ask for a fee or your PIN.",
+        "ur": "راحت: آپ کا رجسٹریشن کوڈ {code} ہے۔ یہ 10 منٹ چلے گا۔ یہ کسی کو نہ بتائیں، ہم کبھی فیس یا پن نہیں مانگتے۔",
+    },
+    "registration_exists": {
+        "en": "Rahat: this number already has an account, so sign in instead. If you did not ask for this, ignore it. "
+              "We never ask for a fee or your PIN.",
+        "ur": "راحت: اس نمبر پر پہلے سے اکاؤنٹ ہے، سائن ان کریں۔ اگر آپ نے نہیں مانگا تو یہ پیغام چھوڑ دیں۔ ہم کبھی فیس یا پن نہیں مانگتے۔",
+    },
     "payment_delayed": {
         "en": "Rahat: your payment is approved but sending it is taking longer. We will try again. You do not need to do anything.",
         "ur": "راحت: آپ کی رقم منظور ہے مگر بھیجنے میں دیر ہو رہی ہے۔ ہم دوبارہ کوشش کریں گے۔ آپ کو کچھ نہیں کرنا۔",
@@ -49,6 +59,9 @@ PROOF_NAMES: dict[str, dict[str, str]] = {
     "income_proof": {"en": "a paper that shows your monthly income", "ur": "ماہانہ آمدنی کا کاغذ"},
     "other": {"en": "the paper the officer asked for", "ur": "وہ کاغذ جو افسر نے مانگا ہے"},
 }
+
+# Messages the person asked for at sign-up: sent at once, carry their own code, no verify code appended.
+ONE_TIME_TEMPLATES = frozenset({"registration_code", "registration_exists"})
 
 LANGS = ("ur", "en")
 CODE_SUFFIX = {"en": " Code {code}", "ur": " کوڈ {code}"}
@@ -90,6 +103,7 @@ def render(template: str, lang: str, payload: dict[str, Any]) -> str:
         "amount": _amount(payload.get("amount_pkr")),
         "rail_ref": _token(payload.get("rail_ref")),
         "proof": PROOF_NAMES.get(proof_kind, PROOF_NAMES["other"])[lang],
+        "code": re.sub(r"\D", "", str(payload.get("code") or ""))[:8],
     }
     text = TEMPLATES[template][lang].format(**values)
     return _SPACES.sub(" ", _SPACE_BEFORE_STOP.sub(r"\1", text)).strip()
