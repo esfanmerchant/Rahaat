@@ -31,7 +31,8 @@ def test_breaker_opens_after_the_threshold_and_lets_one_trial_through() -> None:
     gate.record_failure()
     assert gate.state == "closed" and gate.allow()
     gate.record_failure()
-    assert gate.state == "open" and not gate.allow()
+    assert gate.state == "open"
+    assert not gate.allow()
     clock.advance(10)
     assert gate.state == "half_open"
     assert gate.allow() and not gate.allow()  # exactly one trial call
@@ -94,7 +95,7 @@ def test_a_flaky_service_is_retried_and_succeeds(clock: FakeClock) -> None:
         seen.append(1)
         return (len(seen) == 1) or fail, latency
 
-    STATE.draw_failure = first_fails  # type: ignore[method-assign]
+    STATE.draw_failure = first_fails  # type: ignore[method-assign,assignment]
     try:
         check = service.verify_identity(_citizen("Aslam Khan")["national_id"], "Aslam Khan", _citizen("Aslam Khan")["dob"])
     finally:

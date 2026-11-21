@@ -61,7 +61,7 @@ def test_notify_delivers_in_app_and_sms_with_verify_codes(client: Any, factory: 
     assert outbox["sms"]["destination"] == "•" * 9 + citizen.identifier[-3:] and citizen.identifier not in str(outbox)
     assert client.get("/v1/outbox", headers=factory.headers(client, citizen)).status_code == 403
 
-    genuine = client.post("/v1/notifications/verify", json={"code": rows["sms"].verify_code.lower()}).json()
+    genuine = client.post("/v1/notifications/verify", json={"code": str(rows["sms"].verify_code).lower()}).json()
     assert genuine["genuine"] is True and genuine["template"] == "approved" and genuine["department"] == tenant.name
     assert client.post("/v1/notifications/verify", json={"code": "ZZZZZZ"}).json() == {
         "genuine": False, "template": None, "channel": None, "department": None, "sent_at": None}  # fmt: skip

@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.core.db import open_session, system_session
+from app.core.db import RlsContext, open_session, system_session
 from app.db import models
 from app.modules.jobs import service
 from app.modules.jobs.service import JobContext, RetryLater
@@ -91,7 +91,7 @@ def test_skip_locked_never_hands_out_a_row_another_worker_holds(factory: Any) ->
     tenant = factory.tenant()
     kind = f"test.lock.{uuid.uuid4().hex[:8]}"
     first, second = _enqueue(tenant.id, kind, count=2)
-    holder = open_session(service.RlsContext(role="system"))
+    holder = open_session(RlsContext(role="system"))
     try:
         held = holder.scalars(
             select(models.Job).where(models.Job.id == first).with_for_update(skip_locked=True)

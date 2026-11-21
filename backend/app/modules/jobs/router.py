@@ -75,7 +75,7 @@ def list_jobs(
         query = query.where(tuple_(models.Job.created_at, models.Job.id) < tuple_(paging.as_datetime(created), paging.as_uuid(job_id)))
     rows = db.scalars(query.order_by(models.Job.created_at.desc(), models.Job.id.desc()).limit(limit + 1)).all()
     counts: dict[str, Any] = dict(
-        db.execute(select(models.Job.status, func.count()).where(models.Job.tenant_id == principal.tenant_id).group_by(models.Job.status)).all()  # type: ignore[arg-type]
+        db.execute(select(models.Job.status, func.count()).where(models.Job.tenant_id == principal.tenant_id).group_by(models.Job.status)).all()  # type: ignore[arg-type,unused-ignore]
     )
     page = rows[:limit]
     next_cursor = paging.encode(page[-1].created_at, page[-1].id) if len(rows) > limit else None
