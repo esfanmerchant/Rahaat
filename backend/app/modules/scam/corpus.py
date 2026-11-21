@@ -701,7 +701,8 @@ def load(path: Path = CORPUS_FILE) -> list[dict[str, Any]]:
 
 
 def corpus_bytes(path: Path = CORPUS_FILE) -> bytes:
-    return path.read_bytes()
+    """The file as committed (LF), even if a checkout turned its line endings into CRLF."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
 
 
 def main(argv: list[str]) -> int:
@@ -709,12 +710,12 @@ def main(argv: list[str]) -> int:
     data = serialise(rows)
     info = manifest(rows, data)
     if "--check" in argv:
-        same = CORPUS_FILE.exists() and CORPUS_FILE.read_bytes() == data
+        same = CORPUS_FILE.exists() and corpus_bytes() == data
         print("corpus is up to date" if same else "corpus differs from a fresh run; regenerate it")
         return 0 if same else 1
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     CORPUS_FILE.write_bytes(data)
-    MANIFEST_FILE.write_text(json.dumps(info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    MANIFEST_FILE.write_bytes((json.dumps(info, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     print(json.dumps({k: v for k, v in info.items() if k != "test_families"}, ensure_ascii=False, indent=2))
     return 0
 
