@@ -14,6 +14,8 @@ HTTP_LATENCY = Histogram(
 DECISIONS = Counter("rahat_decisions_total", "Decisions by route", ["route"])
 ACCESS_DENIED = Counter("rahat_access_denied_total", "Requests blocked by policy or consent", ["reason"])
 AUTH_EVENTS = Counter("rahat_auth_events_total", "Authentication events", ["event"])
+RATE_LIMITED = Counter("rahat_rate_limited_total", "Requests refused by a rate limit", ["scope"])
+API_KEY_EVENTS = Counter("rahat_api_key_events_total", "API key authentication and use", ["event"])
 
 METRICS_CONTENT_TYPE = CONTENT_TYPE_LATEST
 

@@ -15,7 +15,7 @@ from app.core.policy import Policy
 from app.modules.cases import service
 
 router = APIRouter(prefix="/v1/cases", tags=["cases"])
-_read = Policy("cases:read", ["officer"], description="The review queue and a case's handoff package")
+_read = Policy("cases:read", ["officer"], api_scopes=["cases:read"], description="The review queue and a case's handoff package")
 _work = Policy("cases:work", ["officer"], description="Take or hand over a case, add notes")
 _decide = Policy("cases:decide", ["officer"], description="Approve, reject, request proof, escalate or reopen, with a reason")
 
