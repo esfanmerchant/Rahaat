@@ -7,6 +7,7 @@ import { Button } from '../../shared/components/Button';
 import { Pictogram } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { lang, t, type Key } from '../../shared/i18n';
+import { online } from '../../shared/network';
 import '../../shared/i18n/more';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { handedBack } from '../actingControl';
@@ -117,6 +118,12 @@ export default function HelperFamilies({ user }: { user: AuthUser }) {
       live = false;
     };
   }, [attempt]);
+
+  // The network came back while the list could not load: ask again by itself.
+  const isOnline = online.value;
+  useEffect(() => {
+    if (isOnline && loaded.state === 'failed') setAttempt((n) => n + 1);
+  }, [isOnline]);
 
   useEffect(() => {
     if (note) sayKey(note === 'idle' ? 'helper_handed_idle' : 'helper_handed_expired');

@@ -584,7 +584,7 @@ function HelpersPage() {
       {data && data.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('mh_empty_title')} body={t('mh_empty_body')} /> : null}
       {data && data.length > 0 ? (
         <ul class="flex flex-col gap-3">
-          {data.map((item) => (
+          {[...data].sort((a, b) => Number(b.status === 'live') - Number(a.status === 'live')).map((item) => (
             <HelperCard key={item.id} item={item} onChanged={reload} />
           ))}
         </ul>
