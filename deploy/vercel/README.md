@@ -30,6 +30,7 @@ Set by `push-env.ps1`; defaults elsewhere are unchanged.
 | `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `2` / `1` | See "Pool sizing". |
 | `UPLOAD_DIR` | `/tmp/rahat-uploads` | The deployment filesystem is read-only except `/tmp`; unused while `DOCUMENT_STORE=db`. |
 | `DOCUMENT_STORE` | `db` | Uploads go to the `document_blobs` table: `/tmp` is not shared between instances, so a file written by one would be missing on another. |
+| `DB_POOLER_MODE` | `transaction` | No client-side pool and no prepared statements; `DATABASE_URL_OWNER` uses Supabase's transaction pooler (port 6543). The session pooler caps clients at 15, and on Sat 21 Nov a burst of sign-ins across instances exhausted it (`EMAXCONNSESSION`, 500s for minutes). |
 | `CRON_SECRET` | generated | Vercel Cron sends it as `Authorization: Bearer ...` to `GET /v1/admin/jobs/drain`. |
 | `DATABASE_URL_OWNER` | from `SUPABASE_URL_OWNER` | The app role's URL is derived from it (`rahat_app.<ref>`); the app never runs as the owner. |
 | `SECRET_KEY`, `MASTER_KEY`, `APP_DB_PASSWORD`, `MOCK_*_KEY` | copied from `.live\secrets.env` | The Supabase data was seeded with these exact values. Changing any of them breaks sign-in and decryption. |

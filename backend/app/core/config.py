@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     # so keep pool + overflow + the owner engine's 3 under that cap.
     db_pool_size: int = Field(default=5, ge=1, le=50)
     db_max_overflow: int = Field(default=10, ge=0, le=50)
+    # session: a pool of long-lived connections (a server, the PC). transaction: for serverless hosts behind a
+    # transaction pooler (Supabase port 6543): no client-side pool, connections close after each use, and no
+    # prepared statements, which a transaction pooler cannot keep. Session mode caps clients at its pool size
+    # (15 on Supabase), and serverless instances each holding a pool exhausted it under a burst of sign-ins.
+    db_pooler_mode: Literal["session", "transaction"] = "session"
 
     secret_key: str = DEV_SECRET_KEY
     jwt_active_kid: str = "k1"

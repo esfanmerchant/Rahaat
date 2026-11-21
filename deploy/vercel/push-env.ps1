@@ -49,7 +49,9 @@ foreach ($name in 'SECRET_KEY', 'MASTER_KEY', 'APP_DB_PASSWORD', 'MOCK_IDENTITY_
   $sensitive[$name] = $secrets[$name]
 }
 if (-not $secrets['SUPABASE_URL_OWNER']) { throw 'SUPABASE_URL_OWNER is missing from the secrets file' }
-$sensitive['DATABASE_URL_OWNER'] = $secrets['SUPABASE_URL_OWNER']
+# Serverless instances go through Supabase's transaction pooler (port 6543): the session pooler (5432) caps clients
+# at its pool size (15), which a burst of sign-ins across several instances exhausted. Migrations from the PC keep 5432.
+$sensitive['DATABASE_URL_OWNER'] = $secrets['SUPABASE_URL_OWNER'] -replace ':5432/', ':6543/'
 if ($secrets['GEMINI_API_KEY']) { $sensitive['GEMINI_API_KEY'] = $secrets['GEMINI_API_KEY'] }
 $bytes = New-Object byte[] 32
 [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
@@ -66,6 +68,7 @@ $plain = [ordered]@{
   DB_MAX_OVERFLOW     = '1'
   UPLOAD_DIR          = '/tmp/rahat-uploads'
   DOCUMENT_STORE      = 'db'
+  DB_POOLER_MODE      = 'transaction'
 }
 
 function Set-VercelEnv([string]$Name, [string]$Value, [bool]$IsSecret) {

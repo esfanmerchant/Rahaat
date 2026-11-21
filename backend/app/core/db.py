@@ -17,6 +17,7 @@ from uuid import UUID
 from sqlalchemy import Engine, create_engine, event, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
@@ -43,20 +44,25 @@ _engines: dict[str, Engine] = {}
 _session_factory: sessionmaker[Session] = sessionmaker(expire_on_commit=False)
 
 
+def engine_options(pool_size: int, max_overflow: int) -> dict[str, Any]:
+    """Connection pooling for the configured pooler mode (see `Settings.db_pooler_mode`)."""
+    if get_settings().db_pooler_mode == "transaction":
+        return {"poolclass": NullPool, "connect_args": {"prepare_threshold": None}}
+    return {"pool_pre_ping": True, "pool_size": pool_size, "max_overflow": max_overflow}
+
+
 def get_engine() -> Engine:
     """Runtime engine: the low-privilege role that RLS applies to."""
     if "app" not in _engines:
         settings = get_settings()
-        _engines["app"] = create_engine(
-            settings.app_url(), pool_pre_ping=True, pool_size=settings.db_pool_size, max_overflow=settings.db_max_overflow
-        )
+        _engines["app"] = create_engine(settings.app_url(), **engine_options(settings.db_pool_size, settings.db_max_overflow))
     return _engines["app"]
 
 
 def get_owner_engine() -> Engine:
     """Table-owner engine. Migrations and the audit-tamper demo only; never used to serve requests."""
     if "owner" not in _engines:
-        _engines["owner"] = create_engine(get_settings().owner_url(), pool_pre_ping=True, pool_size=1, max_overflow=2)
+        _engines["owner"] = create_engine(get_settings().owner_url(), **engine_options(1, 2))
     return _engines["owner"]
 
 

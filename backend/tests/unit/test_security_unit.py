@@ -178,3 +178,15 @@ def test_the_international_form_of_a_mock_phone_is_redacted_like_the_local_one()
     for written in ("0999-1234567", "+92 999 1234567", "+929991234567", "0092-999-1234567"):
         out = redact_for_storage(f"send it to {written} now")
         assert "1234567" not in str(out), (written, out)
+
+
+def test_transaction_pooler_mode_keeps_no_pool_and_no_prepared_statements(monkeypatch: pytest.MonkeyPatch) -> None:
+    from sqlalchemy.pool import NullPool
+
+    from app.core import db
+
+    monkeypatch.setattr(get_settings(), "db_pooler_mode", "transaction")
+    options = db.engine_options(5, 10)
+    assert options["poolclass"] is NullPool and options["connect_args"] == {"prepare_threshold": None}
+    monkeypatch.setattr(get_settings(), "db_pooler_mode", "session")
+    assert db.engine_options(5, 10) == {"pool_pre_ping": True, "pool_size": 5, "max_overflow": 10}
