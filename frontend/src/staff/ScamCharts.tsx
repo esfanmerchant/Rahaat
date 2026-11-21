@@ -189,7 +189,7 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
         ))}
         {days.map((d, i) =>
           i % every === 0 || i === n - 1 ? (
-            <text key={d} x={x(i)} y={H - 10} font-size="10" text-anchor="middle" class="fill-ink-muted">
+            <text key={d} x={x(i)} y={H - 10} font-size="10" text-anchor={i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'} class="fill-ink-muted">
               {shortDay(d)}
             </text>
           ) : null,
