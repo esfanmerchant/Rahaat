@@ -54,6 +54,36 @@ TEMPLATES: dict[str, dict[str, str]] = {
     },
 }
 
+# Messages added after the scam corpus was frozen (A18). They are kept apart from TEMPLATES so that the committed corpus
+# and the scam model trained on it stay reproducible; `render` knows both. TODO (Track C): add them to the scam checker's
+# template patterns (scam/signals.py) and the corpus generator in the same change, then merge this dict into TEMPLATES.
+EXTRA_TEMPLATES: dict[str, dict[str, str]] = {
+    "appeal_received": {
+        "en": "Rahat: we got your appeal for application {tracking_code}. A different officer will look at it again. We will send you a message.",
+        "ur": "راحت: آپ کی درخواست {tracking_code} کی اپیل مل گئی ہے۔ کوئی دوسرا افسر اسے دوبارہ دیکھے گا۔ ہم آپ کو پیغام بھیجیں گے۔",
+    },
+    "appeal_upheld": {
+        "en": "Rahat: a different officer looked again at application {tracking_code}. The first answer stays. You can ask at a Rahat office why.",
+        "ur": "راحت: دوسرے افسر نے درخواست {tracking_code} دوبارہ دیکھی۔ پہلا فیصلہ قائم ہے۔ وجہ پوچھنے کے لیے راحت دفتر جا سکتے ہیں۔",
+    },
+    "appeal_overturned": {
+        "en": "Rahat: good news. A different officer looked again and application {tracking_code} is now approved. You will get Rs {amount}.",
+        "ur": "راحت: خوش خبری۔ دوسرے افسر نے دوبارہ دیکھا اور درخواست {tracking_code} اب منظور ہے۔ آپ کو {amount} روپے ملیں گے۔",
+    },
+    "complaint_received": {
+        "en": "Rahat: we got your complaint. A person will read it. You do not need to do anything now.",
+        "ur": "راحت: آپ کی شکایت مل گئی ہے۔ ایک افسر اسے پڑھے گا۔ آپ کو ابھی کچھ نہیں کرنا۔",
+    },
+    "complaint_resolved": {
+        "en": "Rahat: we looked into your complaint and took action. Thank you for telling us.",
+        "ur": "راحت: ہم نے آپ کی شکایت دیکھ کر کارروائی کی ہے۔ بتانے کا شکریہ۔",
+    },
+    "complaint_closed": {
+        "en": "Rahat: we looked into your complaint and could not change anything. You can speak to a person at a Rahat office.",
+        "ur": "راحت: ہم نے آپ کی شکایت دیکھی مگر کچھ بدل نہیں سکے۔ آپ راحت دفتر میں کسی افسر سے بات کر سکتے ہیں۔",
+    },
+}
+
 PROOF_NAMES: dict[str, dict[str, str]] = {
     "rahat_id": {"en": "a clear photo of your Rahat card", "ur": "راحت کارڈ کی صاف تصویر"},
     "income_proof": {"en": "a paper that shows your monthly income", "ur": "ماہانہ آمدنی کا کاغذ"},
@@ -94,7 +124,7 @@ def _amount(value: Any) -> str:
 
 def render(template: str, lang: str, payload: dict[str, Any]) -> str:
     """The message text for a template, without the verify code. Only known, sanitised values are filled in."""
-    if template not in TEMPLATES:
+    if template not in TEMPLATES and template not in EXTRA_TEMPLATES:
         raise ValueError(f"unknown notification template {template!r}")
     lang = choose_lang(lang, None)
     proof_kind = str(payload.get("proof_kind") or "other")
@@ -105,7 +135,7 @@ def render(template: str, lang: str, payload: dict[str, Any]) -> str:
         "proof": PROOF_NAMES.get(proof_kind, PROOF_NAMES["other"])[lang],
         "code": re.sub(r"\D", "", str(payload.get("code") or ""))[:8],
     }
-    text = TEMPLATES[template][lang].format(**values)
+    text = (TEMPLATES.get(template) or EXTRA_TEMPLATES[template])[lang].format(**values)
     return _SPACES.sub(" ", _SPACE_BEFORE_STOP.sub(r"\1", text)).strip()
 
 

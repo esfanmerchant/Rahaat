@@ -38,6 +38,7 @@ from app.modules.documents import imaging
 from app.modules.documents.views import KIND_SCOPES, citizen_view, document_status, signed_qr_valid
 from app.modules.people.context import PersonContext
 from app.modules.people.service import get_person
+from app.modules.plans import service as plans
 
 log = get_logger("rahat.documents")
 MAX_DOCUMENTS_PER_APPLICATION = 12
@@ -113,7 +114,12 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
         raise
 
     document_id = uuid.uuid4()
-    check = _run_check(original, kind, document_id)  # on the original bytes, before re-encoding
+    # Over the plan's `ocr` limit the photo is still accepted (the citizen must not lose their application), but it is
+    # not checked automatically: no check means a person looks at it.
+    metered = plans.try_consume(db, ctx.tenant_id, "ocr")
+    if not metered:
+        log.warning("ocr plan limit reached; document %s is left for a person to check", document_id)
+    check = _run_check(original, kind, document_id) if metered else None  # on the original bytes, before re-encoding
     clean, ext, mime, width, height = imaging.reencode(inspected)
 
     person = get_person(db, ctx)

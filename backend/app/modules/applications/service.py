@@ -53,6 +53,7 @@ from app.modules.consent.access_log import record_view
 from app.modules.consent.rules import require_consent, require_consent_for_helper_read
 from app.modules.documents.views import citizen_view
 from app.modules.people.context import PersonContext
+from app.modules.plans import service as plans
 
 log = get_logger("rahat.applications")
 
@@ -358,6 +359,7 @@ def create_core(db: Session, ctx: PersonContext, body: ApplicationCreate, *, app
     form.form_version = "v1"  # the server owns the schema version
     if form.phone.value:
         form.phone.value = normalise_mock_phone(form.phone.value)
+    plans.consume(db, ctx.tenant_id, "applications")  # 429 plan_limit_reached at the creation point; nothing the person typed is lost
 
     application = models.Application(
         id=application_id or uuid.uuid4(), tenant_id=ctx.tenant_id, program_id=program.id, person_id=ctx.person_id,

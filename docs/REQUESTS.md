@@ -90,3 +90,21 @@ From: Track D2   To: Track A (cases)   Status: open
 What: (1) `GET /v1/cases?q=` matching the application's tracking code (`R-12345`), the case id prefix and the subject name; `CaseSummary` would carry `tracking_code`. (2) optional `total` (an exact count) on the case, decision, payment and scam-report lists, or a small `GET /v1/stats/today`.
 Why: the command palette promises "open a case by id or tracking code", but staff cannot see a tracking code today, so it matches id, application id and name from the first 100 cases only. The pulse strip counts one page of up to 100 rows and shows a plus sign beyond that.
 Until then: the palette and pulse use the existing list endpoints and say so in their hints.
+
+## Person-level security for appeals
+From: Track A (WP-A)   To: Lead (models and migrations)   Status: open
+What: `appeals` has a `person_id` but only the tenant policy. Add `rls.enable_person_rls(op, "appeals", "person_id")` in a new migration (as for `applications`).
+Why: appeals name a person's application and the citizen's reason. The service already reads the application through its own consent-checked policy and filters by person, but the database should say the same.
+Until then: officers reach an appeal only through the appeals service, which reads the person's application under Row Level Security and answers 403 `consent_required` without consent; citizens see only their own rows.
+
+## Add the new message templates to the scam checker
+From: Track A (WP-A)   To: Track C (scam)   Status: open
+What: `notifications.templates.EXTRA_TEMPLATES` (`appeal_received`, `appeal_upheld`, `appeal_overturned`, `complaint_received`, `complaint_resolved`, `complaint_closed`) are real Rahat messages. Fold them into `scam/signals.py::_template_patterns` and `scam/corpus.py::_program_messages`, regenerate the corpus (`uv run python -m app.modules.scam.corpus`), then merge the dict into `TEMPLATES`.
+Why: a citizen who pastes an official appeal message into the scam checker should see it recognised as a program message. They were kept out of `TEMPLATES` because the committed corpus test (`test_the_committed_corpus_is_exactly_what_the_seeded_generator_writes`) would fail.
+Until then: such a message is judged by the classifier like any unknown message; its verify code still checks out at `POST /v1/notifications/verify`.
+
+## Meter the rules assistant and the agent as `ai_calls`
+From: Track A (WP-A)   To: Track C (rag, agent)   Status: open
+What: call `app.modules.plans.service.consume_committed(principal.rls(), principal.tenant_id, "ai_calls")` at the top of `rag.service.ask` when a principal is present, and in each agent run. It raises the 429 `plan_limit_reached` problem. Voice routes are already metered in `people.context.acting_person`.
+Why: `POST /v1/ask` is public and takes no department session, so the platform cannot meter it without touching the rag module.
+Until then: only speech and API keys count against `ai_calls` and `api_calls`.

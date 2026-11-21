@@ -27,6 +27,7 @@ from app.core.mockdata import mask_identifier
 from app.db import models
 from app.modules.jobs.service import JobContext, PermanentJobError, RetryLater, enqueue
 from app.modules.notifications import templates
+from app.modules.plans import service as plans
 
 log = get_logger("rahat.notifications")
 
@@ -91,6 +92,9 @@ def notify(
     for channel in wanted:
         if channel == "sms" and phone is None:
             log.info("no SMS for template %s: no readable phone number", template)
+            continue
+        if channel == "sms" and not plans.try_consume(db, tenant_id, "sms"):
+            log.warning("sms plan limit reached; template %s stays in the app only", template)  # the in-app copy is always there
             continue
         notification_id = uuid.uuid4()
         code = make_verify_code(notification_id, text_hash)

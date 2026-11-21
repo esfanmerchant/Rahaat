@@ -46,6 +46,7 @@ from app.modules.applications.status import OUTCOME_STATUS, SUBMITTABLE, move
 from app.modules.consent.rules import require_consent
 from app.modules.people.context import PersonContext
 from app.modules.people.service import get_person, registered_national_id
+from app.modules.webhooks.emit import emit as emit_webhook
 
 log = get_logger("rahat.pipeline")
 
@@ -324,6 +325,10 @@ def run(db: Session, ctx: PersonContext, application: models.Application) -> Sub
         elif target == "in_review":
             _open_case(db, ctx, application, reason=reason or (decision.reasons or ["needs_human"])[0], decision=decision,
                        handoff=_handoff_of(decision))  # fmt: skip
+
+    if decision is not None:
+        emit_webhook(db, ctx.tenant_id, "decision.made", {"decision_id": decision.id, "application_id": application.id,
+                                                          "outcome": decision.outcome, "route": decision.route})  # fmt: skip
 
     template, payload = notification_for(target, decided=decision is not None, tracking_code=application.tracking_code,
                                          amount_pkr=_amount(rule_version), proof_kind=_ask_proof(decision))  # fmt: skip

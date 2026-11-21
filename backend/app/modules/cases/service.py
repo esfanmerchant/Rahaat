@@ -30,6 +30,7 @@ from app.core.logging import get_logger
 from app.db import models
 from app.modules.cases import paging, rules
 from app.modules.consent.access_log import record_view
+from app.modules.webhooks.emit import emit as emit_webhook
 
 log = get_logger("rahat.cases")
 
@@ -48,6 +49,11 @@ def _event(db: Session, case: models.Case, event: str, *, from_status: str | Non
            actor_id: uuid.UUID | None, details: dict[str, Any] | None = None) -> None:  # fmt: skip
     db.add(models.CaseEvent(id=uuid.uuid4(), tenant_id=case.tenant_id, case_id=case.id, event=event, from_status=from_status,
                             to_status=to_status, actor_user_id=actor_id, details=dict(details or {}), created_at=_now()))  # fmt: skip
+
+
+def decided_elsewhere(case: models.Case) -> bool:
+    """Appeals and citizen complaints are decided through their own endpoints (a different officer; the citizen is told)."""
+    return case.kind == "appeal" or (case.opened_reason or "").startswith("complaint_")
 
 
 def _illegal(exc: rules.IllegalCaseTransition) -> Conflict:
@@ -114,6 +120,7 @@ def open_case(
                 acting_for_person_id=person_id,
                 details={"kind": kind, "reason": opened_reason[:64], "priority": priority, "confidence": confidence,
                          "decision_id": str(decision_id) if decision_id else None})  # fmt: skip
+    emit_webhook(db, tenant_id, "case.opened", {"case_id": case.id, "kind": kind, "status": case.status, "application_id": application_id})
     db.flush()
     return case
 
@@ -423,6 +430,9 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
     from app.modules.payments.service import request_payment
 
     case = _load(db, principal.tenant_id, case_id, lock=True)
+    if body.action in ("approve", "reject") and decided_elsewhere(case):
+        raise Conflict("This case is decided on its own screen, which also tells the citizen.", code="use_dedicated_endpoint",
+                       extra={"endpoint": "/v1/appeals/{id}/decide" if case.kind == "appeal" else "/v1/complaints/{id}/resolve"})  # fmt: skip
     application = _readable_application(db, principal, case)
     try:
         new_status = rules.next_status(case.status, body.action)
@@ -475,6 +485,12 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
     audit.write(db, tenant_id=principal.tenant_id, action=f"case.{body.action}", actor_id=principal.user_id, actor_role=principal.role,
                 acting_for_person_id=case.subject_person_id, object_type="case", object_id=case.id, reason=body.reason,
                 rule_version_id=decision.rule_version_id if decision else None, details=details)  # fmt: skip
+    if body.action in ("approve", "reject"):
+        emit_webhook(db, case.tenant_id, "case.resolved", {"case_id": case.id, "kind": case.kind, "resolution": case.resolution,
+                                                           "application_id": case.application_id})  # fmt: skip
+        if on_application:
+            emit_webhook(db, case.tenant_id, "decision.made", {"case_id": case.id, "application_id": case.application_id,
+                                                               "outcome": case.resolution, "route": "human"})  # fmt: skip
     db.flush()
 
     if on_application:
@@ -499,6 +515,31 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
                    payload={**tracking, "proof_kind": details["proof_kind"]})  # fmt: skip
         db.flush()
     return build_detail(db, case, application)
+
+
+def resolve_with_outcome(db: Session, principal: Principal, case: models.Case, *, resolution: str, reason: str,
+                         details: dict[str, Any] | None = None) -> None:  # fmt: skip
+    """Close a case that has its own decision screen (an appeal, a complaint): status, event, audit and the `case.resolved` webhook.
+
+    The caller has already checked who may decide and has read the person's data through Row Level Security.
+    """
+    try:
+        new_status = rules.next_status(case.status, "approve")  # any decidable case may resolve
+    except rules.IllegalCaseTransition as exc:
+        raise _illegal(exc) from exc
+    now = _now()
+    old = case.status
+    case.status, case.resolved_at, case.resolution, case.resolution_reason = new_status, now, resolution, reason
+    if case.assigned_to is None:
+        case.assigned_to = principal.user_id
+    _event(db, case, "resolved", from_status=old, to_status=new_status, actor_id=principal.user_id,
+           details={**(details or {}), "resolution": resolution})  # fmt: skip
+    audit.write(db, tenant_id=principal.tenant_id, action="case.resolved", actor_id=principal.user_id, actor_role=principal.role,
+                acting_for_person_id=case.subject_person_id, object_type="case", object_id=case.id, reason=reason,
+                details={"kind": case.kind, "resolution": resolution, **(details or {})})  # fmt: skip
+    emit_webhook(db, case.tenant_id, "case.resolved", {"case_id": case.id, "kind": case.kind, "resolution": resolution,
+                                                       "application_id": case.application_id})  # fmt: skip
+    db.flush()
 
 
 def reopen(db: Session, principal: Principal, case_id: uuid.UUID, *, reason: str) -> CaseDetail:

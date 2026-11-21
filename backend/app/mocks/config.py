@@ -15,6 +15,7 @@ DEV_KEYS: dict[str, str] = {
     "payment": "mock-payment-dev-key-0001",
     "sms": "mock-sms-dev-key-0001",
     "control": "mock-control-dev-key-0001",
+    "webhook": "mock-webhook-dev-key-0001",
 }
 
 KEY_HEADER = "X-Mock-Key"
@@ -30,6 +31,7 @@ class MockServiceSettings(BaseSettings):
     payment_key: str = DEV_KEYS["payment"]
     sms_key: str = DEV_KEYS["sms"]
     control_key: str = DEV_KEYS["control"]
+    webhook_key: str = DEV_KEYS["webhook"]  # the demo webhook receiver (not one of the failure-injected SERVICES)
     max_latency_ms: int = 15_000
     seed: int = 20261121  # failure injection draws from a seeded generator, so a run can be repeated
 
@@ -40,6 +42,7 @@ class MockServiceSettings(BaseSettings):
             "payment": self.payment_key,
             "sms": self.sms_key,
             "control": self.control_key,
+            "webhook": self.webhook_key,
         }[service]
 
 

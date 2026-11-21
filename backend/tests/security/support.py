@@ -24,6 +24,7 @@ from PIL import Image
 from sqlalchemy import select, text
 
 from app.core import apikeys
+from app.core.crypto import encrypt_field
 from app.core.db import system_session
 from app.core.policy import describe_routes
 from app.core.security import decode_access_token, hash_secret
@@ -241,6 +242,15 @@ def _build_side(client: TestClient, factory: Any, label: str) -> Side:
                                       input={"args": {"reason_code": "needs_senior_review"}, "rationale": "security probe"}, output={},
                                       status="waiting_approval")  # fmt: skip
         db.add(agent_step)
+        webhook = models.Webhook(id=uuid.uuid4(), tenant_id=tenant.id, url="mock://receiver", events=["case.opened"], active=True,
+                                 secret_enc=encrypt_field(tenant.wrapped_dek, "whsec_security_probe"), created_by=accounts["admin"].user_id)  # fmt: skip  # noqa: E501
+        db.add(webhook)
+        db.flush()
+        delivery = models.WebhookDelivery(id=uuid.uuid4(), tenant_id=tenant.id, webhook_id=webhook.id, event="case.opened",
+                                          payload={"status": "open"}, status="delivered", attempts=1, response_code=200)  # fmt: skip
+        appeal = models.Appeal(id=uuid.uuid4(), tenant_id=tenant.id, application_id=review["application_id"], person_id=citizen.person_id,
+                               decision_id=review["decision_id"], reason="Security probe", status="open", case_id=review["case_id"])  # fmt: skip
+        db.add_all([delivery, appeal])
         for name, scopes in key_scopes.items():
             raw, prefix, digest = apikeys.generate()
             key = models.ApiKey(id=uuid.uuid4(), tenant_id=tenant.id, name=f"security {name}", prefix=prefix, key_hash=digest,
@@ -256,6 +266,7 @@ def _build_side(client: TestClient, factory: Any, label: str) -> Side:
         "consent_id": consent_id, "session_id": session_id, "key_id": key_ids["payments"],
         "agent_run_id": agent_run.id, "step_id": agent_step.id,
         "candidate_id": candidate.id, "run_id": run.id, "report_id": report.id, "warning_id": warning.id, "delegation_id": delegation.id,
+        "webhook_id": webhook.id, "delivery_id": delivery.id, "appeal_id": appeal.id,
     }  # fmt: skip
     return Side(label=label, tenant_id=tenant.id, accounts=accounts, ids=ids, keys=keys, key_scopes=key_scopes, tenant=tenant)
 

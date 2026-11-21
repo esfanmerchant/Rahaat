@@ -28,6 +28,7 @@ from app.core.logging import get_logger
 from app.db import models
 from app.modules.jobs.service import JobContext, PermanentJobError, RetryLater, enqueue
 from app.modules.payments import rules
+from app.modules.webhooks.emit import emit as emit_webhook
 
 log = get_logger("rahat.payments")
 
@@ -178,6 +179,8 @@ def release_payment(db: Session, payment: models.Payment, *, actor_id: uuid.UUID
         ))  # fmt: skip
         application.status = "paid"
         application.version = (application.version or 1) + 1
+        for event in ("payment.sent", "payment.settled"):  # the rail takes and confirms in one call; a real rail would split them
+            emit_webhook(db, locked.tenant_id, event, {"payment_id": locked.id, "application_id": locked.application_id, "status": "settled"})
         audit.write(db, tenant_id=locked.tenant_id, action="payment.settled", actor_type="user" if actor_id else "system", actor_id=actor_id,
                     object_type="payment", object_id=locked.id, acting_for_person_id=locked.person_id,
                     details={"amount_pkr": locked.amount_pkr, "rail_ref": result.rail_ref, "settled_pkr": result.settled_pkr})  # fmt: skip
