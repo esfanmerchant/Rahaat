@@ -27,6 +27,12 @@ def _ingest_all() -> None:
                     log.info("policy corpus for %s: added %s, refused %s", tenant_id, report.added, report.refused)
     except Exception:  # noqa: BLE001  (the assistant then refuses until the corpus is ingested)
         log.exception("could not ingest the policy corpus at startup")
+    try:
+        from app.modules.rag import calibration
+
+        calibration.probability(0.5)  # fit once now, so the first question does not wait for it
+    except Exception:  # noqa: BLE001
+        log.exception("could not prepare the answer calibration")
 
 
 def startup() -> None:
