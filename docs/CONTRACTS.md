@@ -1,0 +1,105 @@
+# Contracts: how to build on the foundation
+
+Read this before writing code in any track. It tells you where things are, the rules the foundation enforces, and the shapes other tracks rely on. The OpenAPI document (`/docs`, `backend/openapi.json`) is the exact schema; this page is the map.
+
+## Where things are
+
+| Need | Use |
+|---|---|
+| Settings | `app.core.config.get_settings()` |
+| A database session for a request | `db: Session = Depends(get_db)` from `app.core.deps` |
+| The caller | `principal: Principal = Depends(Policy("name", roles=[...]))` from `app.core.policy` |
+| A session outside a request (worker, seed, pre-auth lookup) | `app.core.db.session_scope(RlsContext(...))` or `system_session()` |
+| Audit a change | `app.core.audit.write(db, tenant_id=..., action="thing.verb", ...)` |
+| Record a denied attempt | `app.core.audit.write_independent(...)` (commits on its own) |
+| Errors | raise `NotFound`, `Forbidden`, `Conflict`, `Unprocessable`, ... from `app.core.errors` |
+| Encrypt an identifier | `app.core.crypto.encrypt_field(tenant.wrapped_dek, value)` plus `blind_index(value, scope=str(tenant.id))` |
+| Mock formats | `app.core.mockdata` (`make_mock_id`, `normalise_mock_phone`, `mock_id_valid`, `mask_identifier`) |
+| Redact text before logging or sending it out | `app.core.logging.redact` |
+| Tables | `from app.db import models` |
+| Shared shapes | `from app.contracts import ...` |
+
+## Adding an endpoint
+
+1. Create `backend/app/modules/<name>/router.py` with `router = APIRouter(prefix="/v1/...", tags=[...])`. It is discovered automatically; do not edit `app/main.py`.
+2. Every route takes exactly one marker: `Depends(Policy("cases:review", roles=["officer"]))` or `Depends(Public("why this is open"))`. A test fails the build when a route has none.
+3. Request bodies subclass `app.contracts.common.Strict`, so unknown fields are rejected.
+4. Do the work in a `service.py` function that takes `db` and `principal`. Keep decisions and calculations in pure functions with DB-free tests.
+5. Write an audit row for every mutation, in the same transaction.
+6. **Commit explicitly** (`db.commit()`) when the work is complete. The request session rolls back anything uncommitted. Do not rely on dependency teardown to commit: the response may already have been sent.
+7. Paginate with a cursor and `limit` capped at `MAX_PAGE_SIZE`. Creating POSTs accept an `Idempotency-Key`.
+
+A role check in the policy is the first layer. Row Level Security is the second. Do both; never one instead of the other.
+
+## Database rules
+
+- The app connects as `rahat_app` (not the owner, no BYPASSRLS). Each transaction carries `app.role`, `app.tenant_id`, `app.user_id`, `app.person_id`. With no context a query returns nothing.
+- **Tenant tables**: a row is visible only inside its tenant. Always set `tenant_id` on new rows; a wrong value is rejected by the database.
+- **Person tables** (`persons`, `applications`, `documents`, `document_checks`, `memory_items`): also need `app_can_read_person(person_id)` to be true. That means: the citizen themself, a helper with a live delegation, or an officer, API client or worker whose tenant holds an active, unexpired consent. Admins and auditors do not read these tables. A withdrawn consent stops access on the next query.
+- **Global tables**: `plans`, `tenants`, `users`, `sessions`. A user sees their own user and session rows, and the tenants they belong to.
+- **System context** (`system_session()`) bypasses tenant checks. It exists for sign-in lookups, the job dispatcher and the seed. Each use must be narrow and obvious. A worker should run a job in the job's tenant with role `worker`, so consent still applies.
+- **Append-only**: the app role can only INSERT and SELECT on `audit_log`, `audit_anchors`, `consent_events`.
+- **No `RETURNING`**: ids and timestamps are generated in Python (`Base` sets `eager_defaults=False`). A fresh person row is not readable by the consent check inside the statement that inserts it, so an insert that asked for `RETURNING` would fail.
+- JSON columns are not mutation-tracked. Assign a new dict or list.
+- Never build SQL from strings (ruff rule S608 enforces it).
+- **Schema changes go through the lead.** Put the request in `docs/REQUESTS.md`. A new tenant table calls `rls.enable_tenant_rls(op, "<table>")` in its migration; a table with a person's data also calls `rls.enable_person_rls(op, "<table>", "<column>")`. Many columns already have a `data`/`config`/`payload` JSON field for details that do not need their own column.
+- **Dependencies are changed only by the lead** (lockfile conflicts across branches are expensive). Ask in `docs/REQUESTS.md`.
+
+## Shared shapes (`backend/app/contracts/`)
+
+| File | What |
+|---|---|
+| `common.py` | `Role`, `Route` (`auto`, `ask_more`, `human`), `Provenance`, statuses, `IncomeBand`, `Strict`, page sizes |
+| `decision.py` | `TypedDecision[T]`, `CostMatrix` (with derived thresholds), `RuleTraceItem`, `HandoffPackage`, `Explanation`, `DecisionUserView`, `DecisionTrace`, `ReplayResult` |
+| `application.py` | `FieldValue[T]`, `ApplicationFormV1`, `apply_patch` |
+| `documents.py` | `DocumentCheck`, `DocumentCitizenView`, `QrResult`, `OcrResult`, `DocumentSignal` |
+| `api.py` | request and response models of the spine API below |
+
+Rules that the models enforce: an abstained `TypedDecision` cannot be routed `auto`; only `qr_signed` and `registry` values can be `verified`; an unknown field value has confidence 0.
+
+## Spine API (final paths; stubs answer in dev until the real endpoint lands)
+
+| Method and path | Roles | Request | Response | Owner |
+|---|---|---|---|---|
+| `GET /v1/me/person` | citizen, helper | | `PersonOut` | A |
+| `GET /v1/programs` | any | | `ProgramOut[]` | A |
+| `GET /v1/consents` | citizen, helper | | `ConsentOut[]` | A |
+| `POST /v1/consents` | citizen, helper | `ConsentCreate` | `ConsentOut` | A |
+| `POST /v1/consents/{id}/withdraw` | citizen, helper | | `ConsentOut` | A |
+| `GET /v1/applications` | citizen, helper | | `ApplicationList` | A |
+| `POST /v1/applications` | citizen, helper | `ApplicationCreate` | `ApplicationOut` | A |
+| `GET /v1/applications/{id}` | citizen, helper | | `ApplicationOut` | A |
+| `PATCH /v1/applications/{id}` | citizen, helper | `ApplicationPatch` | `ApplicationOut` | A |
+| `POST /v1/applications/{id}/submit` | citizen, helper | | `SubmitOut` | A (calls B's `decide`) |
+| `POST /v1/applications/{id}/documents` | citizen, helper | multipart `file`, `kind` | `DocumentOut` | A (calls C's `check_document`) |
+| `GET /v1/notifications` | any | | `NotificationList` | A |
+| `GET /v1/cases` | officer | | `CaseList` | A |
+| `GET /v1/cases/{id}` | officer | | `CaseDetail` | A |
+| `POST /v1/cases/{id}/actions` | officer | `CaseActionIn` | `CaseDetail` | A |
+| `POST /v1/cases/{id}/notes` | officer | `CaseNoteIn` | `CaseDetail` | A |
+| `GET /v1/decisions/{id}` | officer, auditor | | `{user_view, trace}` | B |
+
+Already real: `/v1/auth/*` (login, refresh, switch, logout, me, sessions), `/v1/audit`, `/v1/audit/verify`, `/v1/system/{info,health,policies}`, `/v1/demo/accounts`, `/healthz`, `/readyz`, `/metrics`.
+
+Stubs live in `backend/app/modules/zz_stubs`. They load only in dev and test, mark responses with `X-Rahat-Stub: 1`, and lose to any real route with the same method and path. Delete a stub when its real endpoint is merged.
+
+Functions other tracks call (define them with these names so integration is a one-line import):
+
+- Track B: `app.modules.decision.service.decide(snapshot, rule_version, cost_matrix, model_version) -> DecisionResult` (pure).
+- Track C: `app.modules.docs_ai.service.check_document(image_bytes, kind) -> DocumentCheck`.
+- Track C: `app.modules.scam.service.classify_message(text, sender) -> TypedDecision[ScamLabel]`.
+
+## Tests
+
+- Fixtures in `backend/conftest.py`: `client` (TestClient), `factory` (makes isolated tenants and accounts, `factory.headers(client, account)` signs in), `database`, `app`.
+- Any test that uses those fixtures is marked `db` automatically. `npm run test:fast` runs everything else in a few seconds.
+- Every test creates its own tenants. Never rely on rows from another test, and never truncate.
+- Put module tests in `backend/app/modules/<name>/tests/` and cross-cutting ones in `backend/tests/`.
+- Test real-looking identifiers only to prove they are refused, and add `# mock-lint: allow` on that line.
+
+## Things that surprise people
+
+- FastAPI in this project keeps included routers lazy, so `app.routes` does not list API routes. Use `app.core.policy.describe_routes(app)`.
+- Python's clock on Windows ticks about every 15 ms. Two rows created in one request can share a `created_at`; never use it alone to order.
+- SQLAlchemy `text()` reads `:name` as a parameter. Pass JSON and anything with a colon as a bound value.
+- The first start of the embedded database takes about 15 seconds; after that it stays running. `npm run db:stop` stops it.
