@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 14:05 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
+Last updated: Sat 21 Nov 2026, 14:25 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -39,10 +39,10 @@ Track A
 - [ ] A2 Consent grant at registration
 - [ ] A3 Applications: draft, patch, submit
 - [ ] A4 Document upload (hardened)
-- [ ] A5 Cases: state machine, queue, review actions
-- [ ] A6 Mock identity, registry, payment and SMS services with failure injection
-- [ ] A7 Payments: idempotent, four-eyes
-- [ ] A8 Notifications outbox and jobs worker
+- [x] A5 Cases: state machine, queue with filters and keyset paging, assign, notes, actions with required reasons, reopen, SLA, review time
+- [x] A6 Mock identity, registry, payment and SMS services with keys and failure injection; adapters with timeout, retry and circuit breaker
+- [x] A7 Payments: one per application, released at once up to Rs 15,000, a second officer above it, reconciliation row
+- [x] A8 Notifications in English and Urdu with verify codes; Postgres job queue with retries, dead letter and consent-aware workers
 
 Track B
 - [ ] B1 Rule interpreter with three-valued logic and trace
@@ -58,15 +58,15 @@ Track C
 - [ ] C3 Scam corpus, classifier, URL and sender analysis
 
 Track D1
-- [ ] D1.1 Tokens, pictograms, audio player, i18n
-- [ ] D1.2 Citizen PIN login
-- [ ] D1.3 Guided application
-- [ ] D1.4 Result screen and tracker
+- [x] D1.1 Tokens, pictograms, audio player, i18n (Urdu and English)
+- [x] D1.2 Citizen PIN login
+- [x] D1.3 Guided application: consent, card photo with retake hints, one question per screen, review, send (tested against stubs, Slow 3G and offline in headless Chrome)
+- [x] D1.4 Result screen for every outcome, tracker with symbol code, ask a person; 192 Urdu and 192 English voice prompts
 
 Track D2
-- [ ] D2.1 Staff shell
-- [ ] D2.2 Officer queue and case review
-- [ ] D2.3 Auditor decision viewer
+- [x] D2.1 Staff shell
+- [x] D2.2 Officer queue and case review with the handoff package first (urgent cases first)
+- [x] D2.3 Auditor decision viewer and audit explorer with chain verification
 
 **Gate 1**: the anchor flow completes on the live URL.
 

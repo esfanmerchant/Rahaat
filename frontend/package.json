@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "gen:api": "openapi-typescript ../backend/openapi.json -o src/shared/api/schema.d.ts",
-    "check:bundle": "node scripts/check-bundle.mjs"
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "gen:audio": "node scripts/make-audio.mjs"
   },
   "dependencies": {
     "@preact/signals": "2.11.4",
