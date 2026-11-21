@@ -23,6 +23,7 @@ They are not calibrated on real cards; there are none in this project.
 from __future__ import annotations
 
 import math
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -35,6 +36,7 @@ from app.contracts.documents import Authenticity, DocumentCheck, DocumentCitizen
 from app.modules.docs_ai import layout as L
 
 MODEL_VERSION = "docs-ai-1.0.0"
+_CHECK_LOCK = threading.Lock()
 
 # Quality gate (calibrated on generated photos; see evaluate.py).
 BLUR_MIN = 60.0  # variance of the Laplacian over the printed values, at the card's native scale (red channel)
@@ -222,9 +224,14 @@ def check_document(
     trusted_keys: dict[str, Ed25519PublicKey] | None = None,
     ocr_engine: Any = None,
 ) -> DocumentCheck:
-    """Look at an uploaded document image. Never raises on bad input; see the module docstring."""
+    """Look at an uploaded document image. Never raises on bad input; see the module docstring.
+
+    Checks run one at a time per process: OpenCV, Pillow and FreeType native code is not reliably thread-safe,
+    and a check takes well under a second, so the thread pool queues instead of risking a native crash.
+    """
     try:
-        return _check(image_bytes, kind, document_id=document_id, trusted_keys=trusted_keys, ocr_engine=ocr_engine)
+        with _CHECK_LOCK:
+            return _check(image_bytes, kind, document_id=document_id, trusted_keys=trusted_keys, ocr_engine=ocr_engine)
     except Exception:  # noqa: BLE001 - the last line of defence: a person looks instead
         from app.core.logging import get_logger
 
