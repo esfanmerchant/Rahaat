@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { Badge, humanize, num, Section, type CaseDetail, type DecisionTrace } from '../ui';
+import { Badge, humanize, num, type CaseDetail, type DecisionTrace } from '../ui';
+import { Card, Info } from './pg';
 
 /**
  * Decision anatomy: how this decision was made, drawn from the trace the engine stored.
@@ -34,8 +35,8 @@ export function ProbabilityBar({ trace }: { trace: DecisionTrace }) {
   const tick = (pos: number | undefined, label: string, sub: string, up: boolean) =>
     pos === undefined ? null : (
       <div key={label} class="st-tick" style={{ left: `${pos * 100}%` }} title={sub}>
-        <span class={`absolute ${up ? 'bottom-full mb-1' : 'top-full mt-1'} -translate-x-1/2 whitespace-nowrap text-center text-xs leading-tight text-ink-muted`}>
-          <span class="block font-semibold text-ink">{label}</span>
+        <span class={`pg-tick-lbl ${up ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+          <b>{label}</b>
           <span class="rh-num font-mono">{sub}</span>
         </span>
       </div>
@@ -43,17 +44,24 @@ export function ProbabilityBar({ trace }: { trace: DecisionTrace }) {
 
   return (
     <div class="flex flex-col gap-1">
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-muted">How sure the system was (p_ok)</h3>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <h3 class="pg-cap">Sureness</h3>
+          <span class="st-chip font-mono">p_ok</span>
+          <Info label="About p_ok">
+            How sure the system was that this applicant is eligible. The reject test reads P(ineligible){inelig !== undefined ? ` (${num(inelig, 3)} here)` : ''}, so its tick is drawn where p_ok can no longer exceed the complement. The route is the engine&apos;s, not a reading of this picture.
+          </Info>
+        </div>
         {p === null ? (
-          <span class="text-ink-subtle">No p_ok was stored for this decision.</span>
+          <span class="text-ink-subtle">No p_ok stored.</span>
         ) : (
-          <span class="rh-num font-mono text-lg font-black st-noor-text">
-            {pctText(p)} <span class="text-xs font-normal text-ink-muted">{zone}</span>
+          <span class="flex items-center gap-3">
+            <span class="st-chip info">{zone}</span>
+            <span class="pg-pbig rh-num font-mono">{pctText(p)}</span>
           </span>
         )}
       </div>
-      <div class="px-6 pb-10 pt-9">
+      <div class="px-8 pb-9 pt-9">
         <div
           ref={track}
           class="st-prob"
@@ -65,9 +73,9 @@ export function ProbabilityBar({ trace }: { trace: DecisionTrace }) {
               : `p_ok ${pctText(p)} on a scale from 0 to 1. ${approve !== undefined ? `Approve threshold ${num(approve, 3)}. ` : ''}${floor !== undefined ? `Confidence floor ${num(floor, 3)}. ` : ''}${reject !== undefined ? `Reject threshold ${num(reject, 3)} on P(ineligible). ` : ''}`
           }
         >
-          {tick(rejectPos, 'reject at or above', `P(ineligible) ${num(reject ?? 0, 3)}`, true)}
-          {tick(floor, 'confidence floor', num(floor ?? 0, 3), false)}
-          {tick(approve, 'approve at or above', num(approve ?? 0, 3), true)}
+          {tick(rejectPos, 'reject', `P(inel.) ${num(reject ?? 0, 3)}`, true)}
+          {tick(floor, 'floor', num(floor ?? 0, 3), false)}
+          {tick(approve, 'approve', num(approve ?? 0, 3), true)}
           {p !== null ? <div class="st-marker" /> : null}
         </div>
         <div class="rh-num mt-1 flex justify-between font-mono text-xs text-ink-subtle" aria-hidden="true">
@@ -75,9 +83,6 @@ export function ProbabilityBar({ trace }: { trace: DecisionTrace }) {
           <span>1</span>
         </div>
       </div>
-      <p class="text-xs text-ink-subtle">
-        The reject test reads P(ineligible){inelig !== undefined ? ` (${num(inelig, 3)} here)` : ''}, so its tick is drawn where p_ok can no longer exceed the complement. The route below is the engine's, not a reading of this picture.
-      </p>
     </div>
   );
 }
@@ -85,12 +90,12 @@ export function ProbabilityBar({ trace }: { trace: DecisionTrace }) {
 /** One bar per priced action; the cheapest is lit. The route is chosen by lowest expected cost, then guards. */
 export function CostBars({ trace }: { trace: DecisionTrace }) {
   const costs = Object.entries(trace.expected_costs);
-  if (costs.length === 0) return <p class="text-ink-subtle">No expected costs were stored.</p>;
+  if (costs.length === 0) return <p class="text-ink-subtle">No costs stored.</p>;
   const max = Math.max(...costs.map(([, v]) => v), 0.0001);
   const lowest = costs.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
   return (
     <div class="flex flex-col gap-1">
-      <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Expected cost of each action (units)</h3>
+      <h3 class="pg-cap mb-1">Expected cost</h3>
       <ul class="flex flex-col gap-1.5">
         {costs
           .sort((a, b) => a[1] - b[1])
@@ -111,9 +116,11 @@ export function CostBars({ trace }: { trace: DecisionTrace }) {
             </li>
           ))}
       </ul>
-      <p class="text-xs text-ink-subtle">
-        Lowest: <span class="font-semibold text-ink">{humanize(lowest)}</span>. The engine recorded route <span class="font-mono">{trace.route}</span> and outcome <span class="font-mono">{trace.outcome}</span>
-        {trace.guards.length ? <>; guards that force a person: {trace.guards.map((g) => <Badge key={g} tone="warn">{humanize(g)}</Badge>)}</> : '.'}
+      <p class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+        <span class="st-chip ok" title="Lowest expected cost">lowest {humanize(lowest)}</span>
+        <span class="st-chip info font-mono" title="Route the engine recorded">{trace.route}</span>
+        <span class="st-chip font-mono" title="Outcome">{trace.outcome}</span>
+        {trace.guards.map((g) => <Badge key={g} tone="warn">{humanize(g)}</Badge>)}
       </p>
     </div>
   );
@@ -137,15 +144,17 @@ function TriGlyph({ result }: { result: 'pass' | 'fail' | 'unknown' }) {
 /** Rule checks as tri-state chips: pass, fail or unknown. Unknown stays unknown; it is never rounded to pass. */
 export function RuleChips({ trace }: { trace: DecisionTrace }) {
   const rules = trace.rule_trace;
-  if (rules.length === 0) return <p class="text-ink-subtle">No rule was evaluated.</p>;
+  if (rules.length === 0) return <p class="text-ink-subtle">No rules.</p>;
   const counts = { pass: 0, fail: 0, unknown: 0 };
   for (const r of rules) counts[r.result]++;
   return (
     <div class="flex flex-col gap-1.5">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Rule checks</h3>
-        <span class="text-xs text-ink-subtle">
-          {counts.pass} true, {counts.fail} false, {counts.unknown} unknown
+        <h3 class="pg-cap">Rules</h3>
+        <span class="flex gap-1.5 text-xs">
+          <span class="st-chip ok">{counts.pass} true</span>
+          <span class="st-chip bad">{counts.fail} false</span>
+          <span class="st-chip unk">{counts.unknown} unknown</span>
         </span>
       </div>
       <ul class="flex flex-wrap gap-1.5">
@@ -245,7 +254,7 @@ export function Provenance({ form }: { form: CaseDetail['form'] | undefined }) {
   if (by.size === 0) return null;
   return (
     <div class="flex flex-col gap-1.5">
-      <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Evidence provenance</h3>
+      <h3 class="pg-cap">Provenance</h3>
       <ul class="flex flex-col gap-1">
         {[...by.entries()].map(([prov, names]) => (
           <li key={prov} class="flex flex-wrap items-center gap-1.5">
@@ -263,15 +272,21 @@ export function Provenance({ form }: { form: CaseDetail['form'] | undefined }) {
 /** The whole panel: probability, costs, rule checks and provenance. */
 export function DecisionAnatomy({ trace, form }: { trace: DecisionTrace; form?: CaseDetail['form'] | undefined }) {
   return (
-    <Section id="anatomy" title="Decision anatomy" aside={<span class="font-mono text-xs text-ink-subtle">rule v{trace.rule_version_no} · {trace.model_version}</span>}>
-      <div class="flex flex-col gap-5">
+    <div class="flex flex-col gap-3">
+      <Card title="Anatomy" id="anatomy" i={0} lit aside={<span class="font-mono text-xs text-ink-subtle">rule v{trace.rule_version_no} · {trace.model_version}</span>}>
         <ProbabilityBar trace={trace} />
-        <div class="grid gap-6 lg:grid-cols-2">
+      </Card>
+      <div class="pg-grid pg-2">
+        <Card i={1}>
           <CostBars trace={trace} />
-          <RuleChips trace={trace} />
-        </div>
-        {form ? <Provenance form={form} /> : null}
+        </Card>
+        <Card i={2}>
+          <div class="flex flex-col gap-4">
+            <RuleChips trace={trace} />
+            {form ? <Provenance form={form} /> : null}
+          </div>
+        </Card>
       </div>
-    </Section>
+    </div>
   );
 }

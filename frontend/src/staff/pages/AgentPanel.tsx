@@ -7,7 +7,8 @@ import { Button } from '../../shared/components/Button';
 import { blockText, CONSEQUENCE, reasonText, resultLine, summarize, toolLabel } from '../agentText';
 import { BTN, failureText } from '../kit';
 import { CheckMark, CrossMark, Dialog, FailureLine } from '../loadview';
-import { Badge, ConfBar, fmtTime, humanize, Section, useLoad } from '../ui';
+import { Badge, ConfBar, fmtTime, humanize, useLoad } from '../ui';
+import { Card, Info } from './pg';
 
 type Run = components['schemas']['RunOut'];
 type Step = components['schemas']['StepOut'];
@@ -104,13 +105,15 @@ export function AgentPanel({ caseId }: { caseId: string }) {
   const earlier = runs?.slice(1) ?? [];
 
   return (
-    <Section
+    <Card
       id="assistant"
       title="Assistant"
+      class="pg-assist"
       aside={
-        <span class="flex items-center gap-2 text-xs text-ink-subtle">
-          It reads the case and proposes one action. Nothing happens until an officer approves.
-        </span>
+        <>
+          <span class="st-chip info" title="Planner">{latest ? latest.planner.type : 'local planner'}</span>
+          <Info label="About the assistant">It reads the case and proposes one action. Nothing happens until an officer approves.</Info>
+        </>
       }
     >
       <div class="flex flex-col gap-3">
@@ -127,15 +130,15 @@ export function AgentPanel({ caseId }: { caseId: string }) {
             {isOfficer ? (
               latest && latest.status === 'waiting_approval' ? null : (
                 <Button size="sm" variant="primary" busy={starting} onClick={() => void start()}>
-                  {latest ? 'Run the assistant again' : 'Start assistant'}
+                  {latest ? 'Run again' : 'Start assistant'}
                 </Button>
               )
             ) : (
-              <p class="st-chip info">Read-only for {role || 'your role'}. Case text and the rationale are not shown to this role.</p>
+              <p class="st-chip info" title="Case text and the rationale are not shown to this role.">Read-only for {role || 'your role'}</p>
             )}
             {reusedNote ? (
               <p role="status" class="st-chip info">
-                A run was already waiting for approval, so it is shown instead of a new one.
+                Run already waiting; shown.
               </p>
             ) : null}
           </div>
@@ -143,7 +146,7 @@ export function AgentPanel({ caseId }: { caseId: string }) {
         {startError ? (
           <p role="alert" class="border border-danger bg-danger-soft px-2 py-1 text-danger">
             {startError.kind === 'forbidden'
-              ? `Only an officer can start the assistant, and only on a case the person has consented to share. ${startError.problem?.detail ?? ''}`
+              ? `Only an officer can start the assistant, on a case the person shared. ${startError.problem?.detail ?? ''}`
               : failureText(startError)}
             {startError.problem?.code ? <span class="ms-2 font-mono text-xs">[{startError.problem.code}]</span> : null}
           </p>
@@ -151,7 +154,7 @@ export function AgentPanel({ caseId }: { caseId: string }) {
 
         {runs !== null && runs.length === 0 ? (
           <p class="text-ink-muted">
-            {isOfficer ? 'No assistant run on this case yet. Start one to get a proposed next step with its reasons.' : 'No assistant run on this case.'}
+            {isOfficer ? 'No run yet. Start one for a proposed next step.' : 'No assistant run.'}
           </p>
         ) : null}
 
@@ -159,7 +162,7 @@ export function AgentPanel({ caseId }: { caseId: string }) {
 
         {earlier.length > 0 ? (
           <details class="text-xs">
-            <summary class="cursor-pointer text-ink-muted">Earlier runs on this case ({earlier.length})</summary>
+            <summary class="cursor-pointer text-ink-muted">Earlier runs ({earlier.length})</summary>
             <div class="mt-2 flex flex-col gap-4">
               {earlier.map((r) => (
                 <RunView key={r.id} run={r} role={role} onChange={replace} onReload={reload} compact />
@@ -168,7 +171,7 @@ export function AgentPanel({ caseId }: { caseId: string }) {
           </details>
         ) : null}
       </div>
-    </Section>
+    </Card>
   );
 }
 
@@ -202,7 +205,7 @@ export function RunView({ run, role, onChange, onReload, compact }: { run: Run; 
         <div role="alert" class="st-warnbar flex flex-wrap items-start gap-2 px-3 py-2" data-testid="agent-flags">
           <span class="st-chip warn">staff only</span>
           <span class="min-w-0 flex-1">
-            Text in this case looks like instructions to the assistant. It was ignored and the case is flagged for your attention.
+            Instruction-like text ignored.
             <span class="ms-2 inline-flex flex-wrap gap-1">
               {live.flags.map((f, i) => (
                 <span key={`${f}-${i}`} class="st-chip warn font-mono">
@@ -213,7 +216,7 @@ export function RunView({ run, role, onChange, onReload, compact }: { run: Run; 
           </span>
         </div>
       ) : null}
-      {hasHiddenText ? <p class="text-xs text-ink-subtle">The rationale and the output of read steps contain case text, so the API does not return them to your role.</p> : null}
+      {hasHiddenText ? <span class="st-chip info" title="The rationale and read-step output contain case text, so the API does not return them to your role.">output hidden</span> : null}
 
       <div class="st-rail" role="list" aria-label="Assistant steps">
         {reads.map((s, i) => (
@@ -221,7 +224,7 @@ export function RunView({ run, role, onChange, onReload, compact }: { run: Run; 
         ))}
         {live.status === 'running' ? <RunningStep index={reads.length} /> : null}
         {actions.map((s, i) => (
-          <ActionStep key={s.id} step={s} run={live} index={reads.length + i} canDecide={isOfficer} onDecide={(approve) => setDeciding({ step: s, approve })} />
+          <ActionStep key={s.id} step={s} index={reads.length + i} canDecide={isOfficer} onDecide={(approve) => setDeciding({ step: s, approve })} />
         ))}
         {abstained ? <AbstainStep run={live} index={reads.length} /> : null}
       </div>
@@ -260,19 +263,17 @@ function RunHeader({ run }: { run: Run }) {
                 ? { tone: 'bad' as const, text: 'Failed' }
                 : { tone: 'neutral' as const, text: humanize(run.outcome) };
   return (
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+    <div class="flex flex-wrap items-center gap-2 text-xs">
       <Badge tone={outcome.tone}>{outcome.text}</Badge>
-      <span class="text-ink-muted">
-        Planner <span class="font-mono text-ink">{p.type}</span> <span class="font-mono text-ink">{p.model_version}</span>
+      <span class="st-chip font-mono" title="Planner">{p.model_version}</span>
+      {p.fallback_reason ? <span class="st-chip warn" title="Hosted planner not used">fallback: {humanize(p.fallback_reason)}</span> : null}
+      <span class="st-chip" title="Decision confidence">
+        <ConfBar value={run.decision.confidence} />
       </span>
-      {p.fallback_reason ? <span class="st-chip warn">hosted planner not used: {humanize(p.fallback_reason)}</span> : null}
-      <span class="flex items-center gap-1 text-ink-muted">
-        Decision confidence <ConfBar value={run.decision.confidence} />
+      <span class="st-chip font-mono" title="Steps used of budget">
+        {run.steps_used}/{run.step_budget}
       </span>
-      <span class="text-ink-muted">
-        Steps <span class="font-mono text-ink">{run.steps_used}</span> of <span class="font-mono text-ink">{run.step_budget}</span>
-      </span>
-      <span class="text-ink-subtle">Started {fmtTime(run.created_at)}</span>
+      <span class="text-ink-subtle" title="Started">{fmtTime(run.created_at)}</span>
     </div>
   );
 }
@@ -287,22 +288,20 @@ function ReadStep({ step, index, showOutput, compact }: { step: Step; index: num
       <NodeIcon tone={failed ? 'bad' : 'ok'} shape={failed ? 'alert' : 'check'} />
       <button
         type="button"
-        class="flex w-full items-start gap-3 px-3 py-2 text-start"
+        class="flex w-full items-center gap-3 px-3 py-1 text-start"
         aria-expanded={open}
         aria-controls={id}
         disabled={!showOutput}
         onClick={() => setOpen((o) => !o)}
       >
         <span class="w-6 shrink-0 font-mono text-xs text-ink-subtle">{step.ordinal}</span>
-        <span class="min-w-0 flex-1">
-          <span class="flex flex-wrap items-center gap-2">
-            <span class="font-semibold">{toolLabel(step.tool)}</span>
-            <span class="font-mono text-xs text-ink-subtle">{step.tool}</span>
-            {failed ? <span class="st-chip bad">failed</span> : null}
-          </span>
-          <span class="block break-words text-ink-muted">{summary}</span>
+        <span class="flex min-w-0 flex-1 items-center gap-2">
+          <span class="shrink-0 font-semibold">{toolLabel(step.tool)}</span>
+          <code class="st-chip font-mono shrink-0">{step.tool}</code>
+          {failed ? <span class="st-chip bad">failed</span> : null}
+          <span class="min-w-0 flex-1 truncate text-ink-muted" title={summary}>{summary}</span>
         </span>
-        {showOutput ? <span class="shrink-0 text-xs text-ink-subtle">{open ? 'Hide' : 'Show'}</span> : null}
+        {showOutput ? <span class="shrink-0 text-xs text-ink-subtle">{open ? 'Hide' : 'Raw'}</span> : null}
       </button>
       {open && showOutput ? (
         <div id={id} class="border-t border-line px-3 py-2">
@@ -320,7 +319,7 @@ function RunningStep({ index }: { index: number }) {
     <div role="listitem" class="st-step act" style={{ '--i': index }}>
       <NodeIcon tone="act" shape="arc" />
       <p role="status" class="px-3 py-2 text-ink-muted">
-        The assistant is reading the case…
+        Reading the case…
       </p>
     </div>
   );
@@ -332,16 +331,16 @@ function AbstainStep({ run, index }: { run: Run; index: number }) {
       <NodeIcon tone="warn" shape="dash" />
       <div class="flex flex-col gap-1 px-3 py-2">
         <p class="text-base font-bold">I am not sure; please review.</p>
-        <p class="text-ink-muted">The assistant proposes no action. The decision stays with you, and the handoff package above is the place to start.</p>
+        <p class="text-ink-muted">No action proposed. Start from the Briefing tab.</p>
         <p class="text-xs text-ink-muted">
-          Why: {run.decision.reasons.length ? run.decision.reasons.map(reasonText).join(' ') : 'no reason was recorded.'}
+          Why: {run.decision.reasons.length ? run.decision.reasons.map(reasonText).join(' ') : 'no reason recorded.'}
         </p>
       </div>
     </div>
   );
 }
 
-function ActionStep({ step, run, index, canDecide, onDecide }: { step: Step; run: Run; index: number; canDecide: boolean; onDecide: (approve: boolean) => void }) {
+function ActionStep({ step, index, canDecide, onDecide }: { step: Step; index: number; canDecide: boolean; onDecide: (approve: boolean) => void }) {
   const waiting = step.status === 'waiting_approval';
   const done = step.status === 'done';
   const rejected = step.status === 'rejected';
@@ -354,16 +353,17 @@ function ActionStep({ step, run, index, canDecide, onDecide }: { step: Step; run
   const stateWord = waiting ? 'Waiting for approval' : done ? 'Approved and done' : rejected ? 'Rejected by an officer' : blocked ? 'Blocked by the action guard' : failed ? 'Approved but failed' : humanize(step.status);
 
   return (
-    <div role="listitem" class={`st-step ${waiting ? 'act' : done ? 'ok' : blocked || failed ? 'bad' : ''}`} style={{ '--i': index }} data-testid="agent-action" data-status={step.status}>
-      <NodeIcon tone={tone} shape={waiting ? 'clock' : done ? 'check' : rejected ? 'cross' : blocked ? 'block' : failed ? 'alert' : 'dot'} />
-      <div class="flex flex-col gap-2 px-3 py-2">
+    <div role="listitem" class={`pg-action ${waiting ? '' : done ? 'done' : blocked || failed ? 'bad' : 'idle'}`} style={{ '--i': index }} data-testid="agent-action" data-status={step.status}>
+      <div class="flex items-start gap-3">
+        <NodeIcon tone={tone} shape={waiting ? 'clock' : done ? 'check' : rejected ? 'cross' : blocked ? 'block' : failed ? 'alert' : 'dot'} />
+      <div class="flex min-w-0 flex-1 flex-col gap-2">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-bold uppercase tracking-widest text-ink-muted">Proposed action</span>
+          <span class="pg-cap">Proposed</span>
           <Badge tone={waiting ? 'warn' : done ? 'good' : blocked || failed ? 'bad' : 'neutral'}>{stateWord}</Badge>
           <span class="font-mono text-xs text-ink-subtle">step {step.ordinal}</span>
         </div>
-        <p class="text-base font-bold">
-          {toolLabel(step.tool)} <span class="font-mono text-xs font-normal text-ink-subtle">{step.tool}</span>
+        <p class="text-lg font-black">
+          {toolLabel(step.tool)} <span class="st-chip font-mono">{step.tool}</span>
         </p>
         {args.length > 0 ? (
           <dl class="st-kv">
@@ -377,18 +377,16 @@ function ActionStep({ step, run, index, canDecide, onDecide }: { step: Step; run
             ))}
           </dl>
         ) : (
-          <p class="text-xs text-ink-subtle">No arguments. {step.tool === 'approve_and_pay' ? 'The amount and the payee are never set by the assistant; the rule version decides the amount.' : ''}</p>
+          <p class="text-xs text-ink-subtle">
+            No arguments {step.tool === 'approve_and_pay' ? <Info label="About the amount">The amount and the payee are never set by the assistant; the rule version decides the amount.</Info> : null}
+          </p>
         )}
         {step.rationale ? (
           <div>
-            <p class="text-xs text-ink-muted">Rationale (from the case, shown to officers only)</p>
+            <p class="pg-cap mb-1">Rationale</p>
             <p class="whitespace-pre-wrap break-words">{step.rationale}</p>
           </div>
         ) : null}
-        <p class="text-xs text-ink-muted">
-          Planner <span class="font-mono text-ink">{run.planner.type}</span> <span class="font-mono text-ink">{run.planner.model_version}</span>, decision confidence{' '}
-          <ConfBar value={run.decision.confidence} />
-        </p>
 
         {waiting && canDecide ? (
           <div class="flex flex-wrap items-center gap-2 border-t border-line pt-2">
@@ -398,10 +396,10 @@ function ActionStep({ step, run, index, canDecide, onDecide }: { step: Step; run
             <Button size="sm" variant="danger" onClick={() => onDecide(false)} data-testid="agent-reject">
               Reject
             </Button>
-            <span class="text-xs text-ink-subtle">Each needs a written reason. {CONSEQUENCE[step.tool] ?? ''}</span>
+            <Info label="What approving does">Each needs a written reason. {CONSEQUENCE[step.tool] ?? ''}</Info>
           </div>
         ) : null}
-        {waiting && !canDecide ? <p class="text-xs text-ink-subtle">Only an officer can approve or reject this step.</p> : null}
+        {waiting && !canDecide ? <p class="text-xs text-ink-subtle">Officers only.</p> : null}
 
         {done ? <ApprovalResult out={out} step={step} /> : null}
         {rejected && step.approval ? (
@@ -411,13 +409,14 @@ function ActionStep({ step, run, index, canDecide, onDecide }: { step: Step; run
         ) : null}
         {blocked ? (
           <div role="alert" class="border border-danger bg-danger-soft px-2 py-1 text-danger">
-            <p class="font-semibold">The action guard refused this step. Nothing ran.</p>
+            <p class="font-semibold">Guard refused. Nothing ran.</p>
             <ul class="list-disc ps-5">
               {codes.length ? codes.map((c) => <li key={c}>{blockText(c)} <span class="font-mono text-xs">[{c}]</span></li>) : <li>No reason code was recorded.</li>}
             </ul>
           </div>
         ) : null}
-        {failed ? <p class="text-danger">The action was approved but could not finish ({humanize(String(out['error'] ?? 'unknown error'))}). Nothing was changed. Use the case actions above.</p> : null}
+        {failed ? <p class="text-danger">Approved but not finished ({humanize(String(out['error'] ?? 'unknown error'))}). Nothing changed. Use the Decide bar.</p> : null}
+      </div>
       </div>
     </div>
   );
