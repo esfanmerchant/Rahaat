@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { warmAudio } from '../shared/audio';
-import { logout } from '../shared/api/auth';
+import { logout, session } from '../shared/api/auth';
 import { api } from '../shared/api/client';
 import { call } from '../shared/api/problem';
 import type { ApplicationSummary, AuthUser } from '../shared/api/types';
@@ -10,8 +10,12 @@ import { Pictogram } from '../shared/components/Pictogram';
 import { Spinner } from '../shared/components/Spinner';
 import { lang, LANGUAGES, setLang, t, type Lang } from '../shared/i18n';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
+import { sayKey } from './apply/parts';
 import { draft } from './apply/flow';
+import { OutboxCard } from './apply/OutboxCard';
+import { pendingCount, runOutbox } from './apply/outbox';
 import { CitizenShell } from './CitizenShell';
+import { WarningsCard } from './WarningsCard';
 
 type Apps = { state: 'loading' } | { state: 'ready'; items: ApplicationSummary[] } | { state: 'unavailable' };
 
@@ -23,9 +27,13 @@ type Apps = { state: 'loading' } | { state: 'ready'; items: ApplicationSummary[]
 export function HomeScreen({ user }: { user: AuthUser }) {
   const { route } = useLocation();
   const [leaving, setLeaving] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [apps, setApps] = useState<Apps>({ state: 'loading' });
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const current = lang.value;
+  const now = session.value;
+  // Helpers act for other people; their consent centre comes with Helper Mode (D1.9).
+  const isCitizen = now.status === 'signed-in' && now.active.role === 'citizen';
 
   useEffect(() => {
     warmAudio(current);
@@ -46,7 +54,13 @@ export function HomeScreen({ user }: { user: AuthUser }) {
   const hasDraft = draft.value !== null || items.some((item) => item.status === 'draft');
   const hasSent = items.some((item) => item.status !== 'draft' && item.status !== 'withdrawn');
 
-  const signOut = async (): Promise<void> => {
+  // Unsent answers live only on this phone: signing out deletes them, so ask first.
+  const signOut = async (force = false): Promise<void> => {
+    if (!force && pendingCount.peek() > 0) {
+      setConfirmLeave(true);
+      sayKey('signout_unsent_body');
+      return;
+    }
     setLeaving(true);
     await logout(); // the "/" route then shows the start screen
   };
@@ -70,18 +84,32 @@ export function HomeScreen({ user }: { user: AuthUser }) {
         {t(hasDraft ? 'home_continue' : 'home_apply')}
       </Button>
 
-      <div class="flex min-h-tap-lg flex-col justify-center">
-        {apps.state === 'loading' ? (
-          <p role="status" class="flex items-center justify-center gap-2 text-base text-ink-muted">
-            <Spinner size={24} />
-            {t('state_loading')}
-          </p>
-        ) : hasSent ? (
-          <Button size="lg" variant="secondary" icon="clock" block onClick={() => route('/track')}>
-            {t('home_see_application')}
+      {apps.state === 'loading' ? (
+        <p role="status" class="flex min-h-tap-lg items-center justify-center gap-2 text-base text-ink-muted">
+          <Spinner size={24} />
+          {t('state_loading')}
+        </p>
+      ) : hasSent ? (
+        <Button size="lg" variant="secondary" icon="clock" block onClick={() => route('/track')}>
+          {t('home_see_application')}
+        </Button>
+      ) : null}
+
+      {/* The shopkeeper's scam checker and the consent centre, one tap each. */}
+      <div class="grid grid-cols-1 gap-3">
+        <Button size="lg" variant="secondary" icon="shield" block onClick={() => route('/scam')}>
+          {t('home_scam')}
+        </Button>
+        {isCitizen ? (
+          <Button size="lg" variant="secondary" icon="lock" block onClick={() => route('/my-data')}>
+            {t('home_my_data')}
           </Button>
         ) : null}
       </div>
+
+      <OutboxCard />
+
+      <WarningsCard />
 
       <section aria-labelledby="home-language" class="mt-auto flex flex-col gap-2 pt-4">
         <h2 id="home-language" class="text-center text-base font-semibold text-ink-muted">
@@ -111,11 +139,35 @@ export function HomeScreen({ user }: { user: AuthUser }) {
             );
           })}
         </div>
-        <div class="flex justify-center pt-2">
-          <Button variant="quiet" size="md" busy={leaving} onClick={() => void signOut()}>
-            {t('sign_out')}
-          </Button>
-        </div>
+        {confirmLeave ? (
+          <div role="alert" class="flex flex-col gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
+            <p class="flex items-center gap-2 text-lg font-bold">
+              <Pictogram name="warning" size={32} />
+              {t('signout_unsent_title')}
+            </p>
+            <p class="text-base text-ink">{t('signout_unsent_body')}</p>
+            <Button
+              size="md"
+              icon="sending"
+              block
+              onClick={() => {
+                setConfirmLeave(false);
+                void runOutbox();
+              }}
+            >
+              {t('signout_unsent_stay')}
+            </Button>
+            <Button size="md" variant="danger" icon="delete" block busy={leaving} onClick={() => void signOut(true)}>
+              {t('signout_unsent_go')}
+            </Button>
+          </div>
+        ) : (
+          <div class="flex justify-center pt-2">
+            <Button variant="quiet" size="md" busy={leaving} onClick={() => void signOut()}>
+              {t('sign_out')}
+            </Button>
+          </div>
+        )}
       </section>
     </CitizenShell>
   );
