@@ -148,3 +148,51 @@
     font-feature-settings: "tnum";
   }
 }
+
+/* The verdict reveal: the lamp is handed from one hand to the next. Fill-mode "both" so reduced motion lands on the end state. */
+@layer components {
+  .rh-handover {
+    animation: rh-handover 1800ms var(--ease-in-out) 500ms both;
+  }
+  @keyframes rh-handover {
+    0% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(36px, -22px);
+    }
+    100% {
+      transform: translate(72px, 0);
+    }
+  }
+  .rh-slide-in {
+    animation: rh-slide-in 640ms var(--ease-spring) 150ms both;
+  }
+  @keyframes rh-slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(calc(var(--rh-dir, 1) * 48px)) rotate(2deg);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  [dir="rtl"] .rh-slide-in {
+    --rh-dir: -1;
+  }
+  /* A glow that rises behind the lamp. */
+  .rh-lampglow {
+    animation: rh-lampglow 1400ms var(--ease-out) 300ms both;
+  }
+  @keyframes rh-lampglow {
+    from {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}

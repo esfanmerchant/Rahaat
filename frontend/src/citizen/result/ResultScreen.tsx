@@ -4,13 +4,14 @@ import { audioKeys, type SpeechItem } from '../../shared/audio';
 import type { DecisionOutcome, DecisionUserView, Explanation } from '../../shared/api/types';
 import type { Speech } from '../../shared/components/AudioPrompt';
 import { Button } from '../../shared/components/Button';
-import { Pictogram, pictogramFor, type PictogramName } from '../../shared/components/Pictogram';
+import { pictogramFor, type PictogramName } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { dirOf, isLang, lang, t, type Lang, type MessageKey } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { lastSubmit } from '../apply/flow';
 import { CitizenShell } from '../CitizenShell';
 import { useApplication } from './data';
+import { Verdict } from './Verdict';
 
 type Tone = 'ok' | 'warn' | 'check' | 'neutral';
 
@@ -20,13 +21,6 @@ const OUTCOMES: Record<DecisionOutcome | 'pending', { title: MessageKey; icon: P
   needs_human: { title: 'result_needs_human_title', icon: 'person-help', tone: 'check' },
   rejected: { title: 'result_rejected_title', icon: 'no', tone: 'neutral' },
   pending: { title: 'result_pending_title', icon: 'clock', tone: 'check' },
-};
-
-const TONE_CLASS: Record<Tone, string> = {
-  ok: 'border-primary bg-primary-soft text-primary-strong',
-  warn: 'border-warning bg-warning-soft text-warning-ink',
-  check: 'border-info bg-info-soft text-info-strong',
-  neutral: 'border-line-strong bg-surface text-ink',
 };
 
 /** The language the server wrote the explanation in (falls back to the UI language). */
@@ -142,14 +136,7 @@ export function ResultScreen() {
   const outcome = decision?.outcome;
   return (
     <CitizenShell onBack={() => route('/')} speech={speech}>
-      <div class="flex flex-col items-center gap-4 text-center">
-        <span class={`flex size-32 items-center justify-center rounded-full border-4 ${TONE_CLASS[spec.tone]}`}>
-          <Pictogram name={icon} size={88} />
-        </span>
-        <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold">
-          {t(spec.title)}
-        </h1>
-      </div>
+      <Verdict kind={outcome ?? 'pending'} title={spec.title} icon={icon} headingRef={headingRef} />
       {decision ? (
         <ExplanationText explanation={decision.explanation} />
       ) : (
