@@ -99,3 +99,26 @@ def test_only_mock_phones_and_bounded_requests(client: TestClient, factory: Any,
     for _ in range(registration.MAX_STARTS_PER_PHONE + 2):
         assert _start(client, tenant.slug, phone).status_code == 202
     assert fakes.n("notify") == registration.MAX_STARTS_PER_PHONE, "repeat requests for one number stop sending, silently"
+
+
+def test_every_start_gets_a_fresh_id_and_only_the_latest_one_works(client: TestClient, factory: Any, fakes: Fakes) -> None:
+    tenant = factory.tenant()
+    existing = factory.account(tenant, "citizen")
+    phone = _phone()
+    new_ids = {_start(client, tenant.slug, phone).json()["registration_id"] for _ in range(2)}
+    known_ids = {_start(client, tenant.slug, existing.identifier).json()["registration_id"] for _ in range(2)}
+    assert len(new_ids) == 2 and len(known_ids) == 2, "ids never reveal whether a number is registered"
+    latest = fakes.calls["notify"][1]  # the code sent with the second start
+    body = {"tenant_slug": tenant.slug, "full_name": "New Citizen", "pin": "8352", "code": latest["payload"]["code"]}
+    results = sorted(client.post("/v1/people/register/complete", json={**body, "registration_id": i}).status_code for i in new_ids)
+    assert results == [201, 401], "a new start replaces the earlier id"
+
+
+def test_over_the_limit_the_code_already_sent_keeps_working(client: TestClient, factory: Any, fakes: Fakes) -> None:
+    tenant = factory.tenant()
+    phone = _phone()
+    ids = [_start(client, tenant.slug, phone).json()["registration_id"] for _ in range(registration.MAX_STARTS_PER_PHONE + 1)]
+    last_sent = fakes.calls["notify"][-1]["payload"]["code"]
+    body = {"tenant_slug": tenant.slug, "full_name": "New Citizen", "pin": "8352", "code": last_sent,
+            "registration_id": ids[registration.MAX_STARTS_PER_PHONE - 1]}  # fmt: skip
+    assert client.post("/v1/people/register/complete", json=body).status_code == 201

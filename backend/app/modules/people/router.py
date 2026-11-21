@@ -7,6 +7,7 @@ from app.contracts.api import PersonOut
 from app.core.context import current_client_ip
 from app.core.deps import get_db
 from app.core.policy import Public
+from app.modules.consent.rules import require_consent_for_helper_read
 from app.modules.people import registration, service
 from app.modules.people.context import PersonContext, acting_person
 
@@ -19,6 +20,7 @@ _track = acting_person("people:read-own", "track", description="A citizen's own 
 
 @router.get("/me/person", response_model=PersonOut, summary="My person record (or the person a helper acts for)")
 def my_person(ctx: PersonContext = Depends(_track), db: Session = Depends(get_db)) -> PersonOut:
+    require_consent_for_helper_read(db, ctx, action="person.read")
     return service.person_out(db, service.get_person(db, ctx))
 
 

@@ -13,7 +13,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.orm import Session
 
 from app.contracts.api import ConsentCreate, ConsentNarrow, ConsentOut
@@ -23,11 +23,21 @@ from app.core.logging import get_logger
 from app.db import models
 from app.modules.applications import hooks
 from app.modules.applications.status import HOLD_ON_WITHDRAWAL, move, resume_status
-from app.modules.consent.rules import ALL_SCOPES, active_consent
+from app.modules.consent.rules import ALL_SCOPES, APPLICATION_PURPOSE, active_consent
 from app.modules.people.context import PersonContext, deny
 
 log = get_logger("rahat.consent")
 _PURPOSE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
+ALLOWED_PURPOSES = frozenset({APPLICATION_PURPOSE, "scam_report"})
+_PERSON_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('consent:' || :person_id, 0))")
+
+
+def _lock_person(db: Session, ctx: PersonContext) -> None:
+    """Serialise consent changes for one person: no two active consents from a double tap, no half-applied withdrawal.
+
+    Taken before any row lock or audit row, so the lock order is always consent lock, rows, audit lock.
+    """
+    db.execute(_PERSON_LOCK, {"person_id": str(ctx.person_id)})
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -106,8 +116,9 @@ def grant(db: Session, ctx: PersonContext, body: ConsentCreate) -> tuple[Consent
     if body.person_id is not None and body.person_id != ctx.person_id:
         # The person comes from the token or X-Acting-For, never from the body.
         raise deny(ctx.principal, "person_mismatch", scope=ctx.scope, person_id=body.person_id)
-    if not _PURPOSE.match(body.purpose):
-        raise Unprocessable("Use a purpose code such as relief_application.", code="invalid_purpose")
+    if not _PURPOSE.match(body.purpose) or body.purpose not in ALLOWED_PURPOSES:
+        raise Unprocessable("Use the purpose relief_application or scam_report.", code="invalid_purpose")
+    _lock_person(db, ctx)
     scopes = _ordered(list(body.field_scopes))
     existing = active_consent(db, tenant_id=ctx.tenant_id, person_id=ctx.person_id, purpose=body.purpose)
     if existing is not None:
@@ -127,12 +138,14 @@ def grant(db: Session, ctx: PersonContext, body: ConsentCreate) -> tuple[Consent
     )  # fmt: skip
     db.add(consent)
     db.flush()
+    # Only the consent that withdrawal took away brings paused applications back. Row locks come before audit rows.
+    resumed = _resume_held_applications(db, ctx) if body.purpose == APPLICATION_PURPOSE else 0
     _event(db, ctx, consent, "granted", {"field_scopes": scopes, "expires_in_days": body.expires_in_days})
     audit.write(
         db, tenant_id=ctx.tenant_id, action="consent.granted", object_type="consent", object_id=consent.id,
-        details={"purpose": body.purpose, "field_scopes": scopes, "person_id": str(ctx.person_id)}, **ctx.audit_fields(),
+        details={"purpose": body.purpose, "field_scopes": scopes, "person_id": str(ctx.person_id), "resumed": resumed},
+        **ctx.audit_fields(),
     )  # fmt: skip
-    resumed = _resume_held_applications(db, ctx)
     db.commit()
     if resumed:
         log.info("consent granted; %d application(s) resumed", resumed)
@@ -140,6 +153,7 @@ def grant(db: Session, ctx: PersonContext, body: ConsentCreate) -> tuple[Consent
 
 
 def narrow(db: Session, ctx: PersonContext, consent_id: UUID, body: ConsentNarrow) -> ConsentOut:
+    _lock_person(db, ctx)
     consent = _owned(db, ctx, consent_id, lock=True)
     if effective_status(consent) != "active":
         raise Conflict("This consent is no longer active.", code="consent_not_active")
@@ -167,6 +181,7 @@ def narrow(db: Session, ctx: PersonContext, consent_id: UUID, body: ConsentNarro
 
 
 def withdraw(db: Session, ctx: PersonContext, consent_id: UUID) -> ConsentOut:
+    _lock_person(db, ctx)
     consent = _owned(db, ctx, consent_id, lock=True)
     if consent.status == "withdrawn":
         return consent_out(db, consent)
@@ -207,13 +222,8 @@ def withdrawal_side_effects(db: Session, ctx: PersonContext, now: datetime) -> d
         .with_for_update()
     ).all()
     for application in applications:
-        previous = move(application, "on_hold_consent")
+        held[str(application.id)] = move(application, "on_hold_consent")
         application.version += 1
-        held[str(application.id)] = previous
-        audit.write(
-            db, tenant_id=ctx.tenant_id, action="application.on_hold_consent", object_type="application",
-            object_id=application.id, details={"from_status": previous}, **ctx.audit_fields(),
-        )  # fmt: skip
 
     jobs = db.execute(
         update(models.Job)
@@ -226,6 +236,11 @@ def withdrawal_side_effects(db: Session, ctx: PersonContext, now: datetime) -> d
         .where(models.MemoryItem.tenant_id == ctx.tenant_id, models.MemoryItem.person_id == ctx.person_id)
         .execution_options(synchronize_session=False)
     )
+    for application_id, previous in held.items():
+        audit.write(
+            db, tenant_id=ctx.tenant_id, action="application.on_hold_consent", object_type="application",
+            object_id=application_id, details={"from_status": previous}, **ctx.audit_fields(),
+        )  # fmt: skip
     return {"held": held, "jobs_cancelled": int(jobs.rowcount or 0), "memory_items_deleted": int(memory.rowcount or 0)}  # type: ignore[attr-defined]
 
 
@@ -254,13 +269,15 @@ def _resume_held_applications(db: Session, ctx: PersonContext) -> int:
     ).all()
     for event in events:  # oldest first, so the latest withdrawal wins
         history.update((event.details or {}).get("held") or {})
+    targets: dict[UUID, str] = {}
     for application in held:
-        target = resume_status(history.get(str(application.id)), submitted=application.submitted_at is not None)
-        move(application, target)
+        targets[application.id] = resume_status(history.get(str(application.id)), submitted=application.submitted_at is not None)
+        move(application, targets[application.id])
         application.version += 1
+    for application_id, target in targets.items():
         audit.write(
             db, tenant_id=ctx.tenant_id, action="application.resumed", object_type="application",
-            object_id=application.id, details={"to_status": target}, **ctx.audit_fields(),
+            object_id=application_id, details={"to_status": target}, **ctx.audit_fields(),
         )  # fmt: skip
     return len(held)
 

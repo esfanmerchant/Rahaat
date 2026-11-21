@@ -86,6 +86,12 @@ def test_traversal_filename_is_ignored_and_the_stored_copy_is_clean(client: Test
     assert client.get(f"/v1/documents/{document.id}/content", headers=world.h("citizen")).status_code == 403
     assert client.get(f"/v1/documents/{uuid.uuid4()}/content", headers=world.h("officer")).status_code == 404
 
+    consent_id = client.get("/v1/consents", headers=world.h("citizen")).json()[0]["id"]
+    narrowed = client.patch(f"/v1/consents/{consent_id}", json={"field_scopes": ["identity", "household"]}, headers=world.h("citizen"))
+    assert narrowed.status_code == 200
+    blocked = client.get(f"/v1/documents/{document.id}/content", headers=world.h("officer"))
+    assert blocked.status_code == 403 and blocked.json()["code"] == "consent_scope_missing"
+
 
 def test_signed_card_fills_the_form_as_verified(client: TestClient, world: World, fakes: Fakes, uploads: Path) -> None:
     app = new_app(client, world).json()["id"]

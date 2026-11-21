@@ -7,6 +7,7 @@ registry. A field that a signed card already verified cannot be overwritten by t
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from datetime import date
@@ -22,6 +23,10 @@ from app.core.mockdata import mock_id_shape_ok, mock_id_valid, normalise_mock_ph
 CLIENT_PROVENANCE: Final[frozenset[str]] = frozenset({"tapped", "typed", "spoken"})
 _FIELD_VALUE_KEYS: Final[frozenset[str]] = frozenset({"value", "confidence", "provenance", "verified"})
 _LANGS: Final[frozenset[str]] = frozenset({"en", "ur", "sd"})
+_GENDERS: Final[frozenset[str]] = frozenset({"female", "male", "other"})
+_TEXT_LIMITS: Final[dict[str, int]] = {"full_name": 120, "district": 64, "payout_account": 40, "gender": 16}
+_DIGIT_RUN = re.compile(r"\d{5,}")  # an ID or phone number typed into a name field
+_MOCK_PAYOUT = re.compile(r"^MOCK-[A-Z0-9]{4,32}$")
 
 # Which consent scope covers each form field. Writing a field needs that scope in the active consent.
 FIELD_SCOPE: Final[dict[str, ConsentScope]] = {
@@ -87,6 +92,15 @@ def _value_errors(name: str, value: Any) -> list[FieldError]:
             return [FieldError(where, "That date of birth is not possible.", "date_range")]
     if name == "household_size" and isinstance(value, int) and not 1 <= value <= 30:
         return [FieldError(where, "A household has between 1 and 30 people.", "household_size_range")]
+    if name in _TEXT_LIMITS:
+        if not isinstance(value, str) or not value.strip() or len(value) > _TEXT_LIMITS[name]:
+            return [FieldError(where, f"Use 1 to {_TEXT_LIMITS[name]} characters.", "text_length")]
+        if name in ("full_name", "district") and _DIGIT_RUN.search(value):
+            return [FieldError(where, "Numbers do not belong in this field.", "digits_not_allowed")]
+        if name == "gender" and value not in _GENDERS:
+            return [FieldError(where, "Choose female, male or other.", "invalid_choice")]
+        if name == "payout_account" and normalise_mock_phone(value) is None and not _MOCK_PAYOUT.match(value):
+            return [FieldError(where, "Use a mock wallet (0999-NNNNNNN) or a MOCK- account.", "mock_payout_format")]
     return []
 
 
@@ -96,7 +110,7 @@ def check_client_patch(patch: Mapping[str, Any], current: ApplicationFormV1) -> 
     for name, raw in patch.items():
         where = f"form_patch.{name}"
         if name == "language":
-            if raw not in _LANGS:
+            if not isinstance(raw, str) or raw not in _LANGS:
                 errors.append(FieldError(where, "Choose en or ur.", "invalid_language"))
             continue
         if name not in FORM_FIELDS:
@@ -110,9 +124,10 @@ def check_client_patch(patch: Mapping[str, Any], current: ApplicationFormV1) -> 
             errors.append(FieldError(where, f"Unknown keys: {', '.join(sorted(extra))}.", "field_value_shape"))
             continue
         provenance = raw.get("provenance", "tapped")
-        if provenance not in CLIENT_PROVENANCE:
+        if not isinstance(provenance, str) or provenance not in CLIENT_PROVENANCE:
             errors.append(FieldError(f"{where}.provenance", "Use tapped, typed or spoken.", "provenance_not_allowed"))
-        if raw.get("verified") not in (None, False):
+        verified = raw.get("verified")
+        if verified is not None and verified is not False:
             errors.append(FieldError(f"{where}.verified", "Only the department can mark a value as verified.", "verified_not_allowed"))
         existing: FieldValue[Any] = getattr(current, name)
         if existing.verified:

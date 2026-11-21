@@ -140,3 +140,24 @@ def test_helper_can_withdraw_for_the_person(client: TestClient, world: World) ->
     # Another person's consent is not found, whoever asks.
     other = client.get("/v1/consents", headers=world.h("other_citizen")).json()[0]["id"]
     assert client.post(f"/v1/consents/{other}/withdraw", headers=world.h("citizen")).status_code == 404
+
+
+def test_only_known_purposes_and_only_the_application_consent_resumes(client: TestClient, world: World) -> None:
+    app = new_app(client, world).json()
+    unknown = client.post("/v1/consents", json={"purpose": "anything_else", "field_scopes": ["identity"]}, headers=world.h("citizen"))
+    assert unknown.status_code == 422 and unknown.json()["code"] == "invalid_purpose"
+    client.post(f"/v1/consents/{_consent_id(client, world)}/withdraw", headers=world.h("citizen"))
+    other = client.post("/v1/consents", json={"purpose": "scam_report", "field_scopes": ["contact"]}, headers=world.h("citizen"))
+    assert other.status_code == 201
+    assert client.get(f"/v1/applications/{app['id']}", headers=world.h("citizen")).json()["status"] == "on_hold_consent"
+
+
+def test_helper_cannot_read_the_person_after_withdrawal(client: TestClient, world: World) -> None:
+    pid = world.citizen.person_id
+    assert client.get("/v1/me/person", headers=world.h("helper", pid)).status_code == 200
+    client.post(f"/v1/consents/{_consent_id(client, world)}/withdraw", headers=world.h("citizen"))
+    after = client.get("/v1/me/person", headers=world.h("helper", pid))
+    assert after.status_code == 403 and after.json()["code"] == "consent_required"
+    assert client.get("/v1/me/person", headers=world.h("citizen")).status_code == 200, "the person still sees themself"
+    # The helper can still see and restore the consent for the person.
+    assert client.get("/v1/consents", headers=world.h("helper", pid)).status_code == 200

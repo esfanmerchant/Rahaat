@@ -36,6 +36,9 @@ def optional(target: tuple[str, str]) -> Callable[..., Any] | None:
             _warned.add(module_name)
             log.warning("optional module %s is not available; degrading safely", module_name)
         return None
+    except Exception:  # noqa: BLE001  (a module that breaks while importing must not break this request)
+        log.exception("optional module %s failed to import; degrading safely", module_name)
+        return None
     fn = getattr(module, attr, None)
     if not callable(fn):
         key = f"{module_name}.{attr}"

@@ -18,7 +18,8 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from app.core.errors import AppError
 
 MAX_BYTES: Final = 5 * 1024 * 1024
-MAX_PIXELS: Final = 25_000_000  # about 5000 x 5000; a phone photo of a card is far below this
+MAX_PIXELS: Final = 12_000_000  # a 12 MP phone photo; decoding stays near 40 MB
+STORED_MAX_SIDE: Final = 2400  # the stored copy officers view; checks run on the original
 MAX_SIDE: Final = 10_000
 
 _MIME: Final = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
@@ -109,12 +110,13 @@ def reencode(inspected: Inspected) -> tuple[bytes, str, str, int, int]:
     has_alpha = image.mode in ("RGBA", "LA", "PA") or (image.mode == "P" and "transparency" in image.info)
     mode = "RGBA" if has_alpha and inspected.kind in ("png", "webp") else "RGB"
     pixels = image.convert(mode)
+    pixels.thumbnail((STORED_MAX_SIDE, STORED_MAX_SIDE))  # in place, only ever smaller
     clean = Image.frombytes(mode, pixels.size, pixels.tobytes())  # no info dict: EXIF, ICC and text are gone
     out = io.BytesIO()
     if inspected.kind == "jpeg":
-        clean.save(out, format="JPEG", quality=90, optimize=True)
+        clean.save(out, format="JPEG", quality=90)
     elif inspected.kind == "png":
-        clean.save(out, format="PNG", optimize=True)
+        clean.save(out, format="PNG", compress_level=6)
     else:
         clean.save(out, format="WEBP", quality=90)
     return out.getvalue(), _EXT[inspected.kind], _MIME[inspected.kind], clean.width, clean.height

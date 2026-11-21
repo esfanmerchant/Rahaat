@@ -32,6 +32,13 @@ from app.seed import RULES_V1
 
 ALL_SCOPES = ["identity", "contact", "household", "income", "documents"]
 
+# Track A2's notify(): it raises ValueError for any other template and keeps only these payload keys.
+NOTIFY_TEMPLATES = frozenset({"approved", "person_will_check", "proof_needed", "rejected", "application_received",
+                              "payment_sent", "payment_delayed"})  # fmt: skip
+NOTIFY_PAYLOAD_KEYS = frozenset({"tracking_code", "amount_pkr", "rail_ref", "proof_kind", "application_id", "payment_id", "case_id"})
+# Requested from Track A2 for self-registration (see the A1 report); not in its template set yet.
+REQUESTED_TEMPLATES = {"registration_code": frozenset({"code"}), "registration_exists": frozenset()}
+
 
 @dataclass
 class World:
@@ -210,17 +217,29 @@ class Fakes:
         db.flush()
         return payment
 
-    def notify(self, db: Any, *, tenant_id: uuid.UUID, person_id: uuid.UUID | None, template: str, payload: dict[str, Any],
+    def notify(self, db: Any, *, tenant_id: uuid.UUID, person_id: uuid.UUID | None, template: str, payload: dict[str, Any] | None = None,
                lang: str | None = None, channels: tuple[str, ...] = ("in_app", "sms")) -> list[models.Notification]:  # fmt: skip
-        self.record("notify", template=template, payload=payload)
+        """Strict: an unknown template or payload key is recorded as rejected and raises, like the real one."""
+        allowed = NOTIFY_PAYLOAD_KEYS | REQUESTED_TEMPLATES.get(template, frozenset())
+        if template not in NOTIFY_TEMPLATES and template not in REQUESTED_TEMPLATES:
+            self.record("notify_rejected", template=template, payload=payload)
+            raise ValueError(f"unknown notification template {template!r}")
+        extra = set(payload or {}) - allowed
+        if extra:
+            self.record("notify_rejected", template=template, payload=payload)
+            raise ValueError(f"payload keys notify would drop: {sorted(extra)}")
+        self.record("notify", template=template, payload=payload or {})
         return []
+
+    def proof_received(self, db: Any, *, tenant_id: uuid.UUID, application_id: uuid.UUID) -> None:
+        self.record("proof_received", application_id=application_id)
 
 
 _MODULES = {
     "app.modules.decision.service": ("decide_and_record", "user_view"),
     "app.modules.docs_ai.service": ("check_document",),
     "app.modules.integrations.service": ("verify_identity", "lookup_registry"),
-    "app.modules.cases.service": ("open_case",),
+    "app.modules.cases.service": ("open_case", "proof_received"),
     "app.modules.payments.service": ("request_payment",),
     "app.modules.notifications.service": ("notify",),
 }

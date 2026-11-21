@@ -214,8 +214,8 @@ def application_out(db: Session, application: models.Application, *, decision: m
     form = form_of(application)
     version = active_rule_version(db, application.program_id)
     documents: list[DocumentCitizenView] = [
-        citizen_view(str(doc.id), doc.kind, check, identity_mismatch=mismatch)  # type: ignore[arg-type]
-        for doc, check, mismatch in latest_checks(db, application.id)
+        citizen_view(str(doc.id), doc.kind, check, identity_mismatch=doc.status in ("mismatch", "unbound"))  # type: ignore[arg-type]
+        for doc, check, _ in latest_checks(db, application.id)
     ]
     names = _program_names(db, {application.program_id})
     return ApplicationOut(
@@ -308,6 +308,7 @@ def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate)
     if program is None or program.tenant_id != ctx.tenant_id or not program.active:
         raise NotFound("That program is not open in this department.", code="program_not_found")
     raise_if_errors(check_client_form(form))
+    form.form_version = "v1"  # the server owns the schema version
     if form.phone.value:
         form.phone.value = normalise_mock_phone(form.phone.value)
 

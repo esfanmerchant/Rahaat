@@ -32,13 +32,15 @@ from app.modules.applications import hooks
 from app.modules.applications.forms import merge_signed, signed_fields
 from app.modules.applications.service import form_of, load_owned
 from app.modules.applications.status import EDITABLE
-from app.modules.consent.rules import require_consent
+from app.modules.consent.rules import active_consent, require_consent
 from app.modules.documents import imaging
 from app.modules.documents.views import KIND_SCOPES, citizen_view, document_status, signed_qr_valid
 from app.modules.people.context import PersonContext
 from app.modules.people.service import get_person
 
 log = get_logger("rahat.documents")
+MAX_DOCUMENTS_PER_APPLICATION = 12
+PROOF_RECEIVED = ("app.modules.cases.service", "proof_received")
 BACKEND_DIR = Path(__file__).resolve().parents[3]
 
 
@@ -82,6 +84,9 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
     if application.status not in EDITABLE:
         raise Conflict("Documents can be added only before submitting or when proof is asked for.", code="not_editable",
                        extra={"status": application.status})  # fmt: skip
+    count = db.scalar(select(func.count()).select_from(models.Document).where(models.Document.application_id == application.id))
+    if (count or 0) >= MAX_DOCUMENTS_PER_APPLICATION:
+        raise Conflict("This application already has the most photos it can hold. Ask a person for help.", code="too_many_documents")
     try:
         original = read_capped(stream)
         inspected = imaging.inspect(original)
@@ -100,13 +105,15 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
 
     person = get_person(db, ctx)
     form = form_of(application)
-    mismatch = False
+    mismatch = unbound = False
     merged: list[str] = []
     if signed_qr_valid(check):
         assert check is not None
         values = signed_fields(check.qr.payload)
         signed_id = values.get("national_id")
-        if signed_id and person.national_id_hash and blind_index(signed_id, scope=str(ctx.tenant_id)) != person.national_id_hash:
+        if not person.national_id_hash:
+            unbound = True  # nothing ties this person to an ID yet, so the card cannot be shown to be theirs
+        elif signed_id and blind_index(signed_id, scope=str(ctx.tenant_id)) != person.national_id_hash:
             mismatch = True  # someone else's card: nothing from it enters the form
         elif "identity" in (consent.field_scopes or []):
             form = merge_signed(form, values)
@@ -120,7 +127,7 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
         document = models.Document(
             id=document_id, tenant_id=ctx.tenant_id, application_id=application.id, person_id=ctx.person_id, kind=kind,
             storage_key=storage_key, sha256=sha256_hex(original), mime=mime, size_bytes=len(clean), width=width, height=height,
-            status=document_status(check, identity_mismatch=mismatch), created_by=ctx.user_id,
+            status="unbound" if unbound else document_status(check, identity_mismatch=mismatch), created_by=ctx.user_id,
         )  # fmt: skip
         db.add(document)
         db.flush()
@@ -140,12 +147,26 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
             audit.write(db, tenant_id=ctx.tenant_id, action="document.identity_mismatch", actor_type="system", object_type="document",
                         object_id=document_id, result="flagged", reason="signed_id_differs_from_registered_id",
                         acting_for_person_id=ctx.person_id if ctx.via_helper else None)  # fmt: skip
+        if application.status == "needs_proof":
+            _proof_received(db, ctx, application.id)
         db.commit()
     except Exception:
         path.unlink(missing_ok=True)
         raise
-    view = citizen_view(str(document_id), kind, check, identity_mismatch=mismatch)
+    view = citizen_view(str(document_id), kind, check, identity_mismatch=mismatch or unbound)
     return DocumentOut(document=view, application_version=application.version)
+
+
+def _proof_received(db: Session, ctx: PersonContext, application_id: UUID) -> None:
+    """New proof for an application waiting on it: its case goes back to an officer (Track A2), when present."""
+    proof_received = hooks.optional(PROOF_RECEIVED)
+    if proof_received is None:
+        return
+    try:
+        with db.begin_nested():
+            proof_received(db, tenant_id=ctx.tenant_id, application_id=application_id)
+    except Exception:  # noqa: BLE001
+        log.exception("proof_received failed; the case stays where it is")
 
 
 def _exists_in_tenant(document_id: UUID, tenant_id: UUID) -> bool:
@@ -168,6 +189,14 @@ def content_for_officer(db: Session, principal: Principal, document_id: UUID) ->
             )  # fmt: skip
             raise Forbidden("This person has not agreed to share their information.", code="consent_required")
         raise NotFound("That document does not exist.")
+    consent = active_consent(db, tenant_id=principal.tenant_id, person_id=document.person_id)
+    if consent is None or "documents" not in (consent.field_scopes or []):
+        # The database allows the read while any consent is active; a consent narrowed to exclude documents still stops it.
+        audit.write_independent(
+            tenant_id=principal.tenant_id, action="access.denied", actor_id=principal.user_id, actor_role=principal.role,
+            object_type="document", object_id=document_id, result="denied", reason="consent_scope_missing",
+        )  # fmt: skip
+        raise Forbidden("This person has not agreed to share their documents.", code="consent_scope_missing")
     path = _path_for(document.storage_key)
     if not path.is_file():
         raise NotFound("The stored file is missing.", code="file_missing")

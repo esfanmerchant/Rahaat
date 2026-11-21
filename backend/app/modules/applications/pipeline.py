@@ -12,12 +12,14 @@ reviews the application; an unreachable registry is passed on as `registry_statu
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.contracts.api import SubmitOut
@@ -162,6 +164,7 @@ def _fallback_handoff(form: ApplicationFormV1, dsl: dict[str, Any] | None, evide
         "engine_unavailable": "The decision engine was not available, so nothing was decided automatically.",
         "engine_failed": "The decision engine could not finish, so nothing was decided automatically.",
         "document_unchecked": "An uploaded document could not be checked automatically, so a person must look at it.",
+        "identity_unbound": "This person has no registered ID yet, so the ID on the form or card must be checked by a person.",
     }.get(reason, "The application needs a person to review it.")
     return HandoffPackage(
         question=_QUESTION,
@@ -191,9 +194,9 @@ def _open_case(db: Session, ctx: PersonContext, application: models.Application,
 
 def _request_payment(db: Session, ctx: PersonContext, application: models.Application, decision: models.Decision,
                      rule_version: models.RuleVersion | None) -> None:  # fmt: skip
-    amount = (rule_version.dsl or {}).get("payment_pkr") if rule_version else None
+    amount = _amount(rule_version)
     request_payment = hooks.optional(hooks.REQUEST_PAYMENT)
-    if request_payment is None or not isinstance(amount, int) or amount <= 0:
+    if request_payment is None or amount is None:
         audit.write(
             db, tenant_id=ctx.tenant_id, action="payment.not_requested", actor_type="system", object_type="application",
             object_id=application.id, result="failed",
@@ -207,12 +210,35 @@ def _request_payment(db: Session, ctx: PersonContext, application: models.Applic
     )  # fmt: skip
 
 
-def _notify(db: Session, ctx: PersonContext, application: models.Application, form: ApplicationFormV1, template: str,
-            extra: dict[str, Any]) -> None:  # fmt: skip
+# Templates that Track A2's `notify` knows, and the only payload keys it keeps.
+TEMPLATE_FOR_STATUS: dict[str, str] = {
+    "approved": "approved",
+    "in_review": "person_will_check",
+    "needs_proof": "proof_needed",
+    "rejected": "rejected",
+}
+UNDECIDED_TEMPLATE = "application_received"  # the pipeline could not decide at once
+PROOF_KINDS = ("rahat_id", "income_proof", "other")
+
+
+def notification_for(target: str, *, decided: bool, tracking_code: str | None, amount_pkr: int | None,
+                     proof_kind: str | None) -> tuple[str, dict[str, Any]]:  # fmt: skip
+    """Pure: the template and payload for the outcome of a submission."""
+    payload: dict[str, Any] = {"tracking_code": tracking_code}
+    if not decided:
+        return UNDECIDED_TEMPLATE, payload
+    template = TEMPLATE_FOR_STATUS.get(target, "person_will_check")
+    if template == "approved" and amount_pkr:
+        payload["amount_pkr"] = amount_pkr
+    if template == "proof_needed":
+        payload["proof_kind"] = proof_kind if proof_kind in PROOF_KINDS else "other"
+    return template, payload
+
+
+def _notify(db: Session, ctx: PersonContext, form: ApplicationFormV1, template: str, payload: dict[str, Any]) -> None:
     notify = hooks.optional(hooks.NOTIFY)
     if notify is None:
         return
-    payload = {"tracking_code": application.tracking_code, "application_id": str(application.id), **extra}
     _safe_call(db, "notify", notify, db=db, tenant_id=ctx.tenant_id, person_id=ctx.person_id, template=template,
                payload=payload, lang=form.language)  # fmt: skip
 
@@ -230,28 +256,39 @@ def _decide(db: Session, ctx: PersonContext, application: models.Application, in
     return decision, ""
 
 
+def _amount(rule_version: models.RuleVersion | None) -> int | None:
+    amount = (rule_version.dsl or {}).get("payment_pkr") if rule_version else None
+    return amount if isinstance(amount, int) and not isinstance(amount, bool) and amount > 0 else None
+
+
 def run(db: Session, ctx: PersonContext, application: models.Application) -> SubmitOut:
-    """Submit a locked application that is in a submittable state, decide, apply, commit."""
+    """Submit a locked application that is in a submittable state, decide, apply, commit.
+
+    Audit rows are written after the other tracks' functions have run, so this transaction does not hold
+    the tenant's audit lock while they work (a `write_independent` from inside them would wait for it).
+    """
     form = form_of(application)
     program = db.get(models.Program, application.program_id)
     rule_version = active_rule_version(db, application.program_id)
     if program is None:
         raise RuntimeError("application without a program")
+    person = get_person(db, ctx)
 
     previous = move(application, "submitted")
     application.submitted_at = datetime.now(UTC)
     application.version += 1
-    audit.write(
-        db, tenant_id=ctx.tenant_id, action="application.submitted", object_type="application", object_id=application.id,
-        details={"from_status": previous, "version": application.version}, **ctx.audit_fields(),
-    )  # fmt: skip
 
     evidence = gather_evidence(db, ctx, application, form)
     inp = build_input(application, program, form, evidence)
 
     decision: models.Decision | None = None
-    reason = "document_unchecked" if evidence.unchecked_documents else ""
-    if not reason:
+    if evidence.unchecked_documents:
+        reason = "document_unchecked"
+    elif not person.national_id_hash:
+        # Nothing ties this person to an ID yet (self-registered), so a card or a typed ID cannot be trusted
+        # to be theirs. A person checks the identity; the engine is not asked.
+        reason = "identity_unbound"
+    else:
         decision, reason = _decide(db, ctx, application, inp)
 
     if decision is None:
@@ -262,21 +299,31 @@ def run(db: Session, ctx: PersonContext, application: models.Application) -> Sub
         _open_case(db, ctx, application, reason=reason, decision=None, handoff=_fallback_handoff(form, dsl, evidence, reason))
     else:
         target = OUTCOME_STATUS.get(decision.outcome, "in_review")
+        if target == "approved" and (decision.route != "auto" or decision.guards or evidence.identity_mismatch):
+            # Backstop: money moves only on an automatic approval with no guard raised.
+            target, reason = "in_review", "approval_blocked_by_guard"
         move(application, target)
-        if decision.outcome == "approved":
+        if target == "approved":
             _request_payment(db, ctx, application, decision, rule_version)
         elif target == "in_review":
-            handoff = _handoff_of(decision)
-            _open_case(db, ctx, application, reason=(decision.reasons or ["needs_human"])[0], decision=decision, handoff=handoff)
+            _open_case(db, ctx, application, reason=reason or (decision.reasons or ["needs_human"])[0], decision=decision,
+                       handoff=_handoff_of(decision))  # fmt: skip
 
+    template, payload = notification_for(target, decided=decision is not None, tracking_code=application.tracking_code,
+                                         amount_pkr=_amount(rule_version), proof_kind=_ask_proof(decision))  # fmt: skip
+    _notify(db, ctx, form, template, payload)
+
+    audit.write(
+        db, tenant_id=ctx.tenant_id, action="application.submitted", object_type="application", object_id=application.id,
+        details={"from_status": previous, "version": application.version}, **ctx.audit_fields(),
+    )  # fmt: skip
     audit.write(
         db, tenant_id=ctx.tenant_id, action="application.status_changed", actor_type="system", object_type="application",
         object_id=application.id, reason=reason or None,
-        details={"from_status": "submitted", "to_status": target, "decision_id": str(decision.id) if decision else None},
+        details={"from_status": "submitted", "to_status": target, "decision_id": str(decision.id) if decision else None,
+                 "version": application.version},  # fmt: skip
         acting_for_person_id=ctx.person_id if ctx.via_helper else None,
     )  # fmt: skip
-    _notify(db, ctx, application, form, f"application_{target}",
-            {"outcome": decision.outcome if decision else "needs_human", "ask_proof": _ask_proof(decision)})  # fmt: skip
     db.commit()
     return SubmitOut(application=application_out(db, application, decision=decision), decision=decision_view(db, decision))
 
@@ -294,8 +341,10 @@ def _handoff_of(decision: models.Decision) -> HandoffPackage | None:
 def _ask_proof(decision: models.Decision | None) -> str | None:
     if decision is None or decision.outcome != "needs_proof":
         return None
-    handoff = decision.handoff or {}
-    value = handoff.get("resolving_proof") if isinstance(handoff, dict) else None
+    value = getattr(decision, "ask_proof", None)
+    if not value:
+        handoff = decision.handoff or {}
+        value = handoff.get("resolving_proof") if isinstance(handoff, dict) else None
     return str(value) if value else None
 
 
@@ -303,7 +352,24 @@ def submit(db: Session, ctx: PersonContext, application_id: UUID) -> SubmitOut:
     """Submit once. A repeat submit (double tap, retry after a timeout) returns the first result unchanged."""
     application = load_owned(db, ctx, application_id, lock=True)
     require_consent(db, ctx, action="application.submit")
-    if application.status not in SUBMITTABLE:
+    repeat = application.status == "needs_proof" and not _changed_since_decision(db, application)
+    if application.status not in SUBMITTABLE or repeat:
         decision = latest_decision(db, application.id)
         return SubmitOut(application=application_out(db, application, decision=decision), decision=decision_view(db, decision))
     return run(db, ctx, application)
+
+
+def _changed_since_decision(db: Session, application: models.Application) -> bool:
+    """True when new proof or answers arrived after the last decision (a double tap brings nothing new)."""
+    row = db.scalars(
+        select(models.AuditLog.details)
+        .where(models.AuditLog.tenant_id == application.tenant_id, models.AuditLog.object_id == str(application.id),
+               models.AuditLog.action == "application.status_changed")  # fmt: skip
+        .order_by(models.AuditLog.seq.desc())
+        .limit(1)
+    ).first()
+    try:
+        decided_at_version = json.loads(row).get("version") if row else None
+    except (TypeError, ValueError, AttributeError):
+        decided_at_version = None
+    return decided_at_version is None or application.version > int(decided_at_version)

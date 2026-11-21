@@ -26,11 +26,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.contracts.common import Strict
 from app.core import audit, metrics
-from app.core.crypto import blind_index, decrypt_field, encrypt_field, encrypt_platform
+from app.core.crypto import blind_index, decrypt_field, encrypt_field, encrypt_platform, sha256_hex
 from app.core.db import system_session
 from app.core.errors import NotFound, TooManyRequests, Unauthorized, Unprocessable
 from app.core.logging import get_logger
@@ -140,11 +141,15 @@ def start(body: RegisterStartIn, *, ip: str) -> RegisterStartOut:
         tenant = _tenant(db, body.tenant_slug)
         scope = str(tenant.id)
         user = db.scalar(select(models.User).where(models.User.phone_hash == blind_index(phone)))
+        # Every answer carries a fresh random id, so two starts for one number never reveal whether it exists.
+        registration_id = uuid.uuid4()
         if user is not None:
             # Already registered. Say the same thing, send a sign-in reminder instead of a code.
-            registration_id = uuid.uuid4()
             existing = db.scalar(select(models.Person.id).where(models.Person.tenant_id == tenant.id, models.Person.user_id == user.id))
             template, payload, person_id = "registration_exists", {}, existing
+        elif over_limit:
+            # Too many starts for this number: answer the same way, but keep the code already sent.
+            template, payload, person_id = "", {}, None
         else:
             pending = db.scalar(
                 select(models.Person).where(
@@ -158,11 +163,11 @@ def start(body: RegisterStartIn, *, ip: str) -> RegisterStartOut:
                     phone_enc=encrypt_field(tenant.wrapped_dek, phone), phone_hash=blind_index(phone, scope=scope),
                 )  # fmt: skip
                 db.add(pending)
-            pending.data = {"registration": {"code_hash": code_hash, "expires_at": (now + CODE_TTL).isoformat(), "attempts": 0}}
+            pending.data = {"registration": {"token_hash": sha256_hex(str(registration_id)), "code_hash": code_hash,
+                                             "expires_at": (now + CODE_TTL).isoformat(), "attempts": 0}}  # fmt: skip
             db.flush()
-            registration_id = pending.id
-            template, payload, person_id = "registration_code", {"code": code, "expires_minutes": int(CODE_TTL.total_seconds() // 60)}, pending.id
-        if not over_limit:
+            template, payload, person_id = "registration_code", {"code": code}, pending.id
+        if template and not over_limit:
             _notify(db, tenant_id=tenant.id, person_id=person_id, template=template, payload=payload, lang=body.lang)
         audit.write(db, tenant_id=tenant.id, action="person.registration_started", actor_type="system", object_type="registration",
                     details={"phone_ref": blind_index(phone, scope="registration")[:16], "sent": not over_limit})  # fmt: skip
@@ -176,9 +181,11 @@ def complete(body: RegisterCompleteIn, *, ip: str) -> RegisterCompleteOut:
     now = datetime.now(UTC)
     with system_session() as db:
         tenant = _tenant(db, body.tenant_slug)
+        token_hash = sha256_hex(str(body.registration_id))
         person = db.scalars(
             select(models.Person)
-            .where(models.Person.id == body.registration_id, models.Person.tenant_id == tenant.id, models.Person.status == "pending")
+            .where(models.Person.tenant_id == tenant.id, models.Person.status == "pending",
+                   models.Person.data["registration"]["token_hash"].astext == token_hash)  # fmt: skip
             .with_for_update()
         ).first()
         reg: dict[str, Any] = dict((person.data or {}).get("registration") or {}) if person else {}
@@ -198,7 +205,11 @@ def complete(body: RegisterCompleteIn, *, ip: str) -> RegisterCompleteOut:
         user = models.User(phone_hash=blind_index(phone), phone_enc=encrypt_platform(phone), display_name=body.full_name,
                            lang=person.lang or "ur", password_hash=hash_secret(body.pin))  # fmt: skip
         db.add(user)
-        db.flush()
+        try:
+            with db.begin_nested():
+                db.flush()
+        except IntegrityError:
+            raise Unauthorized(_GENERIC_CODE_ERROR, code="invalid_code") from None  # the number was registered meanwhile
         person.user_id = user.id
         person.full_name = body.full_name
         person.full_name_ur = body.full_name_ur

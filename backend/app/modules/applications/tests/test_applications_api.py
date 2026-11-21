@@ -153,3 +153,17 @@ def test_consent_is_required_to_create_or_change(client: TestClient, world: Worl
     assert response.status_code == 409 and response.json()["code"] == "consent_required"
     assert client.post(f"/v1/applications/{app['id']}/submit", headers=world.h("citizen")).json()["code"] == "consent_required"
     assert _denied(world.tenant.id, "consent_required")
+
+
+def test_odd_json_in_a_patch_is_a_repairable_422_not_a_500(client: TestClient, world: World) -> None:
+    app = new_app(client, world).json()
+    url = f"/v1/applications/{app['id']}"
+    for bad in ({"language": ["en"]}, {"language": {"x": 1}}, {"district": {"value": "Karachi", "provenance": ["typed"]}},
+                {"district": {"value": "Karachi", "provenance": {"a": 1}}}, {"dob": {"value": ["1980-01-01"]}},
+                {"full_name": {"value": "Zainab 4210112345671"}}, {"payout_account": {"value": "PK36SCBL0000001123456702"}},  # mock-lint: allow
+                {"gender": {"value": "x" * 40}}, {"district": {"value": ""}}):  # fmt: skip
+        response = client.patch(url, json={"base_version": 1, "form_patch": bad}, headers=world.h("citizen"))
+        assert response.status_code == 422, (bad, response.text)
+    ok = client.patch(url, json={"base_version": 1, "form_patch": {"payout_account": {"value": "0999-0000201"}, "gender": {"value": "female"}}},
+                      headers=world.h("citizen"))  # fmt: skip
+    assert ok.status_code == 200, ok.text
