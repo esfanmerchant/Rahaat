@@ -86,6 +86,7 @@ export function RuleForm({ dsl, editable, issues, onChange }: { dsl: Dsl; editab
               </label>
             ))}
             {Object.keys(params).length === 0 ? <p class="text-ink-subtle">No parameters.</p> : null}
+            {editable ? <p class="text-xs text-ink-subtle">Rule labels are plain text. If a label quotes a number you change here, edit the label too.</p> : null}
             {editable ? (
               <div class="mt-1 flex items-center gap-2">
                 <input class={`${INPUT} w-44 font-mono`} aria-label="New parameter name" value={newParam} onInput={(e) => setNewParam(e.currentTarget.value)} />

@@ -39,10 +39,12 @@ export function RulesPage() {
     if (!selected && versions.items[0]) setSelected(versions.items[0].id);
   }, [versions.items, selected]);
 
-  const refresh = (select?: string) => {
+  const [notice, setNotice] = useState<Flash>(null);
+  const refresh = (select?: string, text?: string) => {
     versions.reload();
     reloadSets();
     if (select) setSelected(select);
+    setNotice(text ? { tone: 'ok', text } : null);
   };
   const activeSet = sets.state === 'ok' ? sets.data.find((s) => s.id === setId) : undefined;
 
@@ -110,7 +112,7 @@ export function RulesPage() {
                   {versions.items.map((v) => (
                     <tr key={v.id} aria-selected={v.id === selected} class={v.id === selected ? 'bg-info-soft' : 'hover:bg-sunken'}>
                       <td class={TD}>
-                        <button type="button" class="font-semibold underline" onClick={() => setSelected(v.id)} aria-current={v.id === selected}>
+                        <button type="button" class="font-semibold underline" onClick={() => { setSelected(v.id); setNotice(null); }} aria-current={v.id === selected}>
                           v{v.version_no}
                         </button>{' '}
                         {v.is_active ? <Badge tone="good">active</Badge> : null}
@@ -138,19 +140,20 @@ export function RulesPage() {
         </>
       ) : null}
 
+      <FlashLine flash={notice} />
       {selected ? <VersionPanel key={selected} versionId={selected} onChanged={refresh} /> : null}
     </section>
   );
 }
 
-function VersionPanel({ versionId, onChanged }: { versionId: string; onChanged: (select?: string) => void }) {
+function VersionPanel({ versionId, onChanged }: { versionId: string; onChanged: (select?: string, text?: string) => void }) {
   const [loaded, reload] = useLoad(() => call(api.GET('/v1/rules/versions/{version_id}', { params: { path: { version_id: versionId } } })), [versionId]);
   if (loaded.state === 'loading') return <ScreenState kind="loading" density="staff" body="Loading the version…" />;
   if (loaded.state === 'fail') return <FailureState failure={loaded.failure} density="staff" heading="h2" onRetry={reload} />;
   return <VersionBody v={loaded.data} reload={reload} onChanged={onChanged} />;
 }
 
-function VersionBody({ v, reload, onChanged }: { v: Version; reload: () => void; onChanged: (select?: string) => void }) {
+function VersionBody({ v, reload, onChanged }: { v: Version; reload: () => void; onChanged: (select?: string, text?: string) => void }) {
   const me = session.value.status === 'signed-in' ? session.value.user.id : '';
   const editable = v.status === 'draft';
   const [tab, setTab] = useState<Tab>('form');
@@ -191,8 +194,7 @@ function VersionBody({ v, reload, onChanged }: { v: Version; reload: () => void;
     setBusy(false);
     if (out.ok) {
       setAsk('');
-      setFlash({ tone: 'ok', text: out.text });
-      onChanged(out.select);
+      onChanged(out.select, out.text);
       reload();
     } else setFlash(out.flash);
   };
