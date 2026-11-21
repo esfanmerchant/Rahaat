@@ -147,7 +147,7 @@ export function AnswerButton({ icon, label, selected, onSelect, tone = 'text-pri
 
 export function AnswerGroup({ labelledBy, children }: { labelledBy?: string; children?: ComponentChildren }) {
   return (
-    <div role="radiogroup" aria-labelledby={labelledBy} class="flex flex-col gap-3 lg:grid lg:grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] lg:gap-4 lg:has-[>:nth-child(4):last-child]:grid-cols-2">
+    <div role="radiogroup" aria-labelledby={labelledBy} class="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 md:[&>:last-child:nth-child(odd)]:col-span-2 lg:grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] lg:[&>:last-child:nth-child(odd)]:col-span-1 lg:has-[>:nth-child(4):last-child]:grid-cols-2">
       {children}
     </div>
   );
