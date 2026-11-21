@@ -112,3 +112,9 @@ Until then: only speech and API keys count against `ai_calls` and `api_calls`.
 
 ## Staff3 (Command Center)
 - **District on application list rows** (Track A): the Overview hex map can colour provinces by scam reports only. A staff endpoint that returns applications or cases with a `district` (or counts of applications per district) would let it show where applications come from. Until then it says so on screen rather than guessing.
+
+## Paid application: the amount and the verify code as fields
+From: Track D1   To: Track A (cases, payments)   Status: open
+What: `ApplicationOut` (and `ApplicationSummary`) would carry, once paid, `payment: { amount_pkr, paid_at, verify_code }` (null before). Today the citizen app reads `GET /v1/notifications`, takes the `payment_sent` message, finds its `verify_code` and reads the amount as the first number in the message text.
+Why: parsing a sentence is fragile (a changed template breaks the "Paid" card on home) and the citizen cannot call `/v1/payments`.
+Until then: the Paid card shows the amount only when that number is found, never a guessed one.

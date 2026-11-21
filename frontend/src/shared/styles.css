@@ -162,20 +162,79 @@
   }
 }
 
-/* The verdict reveal: the lamp is handed from one hand to the next. Fill-mode "both" so reduced motion lands on the end state. */
+/* The verdict reveal. "A person will check": the lamp travels along a dotted arc to the person who will help. */
 @layer components {
-  .rh-handover {
-    animation: rh-handover 1800ms var(--ease-in-out) 500ms both;
+  /* Base state is the END state (lamp arrived, person glowing), so reduced motion and a stalled animation both read right. */
+  .rh-arc {
+    container-type: inline-size;
+    position: relative;
+    height: 4.5rem;
+    --rh-dir: 1;
   }
-  @keyframes rh-handover {
+  [dir="rtl"] .rh-arc {
+    --rh-dir: -1;
+  }
+  .rh-arc-lamp {
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: 1.8125rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    transform: translateX(calc(var(--rh-dir) * (100cqw - 0.875rem)));
+  }
+  .rh-arc-lamp > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--color-noor);
+    box-shadow: 0 0 0 4px rgb(255 211 110 / 0.22), 0 0 18px 4px rgb(255 211 110 / 0.7);
+  }
+  .rh-arc-end {
+    box-shadow: 0 0 0 2px var(--color-noor), 0 0 32px -2px rgb(255 211 110 / 0.7);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .rh-arc-lamp {
+      animation: rh-arc-x 1900ms linear 600ms both;
+    }
+    .rh-arc-lamp > span {
+      animation: rh-arc-y 1900ms linear 600ms both;
+    }
+    .rh-arc-end {
+      animation: rh-arc-glow 700ms var(--ease-out) 2300ms both;
+    }
+  }
+  @keyframes rh-arc-x {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(calc(var(--rh-dir) * (100cqw - 0.875rem)));
+    }
+  }
+  @keyframes rh-arc-y {
     0% {
-      transform: translate(0, 0);
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0.3, 0.7, 0.6, 1);
     }
     50% {
-      transform: translate(36px, -22px);
+      transform: translateY(-1.8125rem);
+      animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.3);
     }
     100% {
-      transform: translate(72px, 0);
+      transform: translateY(0);
+    }
+  }
+  @keyframes rh-arc-glow {
+    from {
+      box-shadow: none;
+      opacity: 0.6;
+      transform: scale(0.94);
+    }
+    to {
+      box-shadow: 0 0 0 2px var(--color-noor), 0 0 32px -2px rgb(255 211 110 / 0.7);
+      opacity: 1;
+      transform: none;
     }
   }
   .rh-slide-in {
@@ -239,6 +298,134 @@
     }
     to {
       transform: translateY(88px);
+    }
+  }
+}
+
+/* Desktop and tablet showcase. Mobile (under 768px) is unchanged. */
+@layer components {
+  /* A very faint lattice behind the content of the right pane. */
+  .rh-lattice-faint {
+    background-color: var(--color-paper);
+  }
+  @media (min-width: 768px) {
+    .rh-lattice-faint {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%2324409e' stroke-opacity='.06'%3E%3Cpath d='M18 18h28v28H18z'/%3E%3Cpath d='M32 12.2 51.8 32 32 51.8 12.2 32z'/%3E%3Ccircle cx='32' cy='32' r='3'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 64px 64px;
+    }
+  }
+
+  /* The left pane keeps its place while a route changes: it is the person's context. */
+  .rh-pane {
+    view-transition-name: rh-pane;
+  }
+  ::view-transition-group(rh-pane),
+  ::view-transition-old(rh-pane),
+  ::view-transition-new(rh-pane) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  /* Mobile hero: a night band that blends into the ivory below through a lattice that fades out. */
+  .rh-hero {
+    position: relative;
+    isolation: isolate;
+    color: var(--color-night-ink);
+    background-color: var(--color-night-1);
+    background-image: radial-gradient(120% 90% at 50% -20%, rgb(255 211 110 / 0.2), transparent 60%),
+      radial-gradient(90% 70% at 100% 110%, rgb(36 64 158 / 0.5), transparent 70%);
+    border-end-start-radius: 2rem;
+    border-end-end-radius: 2rem;
+    box-shadow: 0 18px 36px -22px rgb(11 16 38 / 0.7);
+  }
+  .rh-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffd36e' stroke-opacity='.1'%3E%3Cpath d='M18 18h28v28H18z'/%3E%3Cpath d='M32 12.2 51.8 32 32 51.8 12.2 32z'/%3E%3Ccircle cx='32' cy='32' r='3'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 64px 64px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+  }
+  /* On a laptop the left pane carries this context, so the hero turns into plain page content. */
+  @media (min-width: 1024px) {
+    .rh-hero {
+      background: none;
+      box-shadow: none;
+      color: var(--color-ink);
+      border-radius: 0;
+    }
+    .rh-hero::after {
+      display: none;
+    }
+  }
+
+  /* Tiles: lift on hover, spring on press. Transform and shadow only. */
+  .rh-tile {
+    transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), border-color 160ms;
+  }
+  @media (hover: hover) {
+    .rh-tile:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-float);
+    }
+  }
+  .rh-tile:active {
+    transform: scale(0.96);
+    transition-duration: 90ms;
+  }
+
+  /* The dawn line along the bottom of the start screen: a thin thread of noor that draws across, with a glow behind it. */
+  .rh-dawn {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-noor) 30%, #fff6dc 50%, var(--color-noor) 70%, transparent);
+    box-shadow: 0 0 24px 2px rgb(255 211 110 / 0.6);
+    transform-origin: center;
+  }
+  .rh-dawn-glow {
+    position: absolute;
+    inset-inline: 10%;
+    bottom: -8rem;
+    height: 14rem;
+    background: radial-gradient(50% 50% at 50% 50%, rgb(255 211 110 / 0.28), transparent 70%);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .rh-dawn {
+      animation: rh-dawn 2200ms var(--ease-out) 400ms both;
+    }
+  }
+  @keyframes rh-dawn {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  /* Celebration for a paid application: the noor glow breathes. */
+  @media (prefers-reduced-motion: no-preference) {
+    .rh-breathe {
+      animation: rh-breathe 3.6s ease-in-out infinite;
+    }
+  }
+  @keyframes rh-breathe {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(0.96);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.04);
     }
   }
 }

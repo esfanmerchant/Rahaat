@@ -73,7 +73,7 @@ export function WarningsCard() {
     lang: code,
   };
   return (
-    <section aria-labelledby="home-warnings" class="flex flex-col gap-3 rounded-lg border-2 border-warning bg-warning-soft p-3 text-warning-ink">
+    <section aria-labelledby="home-warnings" class="flex flex-col gap-3 rounded-2xl border-2 border-warning bg-warning-soft p-4 text-warning-ink shadow-lift">
       <div class="flex items-center justify-between gap-2">
         <h2 id="home-warnings" class="flex items-center gap-2 text-xl font-bold">
           <Pictogram name="warning" size={36} />
