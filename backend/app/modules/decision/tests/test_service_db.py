@@ -168,3 +168,28 @@ def test_rule_change_applies_to_the_next_decision_and_old_decisions_keep_their_v
         assert v1 is not None and v1.status == "retired" and v1.dsl["params"]["income_cap"] == 30000
     actions = [r.action for r in _audit_rows(tenant.id, "rules.version_published")]
     assert actions == ["rules.version_published"]
+
+
+def test_tenant_cost_matrix_moves_the_thresholds(factory: Any) -> None:
+    tenant = factory.tenant()
+    citizen = factory.account(tenant, "citizen")
+    setup = make_program(tenant.id)
+    with system_session() as db:
+        row = db.get(models.Tenant, tenant.id)
+        assert row is not None
+        row.cost_matrix = CostMatrix(wrong_approve=1000.0).model_dump()
+    decision = _record(citizen, setup, base_input())
+    assert service.engine_extras(decision)["thresholds"]["approve"] == round(CostMatrix(wrong_approve=1000.0).approve_threshold(1.0), 4)
+    assert decision.cost_matrix["wrong_approve"] == 1000.0
+
+
+def test_seed_step_registers_the_model_once(factory: Any) -> None:
+    from app.modules.decision.seed_step import seed
+
+    tenant = factory.tenant()
+    for _ in range(2):
+        with system_session() as db:
+            seed(db)
+    with open_session(SYSTEM) as db:
+        rows = db.scalars(select(models.ModelRegistry).where(models.ModelRegistry.tenant_id == tenant.id)).all()
+    assert len(rows) == 1 and rows[0].version == get_model().version and rows[0].metrics["test"]["p_ok"]["ece"] is not None

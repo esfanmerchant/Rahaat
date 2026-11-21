@@ -197,8 +197,14 @@ def split_cases(world: World) -> dict[str, list[SynthCase]]:
     return out
 
 
+@lru_cache(maxsize=2)
+def training_world(seed: int = SEED, households: int = int(TRAIN_PARAMS["households"])) -> World:
+    """The world the model is trained and tested on (bigger than the demo world, same generator)."""
+    return build_world(seed, households=households)
+
+
 def train(world: World | None = None, params: Mapping[str, Any] = TRAIN_PARAMS) -> EvidenceModelV1:
-    world = world or build_world(int(params["seed"]), households=int(params["households"]))
+    world = world or training_world(int(params["seed"]), int(params["households"]))
     parts = split_cases(world)
     rows = {name: [case_features(case) for case in cases] for name, cases in parts.items()}
     labels = {

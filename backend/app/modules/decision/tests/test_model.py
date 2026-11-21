@@ -8,21 +8,23 @@ import numpy as np
 
 from app.modules.decision import model as M
 from app.modules.decision.engine import decide, silent_guess_violations
-from app.modules.decision.model import get_model, split_cases
+from app.modules.decision.model import get_model, split_cases, training_world
 from app.modules.evals import metrics
 from app.synth.world import build_world, default_world, family_split
 
 
 def test_world_is_reproducible_and_big_enough() -> None:
-    a, b = build_world(), build_world()
-    assert [c.inp.model_dump() for c in a.cases[:50]] == [c.inp.model_dump() for c in b.cases[:50]]
+    small_a, small_b = build_world(households=80), build_world(households=80)
+    assert [c.inp.model_dump() for c in small_a.cases] == [c.inp.model_dump() for c in small_b.cases]
+    assert [c.truth for c in small_a.cases] == [c.truth for c in small_b.cases]
+    a = default_world()
     assert len(a.persons) >= 1200
     assert len(a.cases) >= 1000
     tags = collections.Counter(t for c in a.cases for t in c.tags)
     for adversarial in ("forged_card", "impersonation", "double_dip", "ring", "income_misreport", "registry_income_stale",
                         "identity_partial", "card_blurry", "registry_down"):  # fmt: skip
         assert tags[adversarial] >= 10, adversarial
-    assert build_world(seed=7).cases[0].inp != a.cases[0].inp
+    assert build_world(seed=7, households=20).cases[0].inp != small_a.cases[0].inp
 
 
 def test_mock_identifiers_only() -> None:
@@ -34,7 +36,7 @@ def test_mock_identifiers_only() -> None:
 
 
 def test_split_is_by_family_so_no_identity_leaks_into_test() -> None:
-    parts = split_cases(build_world(households=1320))
+    parts = split_cases(training_world())
     families = {name: {c.family_id for c in cases} for name, cases in parts.items()}
     assert not families["train"] & families["test"]
     assert not families["calibration"] & families["test"]
@@ -43,12 +45,13 @@ def test_split_is_by_family_so_no_identity_leaks_into_test() -> None:
 
 
 def test_training_is_deterministic_and_versioned() -> None:
-    model = get_model()
-    again = M.train()
-    assert again.version == model.version and again.data_hash == model.data_hash
-    assert model.version.startswith("evidence-lr-") and len(model.version) == len("evidence-lr-") + 12
-    other = M.train(params={**M.TRAIN_PARAMS, "C": 0.1})
-    assert other.version != model.version
+    small = build_world(households=150)
+    first, again = M.train(small), M.train(build_world(households=150))
+    assert again.version == first.version and again.data_hash == first.data_hash and again.eligible == first.eligible
+    assert first.version.startswith("evidence-lr-") and len(first.version) == len("evidence-lr-") + 12
+    assert M.train(small, params={**M.TRAIN_PARAMS, "C": 0.1}).version != first.version
+    assert M.train(build_world(seed=5, households=150)).version != first.version
+    assert get_model().version != first.version
 
 
 def test_calibration_on_held_out_families() -> None:
@@ -75,7 +78,7 @@ def test_routing_quality_on_held_out_cases_at_default_costs() -> None:
 
     model = get_model()
     costs = CostMatrix()
-    test = split_cases(build_world(households=1320))["test"]
+    test = split_cases(training_world())["test"]
     counts: collections.Counter[str] = collections.Counter()
     for case in test:
         dsl = {**RULES_V1, "params": {**RULES_V1["params"], "income_cap": case.income_cap}}
@@ -99,24 +102,25 @@ def test_routing_quality_on_held_out_cases_at_default_costs() -> None:
     assert realised / n < costs.human_cost(1.0)  # cheaper than sending everything to a person
 
 
-def test_numpy_logistic_regression_matches_scikit_learn() -> None:
-    from sklearn.isotonic import IsotonicRegression
-    from sklearn.linear_model import LogisticRegression
-
+def test_logistic_regression_reaches_the_optimum_and_isotonic_is_monotone() -> None:
+    """Our IRLS solution has zero gradient of the penalised loss (what scikit-learn's lbfgs also solves);
+    the PAV map is non-decreasing and reproduces block means. Checked without importing scikit-learn (slow)."""
     rng = np.random.default_rng(3)
     x = rng.normal(size=(400, 5))
     y = (x @ np.array([1.5, -2.0, 0.5, 0.0, 1.0]) + rng.normal(size=400) > 0).astype(float)
-    ours = M.fit_logistic(x, y, 1.0 / 0.5)
-    ref = LogisticRegression(C=0.5, max_iter=5000, tol=1e-10).fit(x, y)
-    assert np.allclose(ours[1:], ref.coef_[0], atol=1e-4) and abs(ours[0] - ref.intercept_[0]) < 1e-4
+    w = M.fit_logistic(x, y, 2.0)
+    xb = np.hstack([np.ones((400, 1)), x])
+    p = 1 / (1 + np.exp(-(xb @ w)))
+    reg = np.full(6, 2.0)
+    reg[0] = 0.0
+    assert np.max(np.abs(xb.T @ (p - y) + reg * w)) < 1e-6
 
-    raw = rng.uniform(size=300)
-    labels = (rng.uniform(size=300) < raw).astype(float)
-    xs, ys = M.fit_isotonic(list(raw), list(labels))
-    iso = IsotonicRegression(out_of_bounds="clip").fit(raw, labels)
-    probe = np.linspace(0, 1, 101)
-    ours_pred = [M._interp(float(p), xs, ys) for p in probe]
-    assert np.allclose(ours_pred, iso.predict(probe), atol=1e-9)
+    raw = list(rng.uniform(size=300))
+    labels = [float(v) for v in (rng.uniform(size=300) < np.asarray(raw))]
+    xs, ys = M.fit_isotonic(raw, labels)
+    assert xs == sorted(xs) and ys == sorted(ys)
+    assert M.fit_isotonic([0.1, 0.2, 0.3, 0.4], [1.0, 0.0, 1.0, 1.0]) == ([0.1, 0.2, 0.3, 0.4], [0.5, 0.5, 1.0, 1.0])
+    assert M._interp(0.25, [0.1, 0.2, 0.3], [0.0, 0.5, 1.0]) == 0.75
 
 
 def test_metrics() -> None:
