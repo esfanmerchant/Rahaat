@@ -88,8 +88,8 @@ def generate(out: Path) -> list[dict[str, Any]]:
                             "national_id": person["national_id"], "bytes": len(data), **info})  # fmt: skip
     key = issuer_key()
     manifest = {"notice": NOTICE, "issuer_key_id": key.key_id, "files": entries}
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    (out / "issuer_jwks.json").write_text(json.dumps(public_jwks(), indent=2) + "\n", encoding="utf-8")
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    (out / "issuer_jwks.json").write_text(json.dumps(public_jwks(), indent=2) + "\n", encoding="utf-8", newline="\n")
     return entries
 
 
