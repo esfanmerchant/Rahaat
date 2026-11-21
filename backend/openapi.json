@@ -1,6 +1,137 @@
 {
   "components": {
     "schemas": {
+      "AccessEntry": {
+        "properties": {
+          "action": {
+            "description": "The raw audit action, for the auditor's cross-reference",
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_kind": {
+            "enum": [
+              "staff",
+              "helper",
+              "partner",
+              "system"
+            ],
+            "title": "Actor Kind",
+            "type": "string"
+          },
+          "actor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Helpers only. Staff are shown by role and department",
+            "title": "Actor Name"
+          },
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          },
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "event": {
+            "enum": [
+              "viewed",
+              "denied",
+              "helper_opened",
+              "helper_acted",
+              "exported"
+            ],
+            "title": "Event",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why: a purpose code for reads, the refusal code for denied attempts",
+            "title": "Reason"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "what": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What was read: case_detail, document_content, decision_trace, ...",
+            "title": "What"
+          }
+        },
+        "required": [
+          "seq",
+          "at",
+          "event",
+          "action",
+          "allowed",
+          "actor_kind",
+          "department"
+        ],
+        "title": "AccessEntry",
+        "type": "object"
+      },
+      "AccessLogPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AccessEntry"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AccessLogPage",
+        "type": "object"
+      },
       "ActiveOut": {
         "properties": {
           "person_id": {
@@ -93,6 +224,391 @@
           "citation"
         ],
         "title": "AnswerSentenceOut",
+        "type": "object"
+      },
+      "ApiKeyCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_days": {
+            "default": 90,
+            "description": "Every key expires; at most a year",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Expires In Days",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Who or what uses the key, for example 'NGO case sync'",
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Name",
+            "type": "string"
+          },
+          "rate_limit_per_minute": {
+            "anyOf": [
+              {
+                "maximum": 1200.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Requests a minute for this key; the platform default when omitted",
+            "title": "Rate Limit Per Minute"
+          },
+          "scopes": {
+            "description": "See GET /v1/admin/api-keys/scopes",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "title": "ApiKeyCreate",
+        "type": "object"
+      },
+      "ApiKeyCreated": {
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "description": "Shown once. Store it now: only a hash is kept, so it cannot be shown again.",
+            "title": "Key",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "description": "Public part of the key, to tell keys apart. The secret is never stored.",
+            "title": "Prefix",
+            "type": "string"
+          },
+          "rate_limit_per_minute": {
+            "title": "Rate Limit Per Minute",
+            "type": "integer"
+          },
+          "requested_scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scopes waiting for a second admin's approval",
+            "title": "Requested Scopes"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "scopes": {
+            "description": "What the key can do now. Empty while it waits for a second admin.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "pending_approval",
+              "revoked",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "status",
+          "scopes",
+          "rate_limit_per_minute",
+          "expires_at",
+          "created_at",
+          "key"
+        ],
+        "title": "ApiKeyCreated",
+        "type": "object"
+      },
+      "ApiKeyDecide": {
+        "additionalProperties": false,
+        "properties": {
+          "approve": {
+            "title": "Approve",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "approve",
+          "reason"
+        ],
+        "title": "ApiKeyDecide",
+        "type": "object"
+      },
+      "ApiKeyOut": {
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "description": "Public part of the key, to tell keys apart. The secret is never stored.",
+            "title": "Prefix",
+            "type": "string"
+          },
+          "rate_limit_per_minute": {
+            "title": "Rate Limit Per Minute",
+            "type": "integer"
+          },
+          "requested_scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scopes waiting for a second admin's approval",
+            "title": "Requested Scopes"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "scopes": {
+            "description": "What the key can do now. Empty while it waits for a second admin.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "pending_approval",
+              "revoked",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "status",
+          "scopes",
+          "rate_limit_per_minute",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "ApiKeyOut",
+        "type": "object"
+      },
+      "ApiKeyRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "ApiKeyRevoke",
+        "type": "object"
+      },
+      "ApiKeyRotate": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "End the new key sooner than the old one would have ended; it never ends later",
+            "title": "Expires In Days"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "ApiKeyRotate",
         "type": "object"
       },
       "ApplicationCreate": {
@@ -956,6 +1472,35 @@
           "file"
         ],
         "title": "Body_upload_document_v1_applications__application_id__documents_post",
+        "type": "object"
+      },
+      "BucketOut": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "per_minute": {
+            "title": "Per Minute",
+            "type": "integer"
+          },
+          "remaining": {
+            "description": "Requests that could be made right now",
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "seconds_to_full": {
+            "title": "Seconds To Full",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "per_minute",
+          "remaining",
+          "seconds_to_full"
+        ],
+        "title": "BucketOut",
         "type": "object"
       },
       "CampaignList": {
@@ -2081,6 +2626,63 @@
         "title": "ConsentOut",
         "type": "object"
       },
+      "CorrectionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "application_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Defaults to my newest application",
+            "title": "Application Id"
+          },
+          "field": {
+            "description": "A form field, e.g. full_name, dob, household_size",
+            "maxLength": 64,
+            "minLength": 2,
+            "title": "Field",
+            "type": "string"
+          },
+          "new_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The right value, in the field's own format",
+            "title": "New Value"
+          },
+          "reason": {
+            "description": "Why the current value is wrong",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "new_value",
+          "reason"
+        ],
+        "title": "CorrectionIn",
+        "type": "object"
+      },
       "CostCurvePoint": {
         "properties": {
           "approvals": {
@@ -2278,6 +2880,93 @@
           "reason"
         ],
         "title": "CostMatrixSave",
+        "type": "object"
+      },
+      "DataRequestOut": {
+        "properties": {
+          "case_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Status"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "correction",
+              "erasure"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "new_value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Value"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "requested_at": {
+            "title": "Requested At",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "description": "open | accepted | rejected",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "requested_at"
+        ],
+        "title": "DataRequestOut",
         "type": "object"
       },
       "DatasetOut": {
@@ -3367,6 +4056,127 @@
         "title": "DecisionView",
         "type": "object"
       },
+      "DelegationCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_days": {
+            "default": 90,
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Expires In Days",
+            "type": "integer"
+          },
+          "helper_phone": {
+            "description": "The helper's mock phone, 0999-NNNNNNN",
+            "maxLength": 16,
+            "minLength": 10,
+            "title": "Helper Phone",
+            "type": "string"
+          },
+          "pin": {
+            "description": "Family PIN the helper must enter on the shared phone",
+            "maxLength": 6,
+            "minLength": 4,
+            "title": "Pin",
+            "type": "string"
+          },
+          "scopes": {
+            "description": "track: see status; apply: fill and send; upload: add photos",
+            "items": {
+              "enum": [
+                "track",
+                "apply",
+                "upload"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "helper_phone",
+          "scopes",
+          "pin"
+        ],
+        "title": "DelegationCreate",
+        "type": "object"
+      },
+      "DelegationOut": {
+        "properties": {
+          "expires_at": {
+            "title": "Expires At",
+            "type": "string"
+          },
+          "granted_at": {
+            "title": "Granted At",
+            "type": "string"
+          },
+          "helper_name": {
+            "title": "Helper Name",
+            "type": "string"
+          },
+          "helper_phone_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Helper Phone Masked"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "pin_set": {
+            "title": "Pin Set",
+            "type": "boolean"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "live",
+              "expired",
+              "revoked"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "helper_name",
+          "scopes",
+          "status",
+          "pin_set",
+          "granted_at",
+          "expires_at"
+        ],
+        "title": "DelegationOut",
+        "type": "object"
+      },
       "DemoAccountOut": {
         "properties": {
           "identifier": {
@@ -3947,6 +4757,25 @@
         "title": "DuplicateEvidence",
         "type": "object"
       },
+      "ErasureIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "ErasureIn",
+        "type": "object"
+      },
       "EvalRunList": {
         "properties": {
           "items": {
@@ -4201,6 +5030,232 @@
           }
         },
         "title": "Fact",
+        "type": "object"
+      },
+      "FamiliesOut": {
+        "properties": {
+          "current_person_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Person Id"
+          },
+          "current_ticket_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Ticket Expires At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "live_count": {
+            "title": "Live Count",
+            "type": "integer"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "live_count"
+        ],
+        "title": "FamiliesOut",
+        "type": "object"
+      },
+      "FamilyApplication": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Code"
+          },
+          "tracking_symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tracking Symbols",
+            "type": "array"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "updated_at"
+        ],
+        "title": "FamilyApplication",
+        "type": "object"
+      },
+      "FamilyOut": {
+        "properties": {
+          "application": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FamilyApplication"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest application, while consent is active"
+          },
+          "consent_active": {
+            "description": "False when the family took back its consent from the department",
+            "title": "Consent Active",
+            "type": "boolean"
+          },
+          "current": {
+            "description": "True for the family this session has switched to",
+            "title": "Current",
+            "type": "boolean"
+          },
+          "delegation_id": {
+            "format": "uuid",
+            "title": "Delegation Id",
+            "type": "string"
+          },
+          "delegation_status": {
+            "enum": [
+              "live",
+              "expired",
+              "revoked"
+            ],
+            "title": "Delegation Status",
+            "type": "string"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only while the delegation is live",
+            "title": "Display Name"
+          },
+          "display_name_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name Ur"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "string"
+          },
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "person_id",
+          "delegation_id",
+          "delegation_status",
+          "scopes",
+          "expires_at",
+          "consent_active",
+          "current"
+        ],
+        "title": "FamilyOut",
+        "type": "object"
+      },
+      "FieldConflictOut": {
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "reason": {
+            "description": "changed_since_your_version | field_locked",
+            "title": "Reason",
+            "type": "string"
+          },
+          "server_value": {
+            "description": "What the server holds (a FieldValue), kept",
+            "title": "Server Value"
+          },
+          "your_value": {
+            "description": "What the device sent, not applied",
+            "title": "Your Value"
+          }
+        },
+        "required": [
+          "field",
+          "server_value",
+          "your_value",
+          "reason"
+        ],
+        "title": "FieldConflictOut",
         "type": "object"
       },
       "FieldValue_Literal__under_15k____15k_30k____30k_50k____over_50k___": {
@@ -4894,6 +5949,58 @@
         "title": "KbSectionOut",
         "type": "object"
       },
+      "KeyBucketOut": {
+        "properties": {
+          "key_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Id"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "per_minute": {
+            "title": "Per Minute",
+            "type": "integer"
+          },
+          "remaining": {
+            "description": "Requests that could be made right now",
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "seconds_to_full": {
+            "title": "Seconds To Full",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "per_minute",
+          "remaining",
+          "seconds_to_full"
+        ],
+        "title": "KeyBucketOut",
+        "type": "object"
+      },
       "LabelIn": {
         "additionalProperties": false,
         "properties": {
@@ -5121,6 +6228,41 @@
           "all_human_cost_per_case"
         ],
         "title": "LabelledStats",
+        "type": "object"
+      },
+      "LimitsOut": {
+        "properties": {
+          "anonymous_per_minute": {
+            "description": "Per client network, for calls without a valid sign-in",
+            "title": "Anonymous Per Minute",
+            "type": "integer"
+          },
+          "api_key_default_per_minute": {
+            "title": "Api Key Default Per Minute",
+            "type": "integer"
+          },
+          "department_per_minute": {
+            "description": "Each of the three department lanes: staff, public (citizens and helpers), API keys",
+            "title": "Department Per Minute",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "user_per_minute": {
+            "title": "User Per Minute",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled",
+          "anonymous_per_minute",
+          "user_per_minute",
+          "department_per_minute",
+          "api_key_default_per_minute"
+        ],
+        "title": "LimitsOut",
         "type": "object"
       },
       "LiveStats": {
@@ -6208,6 +7350,52 @@
         "title": "PaymentSettingsOut",
         "type": "object"
       },
+      "PersonBucketOut": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "per_minute": {
+            "title": "Per Minute",
+            "type": "integer"
+          },
+          "remaining": {
+            "description": "Requests that could be made right now",
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "seconds_to_full": {
+            "title": "Seconds To Full",
+            "type": "integer"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "per_minute",
+          "remaining",
+          "seconds_to_full",
+          "user_id"
+        ],
+        "title": "PersonBucketOut",
+        "type": "object"
+      },
       "PersonOut": {
         "properties": {
           "district": {
@@ -6298,6 +7486,68 @@
           "recall"
         ],
         "title": "PrPoint",
+        "type": "object"
+      },
+      "ProbeOut": {
+        "properties": {
+          "claim": {
+            "title": "Claim",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "sql": {
+            "description": "The exact statement the database was asked to run, as the API's own role",
+            "title": "Sql",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "claim",
+          "passed",
+          "sql",
+          "evidence"
+        ],
+        "title": "ProbeOut",
+        "type": "object"
+      },
+      "ProbeRunOut": {
+        "properties": {
+          "audit_seq": {
+            "description": "The audit row that records this run",
+            "title": "Audit Seq",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "probes": {
+            "items": {
+              "$ref": "#/components/schemas/ProbeOut"
+            },
+            "title": "Probes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "passed",
+          "audit_seq",
+          "probes"
+        ],
+        "title": "ProbeRunOut",
         "type": "object"
       },
       "ProgramOut": {
@@ -6394,6 +7644,62 @@
           }
         },
         "title": "QrResult",
+        "type": "object"
+      },
+      "RateLimitsOut": {
+        "properties": {
+          "api_calls_this_month": {
+            "title": "Api Calls This Month",
+            "type": "integer"
+          },
+          "api_keys": {
+            "items": {
+              "$ref": "#/components/schemas/KeyBucketOut"
+            },
+            "title": "Api Keys",
+            "type": "array"
+          },
+          "costly_routes": {
+            "description": "Routes that count as more than one request",
+            "items": {
+              "$ref": "#/components/schemas/RouteCostOut"
+            },
+            "title": "Costly Routes",
+            "type": "array"
+          },
+          "department": {
+            "description": "Only lanes used since the process started appear here",
+            "items": {
+              "$ref": "#/components/schemas/BucketOut"
+            },
+            "title": "Department",
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsOut"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/PersonBucketOut"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "limits",
+          "department",
+          "people",
+          "api_keys",
+          "api_calls_this_month",
+          "period",
+          "costly_routes"
+        ],
+        "title": "RateLimitsOut",
         "type": "object"
       },
       "ReasonIn": {
@@ -7028,6 +8334,29 @@
           "fpr"
         ],
         "title": "RocPoint",
+        "type": "object"
+      },
+      "RouteCostOut": {
+        "properties": {
+          "cost": {
+            "title": "Cost",
+            "type": "integer"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "path",
+          "cost"
+        ],
+        "title": "RouteCostOut",
         "type": "object"
       },
       "RuleSetOut": {
@@ -7758,6 +9087,77 @@
         "title": "ScamReportOut",
         "type": "object"
       },
+      "ScopeOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "endpoints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Endpoints",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "needs_second_admin": {
+            "title": "Needs Second Admin",
+            "type": "boolean"
+          },
+          "personal_data": {
+            "title": "Personal Data",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "personal_data",
+          "needs_second_admin",
+          "endpoints"
+        ],
+        "title": "ScopeOut",
+        "type": "object"
+      },
+      "SecurityEventOut": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "created_at",
+          "details"
+        ],
+        "title": "SecurityEventOut",
+        "type": "object"
+      },
       "ServiceOut": {
         "properties": {
           "breaker": {
@@ -8285,37 +9685,335 @@
         "title": "SubmitOut",
         "type": "object"
       },
-      "SwitchIn": {
-        "additionalProperties": false,
+      "SwitchOut": {
         "properties": {
-          "role": {
+          "display_name": {
             "anyOf": [
               {
-                "enum": [
-                  "citizen",
-                  "helper",
-                  "officer",
-                  "admin",
-                  "auditor"
-                ],
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Role"
+            "title": "Display Name"
           },
-          "tenant_id": {
+          "expires_at": {
+            "title": "Expires At",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "person_id": {
             "format": "uuid",
-            "title": "Tenant Id",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "ticket": {
+            "description": "Send as X-Helper-Ticket with X-Acting-For on every request for this family",
+            "title": "Ticket",
             "type": "string"
           }
         },
         "required": [
-          "tenant_id"
+          "person_id",
+          "scopes",
+          "ticket",
+          "expires_at",
+          "expires_in"
         ],
-        "title": "SwitchIn",
+        "title": "SwitchOut",
+        "type": "object"
+      },
+      "SyncIn": {
+        "additionalProperties": false,
+        "properties": {
+          "device_id": {
+            "maxLength": 64,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Device Id",
+            "type": "string"
+          },
+          "ops": {
+            "description": "Applied in this order",
+            "items": {
+              "$ref": "#/components/schemas/SyncOpIn"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Ops",
+            "type": "array"
+          }
+        },
+        "required": [
+          "device_id",
+          "ops"
+        ],
+        "title": "SyncIn",
+        "type": "object"
+      },
+      "SyncOpIn": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "patch_application: the version the edit was made against",
+            "title": "Base Version"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the device queued the op (kept for the record)",
+            "title": "Created At"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The application. For a create, the id the device chose for it",
+            "title": "Entity Id"
+          },
+          "kind": {
+            "enum": [
+              "create_application",
+              "patch_application",
+              "submit_application"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "op_id": {
+            "description": "Made on the device; the same op is applied once",
+            "maxLength": 64,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Op Id",
+            "type": "string"
+          },
+          "patch": {
+            "additionalProperties": true,
+            "description": "create_application: {program_id, form?}. patch_application: field name to FieldValue, like form_patch",
+            "title": "Patch",
+            "type": "object"
+          },
+          "person_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional; must be the person of this request",
+            "title": "Person Id"
+          }
+        },
+        "required": [
+          "op_id",
+          "kind"
+        ],
+        "title": "SyncOpIn",
+        "type": "object"
+      },
+      "SyncOpResult": {
+        "properties": {
+          "application_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Status"
+          },
+          "applied_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applied Fields",
+            "type": "array"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/FieldConflictOut"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "extra": {
+            "additionalProperties": true,
+            "title": "Extra",
+            "type": "object"
+          },
+          "op_id": {
+            "title": "Op Id",
+            "type": "string"
+          },
+          "original_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a duplicate: what happened the first time",
+            "title": "Original Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a rejection: the error code (consent_required, not_editable, ...)",
+            "title": "Reason"
+          },
+          "retryable": {
+            "default": false,
+            "description": "True when the op was not recorded and can be sent again later as it is",
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "applied",
+              "duplicate",
+              "conflict",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Code"
+          },
+          "unchanged_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unchanged Fields",
+            "type": "array"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "op_id",
+          "status"
+        ],
+        "title": "SyncOpResult",
+        "type": "object"
+      },
+      "SyncOut": {
+        "properties": {
+          "device_id": {
+            "title": "Device Id",
+            "type": "string"
+          },
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SyncOpResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "server_time": {
+            "title": "Server Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_id",
+          "person_id",
+          "results",
+          "server_time"
+        ],
+        "title": "SyncOut",
         "type": "object"
       },
       "ThresholdsOut": {
@@ -9598,11 +11296,73 @@
         ],
         "title": "WarningOut",
         "type": "object"
+      },
+      "app__modules__auth__schemas__SwitchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "citizen",
+                  "helper",
+                  "officer",
+                  "admin",
+                  "auditor"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ],
+        "title": "SwitchIn",
+        "type": "object"
+      },
+      "app__modules__helpers__schemas__SwitchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "pin": {
+            "maxLength": 6,
+            "minLength": 4,
+            "pattern": "^\\d{4,6}$",
+            "title": "Pin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "person_id",
+          "pin"
+        ],
+        "title": "SwitchIn",
+        "type": "object"
       }
     },
     "securitySchemes": {
+      "APIKeyHeader": {
+        "description": "An API key (rk_...) made by a department admin",
+        "in": "header",
+        "name": "X-API-Key",
+        "type": "apiKey"
+      },
       "HTTPBearer": {
-        "description": "Access token from POST /v1/auth/login",
+        "description": "Access token from POST /v1/auth/login, or an API key (rk_...)",
         "scheme": "bearer",
         "type": "http"
       }
@@ -9662,6 +11422,391 @@
         "summary": "Readiness: the database answers",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/v1/admin/api-keys": {
+      "get": {
+        "operationId": "list_keys_v1_admin_api_keys_get",
+        "parameters": [
+          {
+            "description": "Also list revoked and expired keys",
+            "in": "query",
+            "name": "include_inactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Also list revoked and expired keys",
+              "title": "Include Inactive",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyOut"
+                  },
+                  "title": "Response List Keys V1 Admin Api Keys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "This department's API keys (never the secrets)",
+        "tags": [
+          "admin: API keys"
+        ]
+      },
+      "post": {
+        "operationId": "create_key_v1_admin_api_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Create a key; the response is the only time it is shown",
+        "tags": [
+          "admin: API keys"
+        ]
+      }
+    },
+    "/v1/admin/api-keys/scopes": {
+      "get": {
+        "operationId": "list_scopes_v1_admin_api_keys_scopes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScopeOut"
+                  },
+                  "title": "Response List Scopes V1 Admin Api Keys Scopes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "What a key can be allowed to do, and which endpoints each scope opens",
+        "tags": [
+          "admin: API keys"
+        ]
+      }
+    },
+    "/v1/admin/api-keys/{key_id}": {
+      "get": {
+        "operationId": "get_key_v1_admin_api_keys__key_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "One API key (never the secret)",
+        "tags": [
+          "admin: API keys"
+        ]
+      }
+    },
+    "/v1/admin/api-keys/{key_id}/decide": {
+      "post": {
+        "operationId": "decide_key_v1_admin_api_keys__key_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyDecide"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Second admin: turn on (or refuse) a key that reads personal data",
+        "tags": [
+          "admin: API keys"
+        ]
+      }
+    },
+    "/v1/admin/api-keys/{key_id}/revoke": {
+      "post": {
+        "operationId": "revoke_key_v1_admin_api_keys__key_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ApiKeyRevoke"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Stop a key; it fails on its very next request",
+        "tags": [
+          "admin: API keys"
+        ]
+      }
+    },
+    "/v1/admin/api-keys/{key_id}/rotate": {
+      "post": {
+        "operationId": "rotate_key_v1_admin_api_keys__key_id__rotate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ApiKeyRotate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Replace the secret; the old key stops at once and the new one keeps its end date",
+        "tags": [
+          "admin: API keys"
         ]
       }
     },
@@ -9765,6 +11910,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Background jobs, newest first",
@@ -9823,6 +11971,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Retry a dead job",
@@ -9849,6 +12000,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Failure controls and circuit breakers of the simulated services",
@@ -9893,6 +12047,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Make a simulated service slow, flaky or down, or reset all",
@@ -9947,6 +12104,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "What the mock SMS gateway delivered (numbers masked)",
@@ -9973,6 +12133,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "The department's payment settings",
@@ -10018,12 +12181,147 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Change the four-eyes limit (audited)",
         "tags": [
           "payments",
           "payments"
+        ]
+      }
+    },
+    "/v1/admin/rate-limits": {
+      "get": {
+        "operationId": "usage_v1_admin_rate_limits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Rate-limit use right now, and API calls metered this month",
+        "tags": [
+          "admin: rate limits"
+        ]
+      }
+    },
+    "/v1/admin/security/events": {
+      "get": {
+        "operationId": "list_events_v1_admin_security_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 48,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SecurityEventOut"
+                  },
+                  "title": "Response List Events V1 Admin Security Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Refused key use, refresh-token reuse and rejected uploads",
+        "tags": [
+          "admin: security"
+        ]
+      }
+    },
+    "/v1/admin/security/probes": {
+      "post": {
+        "operationId": "run_probes_v1_admin_security_probes_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Try to get around Row Level Security with raw SQL, and show the refusals",
+        "tags": [
+          "admin: security"
         ]
       }
     },
@@ -10077,6 +12375,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "responses": {
@@ -10104,6 +12421,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "My applications, newest first",
@@ -10130,6 +12450,25 @@
               ],
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
             }
           }
         ],
@@ -10168,6 +12507,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Start an application (the same client_op_id returns the same application)",
@@ -10207,6 +12549,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "responses": {
@@ -10234,6 +12595,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "One application with documents, decision and timeline",
@@ -10270,6 +12634,25 @@
               ],
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
             }
           }
         ],
@@ -10308,6 +12691,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Save answers (optimistic lock on base_version)",
@@ -10347,6 +12733,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "requestBody": {
@@ -10384,6 +12789,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Upload a photo of an ID or proof (JPEG, PNG or WebP, at most 5 MB)",
@@ -10423,6 +12831,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "responses": {
@@ -10450,6 +12877,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Submit and get the decision (repeat submits return the first result)",
@@ -10533,6 +12963,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Approvals waiting for a second person",
@@ -10591,6 +13024,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Release or stop a payment (second person)",
@@ -10801,6 +13237,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Audit trail, newest first",
@@ -10827,6 +13266,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Recompute the hash chain and report the first broken row",
@@ -10912,6 +13354,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Sign out every device",
@@ -10938,6 +13383,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Who am I, and which departments do I belong to",
@@ -10989,6 +13437,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "My signed-in devices",
@@ -11030,6 +13481,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Sign out one device",
@@ -11045,7 +13499,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SwitchIn"
+                "$ref": "#/components/schemas/app__modules__auth__schemas__SwitchIn"
               }
             }
           },
@@ -11076,6 +13530,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Switch to another department you belong to",
@@ -11227,6 +13684,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Review queue",
@@ -11275,6 +13735,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "One case with its handoff package, form, document checks and trace",
@@ -11333,6 +13796,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Approve, reject, request proof or escalate",
@@ -11391,6 +13857,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Take a case or give it to another officer",
@@ -11449,6 +13918,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Add a note",
@@ -11507,6 +13979,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Reopen a resolved case",
@@ -11535,6 +14010,25 @@
               ],
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
             }
           }
         ],
@@ -11567,6 +14061,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Who has my data, for what, until when",
@@ -11593,6 +14090,25 @@
               ],
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
             }
           }
         ],
@@ -11631,6 +14147,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Share my data with this department for a purpose",
@@ -11670,6 +14189,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "requestBody": {
@@ -11707,6 +14245,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Share less: remove field scopes from a consent",
@@ -11746,6 +14287,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "responses": {
@@ -11773,6 +14333,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Take my data back; stops access on the next request",
@@ -11799,6 +14362,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "The department's costs and the thresholds they give",
@@ -11843,6 +14409,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Change the costs (audited); the next decision uses them",
@@ -12042,6 +14611,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Decisions, newest first, filtered; no personal data",
@@ -12090,6 +14662,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "A decision: the citizen's reason and the auditor's trace",
@@ -12138,6 +14713,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Recompute from the stored snapshot and pinned versions",
@@ -12208,6 +14786,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "The stored, re-encoded image (officers only)",
@@ -12294,6 +14875,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Possible and linked duplicates, newest first",
@@ -12344,6 +14928,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "One pair and what agreed",
@@ -12404,6 +14991,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Two different people",
@@ -12464,6 +15054,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "The same person: link the two records (reversible)",
@@ -12524,6 +15117,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Reverse a link",
@@ -12550,6 +15146,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Threshold analysis on 1,000+ held-out labelled cases",
@@ -12603,6 +15202,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Run the analysis and store it",
@@ -12649,6 +15251,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "What these costs would do; nothing is saved",
@@ -12677,6 +15282,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Dedupe bands measured on 200+ labelled messy record pairs",
@@ -12763,6 +15371,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Stored evaluation runs, newest first",
@@ -12789,11 +15400,155 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Accuracy, mistakes, abstention, silent guesses, latency, cost",
         "tags": [
           "evals"
+        ]
+      }
+    },
+    "/v1/helper/families": {
+      "get": {
+        "operationId": "my_families_v1_helper_families_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamiliesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "My families: application status and whether I may still help",
+        "tags": [
+          "helpers"
+        ]
+      }
+    },
+    "/v1/helper/switch": {
+      "post": {
+        "operationId": "switch_family_v1_helper_switch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__helpers__schemas__SwitchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwitchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Switch to a family with its PIN (attempts are limited)",
+        "tags": [
+          "helpers"
+        ]
+      }
+    },
+    "/v1/helper/switch/end": {
+      "post": {
+        "operationId": "end_switch_v1_helper_switch_end_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Hand the phone back: the current switch ticket stops working",
+        "tags": [
+          "helpers"
         ]
       }
     },
@@ -12819,6 +15574,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Policy documents, versions and sections",
@@ -12845,6 +15603,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Load the policy corpus files (new versions only; edits need a new version)",
@@ -12891,11 +15652,549 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Compare two mock records; nothing is stored",
         "tags": [
           "duplicates"
+        ]
+      }
+    },
+    "/v1/me/access-log": {
+      "get": {
+        "operationId": "my_access_log_v1_me_access_log_get",
+        "parameters": [
+          {
+            "description": "Entries older than this one (the seq of the last entry seen)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Entries older than this one (the seq of the last entry seen)",
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessLogPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Who looked at my data: reads by staff, helpers and partner systems, and refused attempts",
+        "tags": [
+          "consent"
+        ]
+      }
+    },
+    "/v1/me/corrections": {
+      "post": {
+        "operationId": "request_correction_v1_me_corrections_post",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Ask for a wrong value to be corrected (an officer decides)",
+        "tags": [
+          "consent"
+        ]
+      }
+    },
+    "/v1/me/data-requests": {
+      "get": {
+        "operationId": "my_data_requests_v1_me_data_requests_get",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DataRequestOut"
+                  },
+                  "title": "Response My Data Requests V1 Me Data Requests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "My correction and erasure requests",
+        "tags": [
+          "consent"
+        ]
+      }
+    },
+    "/v1/me/erasure-request": {
+      "post": {
+        "operationId": "request_erasure_v1_me_erasure_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErasureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Ask for my data to be erased (nothing is deleted until an officer approves)",
+        "tags": [
+          "consent"
+        ]
+      }
+    },
+    "/v1/me/export": {
+      "get": {
+        "operationId": "export_my_data_v1_me_export_get",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "The export file"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Download everything we hold about me (JSON)",
+        "tags": [
+          "consent"
+        ]
+      }
+    },
+    "/v1/me/helpers": {
+      "get": {
+        "operationId": "list_my_helpers_v1_me_helpers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DelegationOut"
+                  },
+                  "title": "Response List My Helpers V1 Me Helpers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Who may help me, with what, until when",
+        "tags": [
+          "helpers"
+        ]
+      },
+      "post": {
+        "operationId": "grant_helper_v1_me_helpers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelegationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Let a community helper act for me",
+        "tags": [
+          "helpers"
+        ]
+      }
+    },
+    "/v1/me/helpers/{delegation_id}/revoke": {
+      "post": {
+        "operationId": "revoke_helper_v1_me_helpers__delegation_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "delegation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Delegation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Stop a helper at once",
+        "tags": [
+          "helpers"
         ]
       }
     },
@@ -12919,6 +16218,25 @@
               ],
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
             }
           }
         ],
@@ -12947,6 +16265,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "My person record (or the person a helper acts for)",
@@ -13029,6 +16350,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "My messages, newest first",
@@ -13179,6 +16503,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Every message this department sent (destinations masked)",
@@ -13288,6 +16615,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Payments, newest first",
@@ -13400,6 +16730,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Programs in this department, with the active rule version",
@@ -13430,6 +16763,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Rule sets of this department and their active version",
@@ -13476,6 +16812,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Check rules without saving them",
@@ -13564,6 +16903,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Versions of a rule set, newest first",
@@ -13608,6 +16950,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Create a draft from a parent version",
@@ -13656,6 +17001,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "One rule version with its validation result",
@@ -13712,6 +17060,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Edit a draft (published versions never change)",
@@ -13779,6 +17130,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "What changed against the active version (or another one)",
@@ -13837,6 +17191,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Decide one supplied case with this version; stores nothing",
@@ -13895,6 +17252,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Publish (second admin only); applies to the next decision",
@@ -13953,6 +17313,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Send a pending version back to draft (second admin only)",
@@ -14011,6 +17374,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Freeze a valid draft and ask a second admin",
@@ -14069,6 +17435,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "New version copying an earlier published one; needs a second admin to publish",
@@ -14117,6 +17486,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Check a stored version",
@@ -14181,6 +17553,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "The largest campaigns (same message, many reports)",
@@ -14262,6 +17637,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Is this message a scam? Never opens links; may answer 'not sure'",
@@ -14330,6 +17708,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Reports by district, kind and day; groups under 5 are hidden",
@@ -14492,6 +17873,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "The department's reports, redacted, newest first",
@@ -14559,6 +17943,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "My checks, newest first",
@@ -14623,6 +18010,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "One check: your own, or any of the department's for staff",
@@ -14704,6 +18094,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "This is real, ask a person (opens a scam_review case)",
@@ -14762,6 +18155,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Confirm what the message really was",
@@ -14790,6 +18186,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Which scam classifier is running (for the system health screen)",
@@ -14858,6 +18257,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Reports per day and kind; days with 1 to 4 reports are hidden",
@@ -14944,6 +18346,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Public scam warnings of your department, newest first",
@@ -15007,6 +18412,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Publish a public warning for a campaign or district",
@@ -15055,11 +18463,102 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Withdraw a public warning",
         "tags": [
           "scam"
+        ]
+      }
+    },
+    "/v1/sync": {
+      "post": {
+        "operationId": "sync_v1_sync_post",
+        "parameters": [
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Apply changes queued offline, in order; the same op is never applied twice",
+        "tags": [
+          "sync"
         ]
       }
     },
@@ -15083,6 +18582,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Which parts are running right now",
@@ -15135,6 +18637,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Endpoint-to-role registry (every route and who may call it)",
@@ -15202,6 +18707,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Digital Twin runs, newest first",
@@ -15246,6 +18754,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Run a draft over past and labelled cases; nothing is sent or paid",
@@ -15294,6 +18805,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "One Digital Twin run",
@@ -15352,6 +18866,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Record that the draft does not go ahead",
@@ -15410,6 +18927,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Send the draft for a second admin to publish",
@@ -15456,6 +18976,25 @@
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
             }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
           }
         ],
         "requestBody": {
@@ -15492,6 +19031,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Interpret a spoken answer against the type the question expects",
@@ -15534,6 +19076,25 @@
               ],
               "description": "Helpers only: the person id this request is for",
               "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
             }
           }
         ],
@@ -15618,6 +19179,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Transcribe a short recording (optional; the app uses the phone's recogniser first)",

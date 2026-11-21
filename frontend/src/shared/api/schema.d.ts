@@ -38,6 +38,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** This department's API keys (never the secrets) */
+        get: operations["list_keys_v1_admin_api_keys_get"];
+        put?: never;
+        /** Create a key; the response is the only time it is shown */
+        post: operations["create_key_v1_admin_api_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api-keys/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a key can be allowed to do, and which endpoints each scope opens */
+        get: operations["list_scopes_v1_admin_api_keys_scopes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api-keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One API key (never the secret) */
+        get: operations["get_key_v1_admin_api_keys__key_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api-keys/{key_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Second admin: turn on (or refuse) a key that reads personal data */
+        post: operations["decide_key_v1_admin_api_keys__key_id__decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api-keys/{key_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop a key; it fails on its very next request */
+        post: operations["revoke_key_v1_admin_api_keys__key_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api-keys/{key_id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replace the secret; the old key stops at once and the new one keeps its end date */
+        post: operations["rotate_key_v1_admin_api_keys__key_id__rotate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/jobs": {
         parameters: {
             query?: never;
@@ -119,6 +222,57 @@ export interface paths {
         /** Change the four-eyes limit (audited) */
         put: operations["change_settings_v1_admin_payment_settings_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/rate-limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rate-limit use right now, and API calls metered this month */
+        get: operations["usage_v1_admin_rate_limits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/security/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Refused key use, refresh-token reuse and rejected uploads */
+        get: operations["list_events_v1_admin_security_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/security/probes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Try to get around Row Level Security with raw SQL, and show the refusals */
+        post: operations["run_probes_v1_admin_security_probes_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -866,6 +1020,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/helper/families": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My families: application status and whether I may still help */
+        get: operations["my_families_v1_helper_families_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/helper/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Switch to a family with its PIN (attempts are limited) */
+        post: operations["switch_family_v1_helper_switch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/helper/switch/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hand the phone back: the current switch ticket stops working */
+        post: operations["end_switch_v1_helper_switch_end_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/kb/documents": {
         parameters: {
             query?: never;
@@ -911,6 +1116,126 @@ export interface paths {
         put?: never;
         /** Compare two mock records; nothing is stored */
         post: operations["compare_records_v1_matching_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/access-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who looked at my data: reads by staff, helpers and partner systems, and refused attempts */
+        get: operations["my_access_log_v1_me_access_log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask for a wrong value to be corrected (an officer decides) */
+        post: operations["request_correction_v1_me_corrections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/data-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My correction and erasure requests */
+        get: operations["my_data_requests_v1_me_data_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/erasure-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask for my data to be erased (nothing is deleted until an officer approves) */
+        post: operations["request_erasure_v1_me_erasure_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download everything we hold about me (JSON) */
+        get: operations["export_my_data_v1_me_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/helpers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who may help me, with what, until when */
+        get: operations["list_my_helpers_v1_me_helpers_get"];
+        put?: never;
+        /** Let a community helper act for me */
+        post: operations["grant_helper_v1_me_helpers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/helpers/{delegation_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop a helper at once */
+        post: operations["revoke_helper_v1_me_helpers__delegation_id__revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1447,6 +1772,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply changes queued offline, in order; the same op is never applied twice */
+        post: operations["sync_v1_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/system/health": {
         parameters: {
             query?: never;
@@ -1611,6 +1953,56 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessEntry */
+        AccessEntry: {
+            /**
+             * Action
+             * @description The raw audit action, for the auditor's cross-reference
+             */
+            action: string;
+            /**
+             * Actor Kind
+             * @enum {string}
+             */
+            actor_kind: "staff" | "helper" | "partner" | "system";
+            /**
+             * Actor Name
+             * @description Helpers only. Staff are shown by role and department
+             */
+            actor_name?: string | null;
+            /** Actor Role */
+            actor_role?: string | null;
+            /** Allowed */
+            allowed: boolean;
+            /** At */
+            at: string;
+            /** Department */
+            department: string;
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "viewed" | "denied" | "helper_opened" | "helper_acted" | "exported";
+            /**
+             * Reason
+             * @description Why: a purpose code for reads, the refusal code for denied attempts
+             */
+            reason?: string | null;
+            /** Seq */
+            seq: number;
+            /**
+             * What
+             * @description What was read: case_detail, document_content, decision_trace, ...
+             */
+            what?: string | null;
+        };
+        /** AccessLogPage */
+        AccessLogPage: {
+            /** Items */
+            items: components["schemas"]["AccessEntry"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
         /** ActiveOut */
         ActiveOut: {
             /** Person Id */
@@ -1654,6 +2046,145 @@ export interface components {
              * @description Copied word for word from the cited section
              */
             text: string;
+        };
+        /** ApiKeyCreate */
+        ApiKeyCreate: {
+            /**
+             * Expires In Days
+             * @description Every key expires; at most a year
+             * @default 90
+             */
+            expires_in_days: number;
+            /**
+             * Name
+             * @description Who or what uses the key, for example 'NGO case sync'
+             */
+            name: string;
+            /**
+             * Rate Limit Per Minute
+             * @description Requests a minute for this key; the platform default when omitted
+             */
+            rate_limit_per_minute?: number | null;
+            /**
+             * Scopes
+             * @description See GET /v1/admin/api-keys/scopes
+             */
+            scopes: string[];
+        };
+        /** ApiKeyCreated */
+        ApiKeyCreated: {
+            /** Approval Id */
+            approval_id?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Created By */
+            created_by?: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Key
+             * @description Shown once. Store it now: only a hash is kept, so it cannot be shown again.
+             */
+            key: string;
+            /** Last Used At */
+            last_used_at?: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Prefix
+             * @description Public part of the key, to tell keys apart. The secret is never stored.
+             */
+            prefix: string;
+            /** Rate Limit Per Minute */
+            rate_limit_per_minute: number;
+            /**
+             * Requested Scopes
+             * @description Scopes waiting for a second admin's approval
+             */
+            requested_scopes?: string[] | null;
+            /** Revoked At */
+            revoked_at?: string | null;
+            /**
+             * Scopes
+             * @description What the key can do now. Empty while it waits for a second admin.
+             */
+            scopes: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "pending_approval" | "revoked" | "expired";
+        };
+        /** ApiKeyDecide */
+        ApiKeyDecide: {
+            /** Approve */
+            approve: boolean;
+            /** Reason */
+            reason: string;
+        };
+        /** ApiKeyOut */
+        ApiKeyOut: {
+            /** Approval Id */
+            approval_id?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Created By */
+            created_by?: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at?: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Prefix
+             * @description Public part of the key, to tell keys apart. The secret is never stored.
+             */
+            prefix: string;
+            /** Rate Limit Per Minute */
+            rate_limit_per_minute: number;
+            /**
+             * Requested Scopes
+             * @description Scopes waiting for a second admin's approval
+             */
+            requested_scopes?: string[] | null;
+            /** Revoked At */
+            revoked_at?: string | null;
+            /**
+             * Scopes
+             * @description What the key can do now. Empty while it waits for a second admin.
+             */
+            scopes: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "pending_approval" | "revoked" | "expired";
+        };
+        /** ApiKeyRevoke */
+        ApiKeyRevoke: {
+            /** Reason */
+            reason?: string | null;
+        };
+        /** ApiKeyRotate */
+        ApiKeyRotate: {
+            /**
+             * Expires In Days
+             * @description End the new key sooner than the old one would have ended; it never ends later
+             */
+            expires_in_days?: number | null;
+            /** Reason */
+            reason?: string | null;
         };
         /** ApplicationCreate */
         ApplicationCreate: {
@@ -1979,6 +2510,20 @@ export interface components {
              * @enum {string}
              */
             kind: "rahat_id" | "income_proof" | "other";
+        };
+        /** BucketOut */
+        BucketOut: {
+            /** Label */
+            label: string;
+            /** Per Minute */
+            per_minute: number;
+            /**
+             * Remaining
+             * @description Requests that could be made right now
+             */
+            remaining: number;
+            /** Seconds To Full */
+            seconds_to_full: number;
         };
         /** CampaignList */
         CampaignList: {
@@ -2379,6 +2924,29 @@ export interface components {
             /** Withdrawn At */
             withdrawn_at?: string | null;
         };
+        /** CorrectionIn */
+        CorrectionIn: {
+            /**
+             * Application Id
+             * @description Defaults to my newest application
+             */
+            application_id?: string | null;
+            /**
+             * Field
+             * @description A form field, e.g. full_name, dob, household_size
+             */
+            field: string;
+            /**
+             * New Value
+             * @description The right value, in the field's own format
+             */
+            new_value: string | number | boolean | null;
+            /**
+             * Reason
+             * @description Why the current value is wrong
+             */
+            reason: string;
+        };
         /** CostCurvePoint */
         CostCurvePoint: {
             /** Approvals */
@@ -2504,6 +3072,36 @@ export interface components {
              * @default 30
              */
             wrong_reject: number;
+        };
+        /** DataRequestOut */
+        DataRequestOut: {
+            /** Case Status */
+            case_status?: string | null;
+            /** Field */
+            field?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "correction" | "erasure";
+            /** New Value */
+            new_value?: unknown | null;
+            /** Reason */
+            reason?: string | null;
+            /** Requested At */
+            requested_at: string;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @description open | accepted | rejected
+             */
+            status: string;
         };
         /** DatasetOut */
         DatasetOut: {
@@ -2944,6 +3542,56 @@ export interface components {
             trace: components["schemas"]["DecisionTrace"];
             user_view: components["schemas"]["DecisionUserView"];
         };
+        /** DelegationCreate */
+        DelegationCreate: {
+            /**
+             * Expires In Days
+             * @default 90
+             */
+            expires_in_days: number;
+            /**
+             * Helper Phone
+             * @description The helper's mock phone, 0999-NNNNNNN
+             */
+            helper_phone: string;
+            /**
+             * Pin
+             * @description Family PIN the helper must enter on the shared phone
+             */
+            pin: string;
+            /**
+             * Scopes
+             * @description track: see status; apply: fill and send; upload: add photos
+             */
+            scopes: ("track" | "apply" | "upload")[];
+        };
+        /** DelegationOut */
+        DelegationOut: {
+            /** Expires At */
+            expires_at: string;
+            /** Granted At */
+            granted_at: string;
+            /** Helper Name */
+            helper_name: string;
+            /** Helper Phone Masked */
+            helper_phone_masked?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pin Set */
+            pin_set: boolean;
+            /** Revoked At */
+            revoked_at?: string | null;
+            /** Scopes */
+            scopes: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "expired" | "revoked";
+        };
         /** DemoAccountOut */
         DemoAccountOut: {
             /** Identifier */
@@ -3184,6 +3832,11 @@ export interface components {
             /** Score */
             score: number;
         };
+        /** ErasureIn */
+        ErasureIn: {
+            /** Reason */
+            reason?: string | null;
+        };
         /** EvalRunList */
         EvalRunList: {
             /** Items */
@@ -3286,6 +3939,98 @@ export interface components {
              * @default false
              */
             verified: boolean;
+        };
+        /** FamiliesOut */
+        FamiliesOut: {
+            /** Current Person Id */
+            current_person_id?: string | null;
+            /** Current Ticket Expires At */
+            current_ticket_expires_at?: string | null;
+            /** Items */
+            items: components["schemas"]["FamilyOut"][];
+            /** Live Count */
+            live_count: number;
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** FamilyApplication */
+        FamilyApplication: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Tracking Code */
+            tracking_code?: string | null;
+            /** Tracking Symbols */
+            tracking_symbols?: string[];
+            /** Updated At */
+            updated_at: string;
+        };
+        /** FamilyOut */
+        FamilyOut: {
+            /** @description The newest application, while consent is active */
+            application?: components["schemas"]["FamilyApplication"] | null;
+            /**
+             * Consent Active
+             * @description False when the family took back its consent from the department
+             */
+            consent_active: boolean;
+            /**
+             * Current
+             * @description True for the family this session has switched to
+             */
+            current: boolean;
+            /**
+             * Delegation Id
+             * Format: uuid
+             */
+            delegation_id: string;
+            /**
+             * Delegation Status
+             * @enum {string}
+             */
+            delegation_status: "live" | "expired" | "revoked";
+            /**
+             * Display Name
+             * @description Only while the delegation is live
+             */
+            display_name?: string | null;
+            /** Display Name Ur */
+            display_name_ur?: string | null;
+            /** District */
+            district?: string | null;
+            /** Expires At */
+            expires_at: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Scopes */
+            scopes: string[];
+        };
+        /** FieldConflictOut */
+        FieldConflictOut: {
+            /** Field */
+            field: string;
+            /**
+             * Reason
+             * @description changed_since_your_version | field_locked
+             */
+            reason: string;
+            /**
+             * Server Value
+             * @description What the server holds (a FieldValue), kept
+             */
+            server_value: unknown;
+            /**
+             * Your Value
+             * @description What the device sent, not applied
+             */
+            your_value: unknown;
         };
         /** FieldValue[Literal['under_15k', '15k_30k', '30k_50k', 'over_50k']] */
         FieldValue_Literal__under_15k____15k_30k____30k_50k____over_50k___: {
@@ -3596,6 +4341,24 @@ export interface components {
             /** Sentences */
             sentences: number;
         };
+        /** KeyBucketOut */
+        KeyBucketOut: {
+            /** Key Id */
+            key_id?: string | null;
+            /** Label */
+            label: string;
+            /** Name */
+            name?: string | null;
+            /** Per Minute */
+            per_minute: number;
+            /**
+             * Remaining
+             * @description Requests that could be made right now
+             */
+            remaining: number;
+            /** Seconds To Full */
+            seconds_to_full: number;
+        };
         /** LabelIn */
         LabelIn: {
             /**
@@ -3669,6 +4432,25 @@ export interface components {
             stored: boolean;
             /** Unnecessary Handoffs */
             unnecessary_handoffs: number;
+        };
+        /** LimitsOut */
+        LimitsOut: {
+            /**
+             * Anonymous Per Minute
+             * @description Per client network, for calls without a valid sign-in
+             */
+            anonymous_per_minute: number;
+            /** Api Key Default Per Minute */
+            api_key_default_per_minute: number;
+            /**
+             * Department Per Minute
+             * @description Each of the three department lanes: staff, public (citizens and helpers), API keys
+             */
+            department_per_minute: number;
+            /** Enabled */
+            enabled: boolean;
+            /** User Per Minute */
+            user_per_minute: number;
         };
         /** LiveStats */
         LiveStats: {
@@ -4096,6 +4878,27 @@ export interface components {
              */
             four_eyes_limit_pkr: number;
         };
+        /** PersonBucketOut */
+        PersonBucketOut: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Label */
+            label: string;
+            /** Per Minute */
+            per_minute: number;
+            /**
+             * Remaining
+             * @description Requests that could be made right now
+             */
+            remaining: number;
+            /** Seconds To Full */
+            seconds_to_full: number;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
         /** PersonOut */
         PersonOut: {
             /** District */
@@ -4130,6 +4933,36 @@ export interface components {
             recall: number;
             /** Threshold */
             threshold: number;
+        };
+        /** ProbeOut */
+        ProbeOut: {
+            /** Claim */
+            claim: string;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Name */
+            name: string;
+            /** Passed */
+            passed: boolean;
+            /**
+             * Sql
+             * @description The exact statement the database was asked to run, as the API's own role
+             */
+            sql: string;
+        };
+        /** ProbeRunOut */
+        ProbeRunOut: {
+            /**
+             * Audit Seq
+             * @description The audit row that records this run
+             */
+            audit_seq: number;
+            /** Passed */
+            passed: boolean;
+            /** Probes */
+            probes: components["schemas"]["ProbeOut"][];
         };
         /** ProgramOut */
         ProgramOut: {
@@ -4169,6 +5002,28 @@ export interface components {
              * @description None when no QR was found
              */
             signature_valid?: boolean | null;
+        };
+        /** RateLimitsOut */
+        RateLimitsOut: {
+            /** Api Calls This Month */
+            api_calls_this_month: number;
+            /** Api Keys */
+            api_keys: components["schemas"]["KeyBucketOut"][];
+            /**
+             * Costly Routes
+             * @description Routes that count as more than one request
+             */
+            costly_routes: components["schemas"]["RouteCostOut"][];
+            /**
+             * Department
+             * @description Only lanes used since the process started appear here
+             */
+            department: components["schemas"]["BucketOut"][];
+            limits: components["schemas"]["LimitsOut"];
+            /** People */
+            people: components["schemas"]["PersonBucketOut"][];
+            /** Period */
+            period: string;
         };
         /** ReasonIn */
         ReasonIn: {
@@ -4380,6 +5235,15 @@ export interface components {
             threshold: number;
             /** Tpr */
             tpr: number;
+        };
+        /** RouteCostOut */
+        RouteCostOut: {
+            /** Cost */
+            cost: number;
+            /** Method */
+            method: string;
+            /** Path */
+            path: string;
         };
         /** RuleSetOut */
         RuleSetOut: {
@@ -4621,6 +5485,37 @@ export interface components {
             /** Urls */
             urls: components["schemas"]["UrlOut"][];
         };
+        /** ScopeOut */
+        ScopeOut: {
+            /** Description */
+            description: string;
+            /** Endpoints */
+            endpoints: string[];
+            /** Name */
+            name: string;
+            /** Needs Second Admin */
+            needs_second_admin: boolean;
+            /** Personal Data */
+            personal_data: boolean;
+        };
+        /** SecurityEventOut */
+        SecurityEventOut: {
+            /** Created At */
+            created_at: string;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Severity */
+            severity: string;
+        };
         /** ServiceOut */
         ServiceOut: {
             /** Breaker */
@@ -4833,15 +5728,136 @@ export interface components {
             /** @description None while documents are still being checked */
             decision?: components["schemas"]["DecisionUserView"] | null;
         };
-        /** SwitchIn */
-        SwitchIn: {
-            /** Role */
-            role?: ("citizen" | "helper" | "officer" | "admin" | "auditor") | null;
+        /** SwitchOut */
+        SwitchOut: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Expires At */
+            expires_at: string;
+            /** Expires In */
+            expires_in: number;
             /**
-             * Tenant Id
+             * Person Id
              * Format: uuid
              */
-            tenant_id: string;
+            person_id: string;
+            /** Scopes */
+            scopes: string[];
+            /**
+             * Ticket
+             * @description Send as X-Helper-Ticket with X-Acting-For on every request for this family
+             */
+            ticket: string;
+        };
+        /** SyncIn */
+        SyncIn: {
+            /** Device Id */
+            device_id: string;
+            /**
+             * Ops
+             * @description Applied in this order
+             */
+            ops: components["schemas"]["SyncOpIn"][];
+        };
+        /** SyncOpIn */
+        SyncOpIn: {
+            /**
+             * Base Version
+             * @description patch_application: the version the edit was made against
+             */
+            base_version?: number | null;
+            /**
+             * Created At
+             * @description When the device queued the op (kept for the record)
+             */
+            created_at?: string | null;
+            /**
+             * Entity Id
+             * @description The application. For a create, the id the device chose for it
+             */
+            entity_id?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "create_application" | "patch_application" | "submit_application";
+            /**
+             * Op Id
+             * @description Made on the device; the same op is applied once
+             */
+            op_id: string;
+            /**
+             * Patch
+             * @description create_application: {program_id, form?}. patch_application: field name to FieldValue, like form_patch
+             */
+            patch?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Person Id
+             * @description Optional; must be the person of this request
+             */
+            person_id?: string | null;
+        };
+        /** SyncOpResult */
+        SyncOpResult: {
+            /** Application Status */
+            application_status?: string | null;
+            /** Applied Fields */
+            applied_fields?: string[];
+            /** Conflicts */
+            conflicts?: components["schemas"]["FieldConflictOut"][];
+            /** Detail */
+            detail?: string | null;
+            /** Entity Id */
+            entity_id?: string | null;
+            /** Extra */
+            extra?: {
+                [key: string]: unknown;
+            };
+            /** Op Id */
+            op_id: string;
+            /**
+             * Original Status
+             * @description For a duplicate: what happened the first time
+             */
+            original_status?: string | null;
+            /**
+             * Reason
+             * @description For a rejection: the error code (consent_required, not_editable, ...)
+             */
+            reason?: string | null;
+            /**
+             * Retryable
+             * @description True when the op was not recorded and can be sent again later as it is
+             * @default false
+             */
+            retryable: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "applied" | "duplicate" | "conflict" | "rejected";
+            /** Tracking Code */
+            tracking_code?: string | null;
+            /** Unchanged Fields */
+            unchanged_fields?: string[];
+            /** Version */
+            version?: number | null;
+        };
+        /** SyncOut */
+        SyncOut: {
+            /** Device Id */
+            device_id: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Results */
+            results: components["schemas"]["SyncOpResult"][];
+            /** Server Time */
+            server_time: string;
         };
         /** ThresholdsOut */
         ThresholdsOut: {
@@ -5331,6 +6347,26 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** SwitchIn */
+        app__modules__auth__schemas__SwitchIn: {
+            /** Role */
+            role?: ("citizen" | "helper" | "officer" | "admin" | "auditor") | null;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+        };
+        /** SwitchIn */
+        app__modules__helpers__schemas__SwitchIn: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Pin */
+            pin: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -5380,6 +6416,227 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    list_keys_v1_admin_api_keys_get: {
+        parameters: {
+            query?: {
+                /** @description Also list revoked and expired keys */
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_key_v1_admin_api_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_scopes_v1_admin_api_keys_scopes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScopeOut"][];
+                };
+            };
+        };
+    };
+    get_key_v1_admin_api_keys__key_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_key_v1_admin_api_keys__key_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_key_v1_admin_api_keys__key_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyRevoke"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rotate_key_v1_admin_api_keys__key_id__rotate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyRotate"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5590,6 +6847,78 @@ export interface operations {
             };
         };
     };
+    usage_v1_admin_rate_limits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitsOut"];
+                };
+            };
+        };
+    };
+    list_events_v1_admin_security_events_get: {
+        parameters: {
+            query?: {
+                kind?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityEventOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_probes_v1_admin_security_probes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProbeRunOut"];
+                };
+            };
+        };
+    };
     list_applications_v1_applications_get: {
         parameters: {
             query?: {
@@ -5599,6 +6928,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -5631,6 +6962,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -5667,6 +7000,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path: {
                 application_id: string;
@@ -5701,6 +7036,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path: {
                 application_id: string;
@@ -5739,6 +7076,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path: {
                 application_id: string;
@@ -5777,6 +7116,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path: {
                 application_id: string;
@@ -6151,7 +7492,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SwitchIn"];
+                "application/json": components["schemas"]["app__modules__auth__schemas__SwitchIn"];
             };
         };
         responses: {
@@ -6391,6 +7732,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -6423,6 +7766,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -6459,6 +7804,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path: {
                 consent_id: string;
@@ -6497,6 +7844,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path: {
                 consent_id: string;
@@ -7076,6 +8425,89 @@ export interface operations {
             };
         };
     };
+    my_families_v1_helper_families_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamiliesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switch_family_v1_helper_switch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__helpers__schemas__SwitchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    end_switch_v1_helper_switch_end_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     documents_v1_kb_documents_get: {
         parameters: {
             query?: never;
@@ -7149,12 +8581,275 @@ export interface operations {
             };
         };
     };
+    my_access_log_v1_me_access_log_get: {
+        parameters: {
+            query?: {
+                /** @description Entries older than this one (the seq of the last entry seen) */
+                cursor?: number | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessLogPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_correction_v1_me_corrections_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_data_requests_v1_me_data_requests_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_erasure_v1_me_erasure_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErasureIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_my_data_v1_me_export_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The export file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_my_helpers_v1_me_helpers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DelegationOut"][];
+                };
+            };
+        };
+    };
+    grant_helper_v1_me_helpers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DelegationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DelegationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_helper_v1_me_helpers__delegation_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                delegation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DelegationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     my_person_v1_me_person_get: {
         parameters: {
             query?: never;
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -8261,6 +9956,44 @@ export interface operations {
             };
         };
     };
+    sync_v1_sync_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_v1_system_health_get: {
         parameters: {
             query?: never;
@@ -8498,6 +10231,8 @@ export interface operations {
                 "accept-language"?: string | null;
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -8548,6 +10283,8 @@ export interface operations {
             header?: {
                 /** @description Helpers only: the person id this request is for */
                 "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
             };
             path?: never;
             cookie?: never;

@@ -10,7 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.context import current_client_ip
-from app.core.deps import ALL_ROLES, Principal, get_claims, get_db, get_principal
+from app.core.deps import ALL_ROLES, Principal, get_credential, get_db, get_principal
 from app.core.policy import Policy, Public
 from app.modules.rag import service
 from app.modules.rag.ingest import ingest
@@ -28,11 +28,11 @@ def _optional_principal(request: Request, credentials: HTTPAuthorizationCredenti
     """No token: anonymous. A token: checked exactly like every other route (expired or revoked is a 401, never anonymous)."""
     if credentials is None or not credentials.credentials:
         return None
-    claims = get_claims(credentials)
-    sessions = cast(Generator[Session, None, None], get_db(claims))
+    credential = get_credential(request, credentials, None)  # same checks as every other route; a bad token is a 401
+    sessions = cast(Generator[Session, None, None], get_db(credential))
     db = next(sessions)
     try:
-        return get_principal(request, claims, db)
+        return get_principal(request, credential, db)
     finally:
         sessions.close()
 
