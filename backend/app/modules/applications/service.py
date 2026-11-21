@@ -49,6 +49,7 @@ from app.modules.applications.forms import (
 )
 from app.modules.applications.status import EDITABLE
 from app.modules.applications.timeline import DecisionEvent, PaymentEvent, build_timeline, format_tracking, new_tracking_number, symbols_for
+from app.modules.consent.access_log import record_view
 from app.modules.consent.rules import require_consent, require_consent_for_helper_read
 from app.modules.documents.views import citizen_view
 from app.modules.people.context import PersonContext
@@ -256,13 +257,20 @@ def list_applications(db: Session, ctx: PersonContext, *, cursor: str | None, li
     page = rows[:limit]
     names = _program_names(db, {a.program_id for a in page})
     items = [ApplicationSummary(**_summary_fields(a, names.get(a.program_id, ""))) for a in page]
+    if ctx.via_helper:  # a helper's read shows in the person's access log
+        record_view(db, ctx.principal, ctx.person_id, what="applications_list")
+        db.commit()
     return ApplicationList(items=items, next_cursor=_encode_cursor(page[-1]) if len(rows) > limit else None)
 
 
 def get_application(db: Session, ctx: PersonContext, application_id: UUID) -> ApplicationOut:
     application = load_owned(db, ctx, application_id)
     require_consent_for_helper_read(db, ctx, action="application.read")
-    return application_out(db, application)
+    out = application_out(db, application)
+    if ctx.via_helper:
+        record_view(db, ctx.principal, ctx.person_id, what="application", ref_id=application.id)
+        db.commit()
+    return out
 
 
 # --- writing ---------------------------------------------------------------------------------------------
