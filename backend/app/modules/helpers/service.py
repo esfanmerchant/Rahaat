@@ -317,7 +317,7 @@ def families(db: Session, principal: Principal, *, cursor: str | None = None, li
         if person is not None:
             shown.append(person_id)
         items.append(FamilyOut(
-            person_id=person_id, delegation_id=delegation.id, delegation_status=status,  # type: ignore[arg-type]
+            person_id=person_id, delegation_id=delegation.id, delegation_status=status,
             display_name=person.full_name if person else None, display_name_ur=person.full_name_ur if person else None,
             district=person.district if person else None, scopes=ordered_scopes(list(delegation.scopes or [])),
             expires_at=_iso(delegation.expires_at) or "", consent_active=consent, application=_family_application(application),

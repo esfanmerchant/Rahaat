@@ -8,6 +8,7 @@ so ids cannot be probed.
 from __future__ import annotations
 
 import base64
+import uuid
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -161,7 +162,7 @@ def decision_view(db: Session, decision: models.Decision | None) -> DecisionUser
     version = db.get(models.RuleVersion, decision.rule_version_id)
     try:
         return DecisionUserView(
-            decision_id=str(decision.id), outcome=decision.outcome, route=decision.route,  # type: ignore[arg-type]
+            decision_id=str(decision.id), outcome=decision.outcome, route=decision.route,
             explanation=Explanation.model_validate(decision.explanation), rule_version_no=version.version_no if version else 0,
             decided_at=_iso(decision.created_at),
         )  # fmt: skip
@@ -318,13 +319,28 @@ def _refuse_second_open_application(db: Session, ctx: PersonContext, program_id:
         )  # fmt: skip
 
 
-def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate) -> tuple[ApplicationOut, bool]:
-    """Returns (application, created). The same client_op_id always returns the application it first created."""
+def _constraint(exc: IntegrityError) -> str:
+    diag = getattr(getattr(exc, "orig", None), "diag", None)
+    return str(getattr(diag, "constraint_name", "") or "")
+
+
+def create_core(db: Session, ctx: PersonContext, body: ApplicationCreate, *, application_id: UUID | None = None,
+                audit_extra: dict[str, Any] | None = None) -> tuple[models.Application, bool]:  # fmt: skip
+    """Create without committing (the caller commits). Returns (application, created).
+
+    The same client_op_id always returns the application it first created. Offline clients may choose the
+    application id (`application_id`), so later queued edits can refer to it; an id that is already taken
+    by someone else is refused, never reused.
+    """
     form = body.form or ApplicationFormV1()
     require_consent(db, ctx, action="application.create", scopes=scopes_needed(set_fields(form)))
     existing = _by_client_op(db, ctx, body.client_op_id)
     if existing is not None:
-        return application_out(db, existing), False
+        return existing, False
+    if application_id is not None:
+        same = db.get(models.Application, application_id)  # RLS: only rows this person may read are visible
+        if same is not None and same.tenant_id == ctx.tenant_id and same.person_id == ctx.person_id:
+            return same, False
 
     program = db.get(models.Program, body.program_id)
     if program is None or program.tenant_id != ctx.tenant_id or not program.active:
@@ -336,31 +352,42 @@ def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate)
         form.phone.value = normalise_mock_phone(form.phone.value)
 
     application = models.Application(
-        tenant_id=ctx.tenant_id, program_id=program.id, person_id=ctx.person_id, status="draft",
-        form=form.model_dump(mode="json"), form_version=form.form_version, version=1, client_op_id=body.client_op_id,
-        submitted_via="helper" if ctx.via_helper else "web", tracking_code=_allocate_tracking_code(ctx.tenant_id),
-        created_by=ctx.user_id,
+        id=application_id or uuid.uuid4(), tenant_id=ctx.tenant_id, program_id=program.id, person_id=ctx.person_id,
+        status="draft", form=form.model_dump(mode="json"), form_version=form.form_version, version=1,
+        client_op_id=body.client_op_id, submitted_via="helper" if ctx.via_helper else "web",
+        tracking_code=_allocate_tracking_code(ctx.tenant_id), created_by=ctx.user_id,
     )  # fmt: skip
-    db.add(application)
     try:
-        db.flush()
-    except IntegrityError:
-        db.rollback()
+        with db.begin_nested():  # a savepoint: losing a race must not undo the caller's other work
+            db.add(application)
+            db.flush()
+    except IntegrityError as exc:
         existing = _by_client_op(db, ctx, body.client_op_id)
         if existing is not None:  # a concurrent retry of the same create won the race
-            return application_out(db, existing), False
+            return existing, False
         _refuse_second_open_application(db, ctx, program.id)  # another create for this person and program won
+        if application_id is not None and "pkey" in _constraint(exc):
+            raise Conflict("That application id is already used. Generate a new one.", code="entity_id_taken") from None
         raise Conflict("That client_op_id is already used. Generate a new one.", code="client_op_id_conflict") from None
     audit.write(
         db, tenant_id=ctx.tenant_id, action="application.created", object_type="application", object_id=application.id,
-        details={"program_id": str(program.id), "tracking_code": application.tracking_code, "fields": set_fields(form)},
+        details={"program_id": str(program.id), "tracking_code": application.tracking_code, "fields": set_fields(form),
+                 **(audit_extra or {})},
         **ctx.audit_fields(),
     )  # fmt: skip
-    db.commit()
-    return application_out(db, application), True
+    return application, True
 
 
-def patch_application(db: Session, ctx: PersonContext, application_id: UUID, body: ApplicationPatch) -> ApplicationOut:
+def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate) -> tuple[ApplicationOut, bool]:
+    """Returns (application, created). The same client_op_id always returns the application it first created."""
+    application, created = create_core(db, ctx, body)
+    if created:
+        db.commit()
+    return application_out(db, application), created
+
+
+def patch_core(db: Session, ctx: PersonContext, application_id: UUID, body: ApplicationPatch) -> models.Application:
+    """Strict optimistic lock (409 `version_conflict`); does not commit. Offline sync merges field by field instead."""
     application = load_owned(db, ctx, application_id, lock=True)
     fields = [name for name in body.form_patch if name != "language"]
     require_consent(db, ctx, action="application.update", scopes=scopes_needed(fields))
@@ -374,7 +401,7 @@ def patch_application(db: Session, ctx: PersonContext, application_id: UUID, bod
             extra={"current_version": application.version, "form": current.model_dump(mode="json")},
         )
     if not body.form_patch:
-        return application_out(db, application)
+        return application
     updated = merge_client_patch(current, body.form_patch)
     application.form = updated.model_dump(mode="json")
     application.version += 1
@@ -382,5 +409,10 @@ def patch_application(db: Session, ctx: PersonContext, application_id: UUID, bod
         db, tenant_id=ctx.tenant_id, action="application.updated", object_type="application", object_id=application.id,
         details={"fields": sorted(body.form_patch), "version": application.version}, **ctx.audit_fields(),
     )  # fmt: skip
+    return application
+
+
+def patch_application(db: Session, ctx: PersonContext, application_id: UUID, body: ApplicationPatch) -> ApplicationOut:
+    application = patch_core(db, ctx, application_id, body)
     db.commit()
     return application_out(db, application)
