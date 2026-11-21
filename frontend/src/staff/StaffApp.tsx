@@ -7,8 +7,12 @@ import { PrototypeFooter } from '../shared/components/PrototypeFooter';
 import { ScreenState } from '../shared/components/ScreenState';
 import { useTemporaryLang } from '../shared/i18n';
 import { Redirect } from '../shared/routing';
-import { findNavItem, navFor } from './nav';
+import { findNavItem, navFor, type NavItem } from './nav';
 import { PlaceholderPage } from './PlaceholderPage';
+import { AuditPage } from './pages/AuditPage';
+import { CasePage } from './pages/CasePage';
+import { DecisionIndex, DecisionPage } from './pages/DecisionPage';
+import { QueuePage } from './pages/QueuePage';
 import { StaffLogin } from './StaffLogin';
 import { StaffShell, StaffSignOutButton } from './StaffShell';
 
@@ -23,6 +27,8 @@ export default function StaffApp() {
       <Router>
         <Route path="/login" component={StaffLoginRoute} />
         <Route path="/" component={StaffIndex} />
+        <Route path="/cases/:id" component={CaseRoute} />
+        <Route path="/decisions/:id" component={DecisionRoute} />
         <Route path="/:section" component={StaffSection} />
         <Route default component={StaffNotFound} />
       </Router>
@@ -108,7 +114,7 @@ function StaffSection({ section }: { section?: string }) {
             {item === undefined ? (
               <ScreenState kind="not_found" density="staff" title="Page not found" body="There is no staff page at this address." />
             ) : allowed ? (
-              <PlaceholderPage item={item} />
+              <SectionPage item={item} />
             ) : (
               <ScreenState
                 kind="denied"
@@ -121,6 +127,52 @@ function StaffSection({ section }: { section?: string }) {
         );
       }}
     </StaffGuard>
+  );
+}
+
+function SectionPage({ item }: { item: NavItem }) {
+  switch (item.slug) {
+    case 'queue':
+      return <QueuePage />;
+    case 'audit':
+      return <AuditPage />;
+    case 'decisions':
+      return <DecisionIndex />;
+    default:
+      return <PlaceholderPage item={item} />;
+  }
+}
+
+/** A deep link that the role's nav does not list: same guard, explicit role list. */
+function RoleRoute({ roles, label, children }: { roles: readonly string[]; label: string; children: () => ComponentChildren }) {
+  return (
+    <StaffGuard>
+      {(s) => (
+        <StaffShell user={s.user} active={s.active} memberships={s.memberships}>
+          {roles.includes(s.active.role) ? (
+            children()
+          ) : (
+            <ScreenState kind="denied" density="staff" title="Not available for your role" body={`${label} is for ${roles.join(' and ')} accounts. The server enforces this too.`} />
+          )}
+        </StaffShell>
+      )}
+    </StaffGuard>
+  );
+}
+
+function CaseRoute({ id }: { id?: string }) {
+  return (
+    <RoleRoute roles={['officer']} label="Case review">
+      {() => <CasePage id={id ?? ''} />}
+    </RoleRoute>
+  );
+}
+
+function DecisionRoute({ id }: { id?: string }) {
+  return (
+    <RoleRoute roles={['auditor', 'officer']} label="The decision viewer">
+      {() => <DecisionPage id={id ?? ''} />}
+    </RoleRoute>
   );
 }
 
