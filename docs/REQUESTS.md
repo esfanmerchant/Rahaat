@@ -74,7 +74,7 @@ Why: the typed client only sends headers the schema names, so these three go wit
 Until then: the screens treat 409 as "already asked".
 
 ## A new family switch should end the previous ticket
-From: Track D1   To: Track A (helpers)   Status: open
+From: Track D1   To: Track A (helpers)   Status: done (already enforced: a ticket must match the newest switch row of its session, so a second switch ends the first at once; covered by `helpers/tests/test_helpers_api.py::test_a_ticket_belongs_to_one_session_and_one_family`)
 What: confirm that `POST /v1/helper/switch` for a second family makes the first family's ticket useless at once (not only `/switch/end`), and that a ticket is bound to the person it names.
 Why: the app ends the ticket when the helper changes family, but `/switch/end` cannot be sent offline. The phone drops the ticket from memory anyway, so it is only exposed if copied out of memory; one live ticket per helper session would remove the question.
 Until then: the app drops the ticket from memory first and calls `/switch/end` best effort.

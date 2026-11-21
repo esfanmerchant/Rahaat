@@ -46,7 +46,10 @@ _session_factory: sessionmaker[Session] = sessionmaker(expire_on_commit=False)
 def get_engine() -> Engine:
     """Runtime engine: the low-privilege role that RLS applies to."""
     if "app" not in _engines:
-        _engines["app"] = create_engine(get_settings().app_url(), pool_pre_ping=True, pool_size=5, max_overflow=10)
+        settings = get_settings()
+        _engines["app"] = create_engine(
+            settings.app_url(), pool_pre_ping=True, pool_size=settings.db_pool_size, max_overflow=settings.db_max_overflow
+        )
     return _engines["app"]
 
 
