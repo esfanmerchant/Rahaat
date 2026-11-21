@@ -141,6 +141,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Impact report: handoff rate, time, fraud flagged, cost per claim, payments */
+        get: operations["get_impact_v1_admin_impact_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/jobs": {
         parameters: {
             query?: never;
@@ -497,6 +514,40 @@ export interface paths {
         put?: never;
         /** Reject a proposed action: nothing runs */
         post: operations["reject_step_v1_agent_steps__step_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/anomalies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Anomaly flags by detector and the last run */
+        get: operations["list_anomalies_v1_anomalies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/anomalies/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run detection now (queued as a job) */
+        post: operations["run_now_v1_anomalies_run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -972,6 +1023,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/channels/sms/inbound": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Inbound SMS: STATUS, VERIFY, STOP and HELP (English and Roman Urdu). The reply is sent as an SMS */
+        post: operations["sms_inbound_v1_channels_sms_inbound_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/channels/ussd": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** USSD gateway: one request in an aggregator's shape. Answers plain text starting with CON or END */
+        post: operations["ussd_v1_channels_ussd_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/complaints": {
         parameters: {
             query?: never;
@@ -1137,6 +1222,58 @@ export interface paths {
         };
         /** Demo sign-ins (not available in prod) */
         get: operations["demo_accounts_v1_demo_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/sms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Messages sent to a mock number by the channel (demo only) */
+        get: operations["demo_sms_thread_v1_demo_sms_get"];
+        put?: never;
+        /** Simulator relay for one inbound text (demo only) */
+        post: operations["demo_sms_v1_demo_sms_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/ussd": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Simulator relay for one USSD key press (demo only) */
+        post: operations["demo_ussd_v1_demo_ussd_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/ussd/personas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demo numbers for the simulator (demo only) */
+        get: operations["demo_personas_v1_demo_ussd_personas_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2434,6 +2571,21 @@ export interface components {
             /** Route */
             route: string;
         };
+        /** AnomaliesOut */
+        AnomaliesOut: {
+            /**
+             * Counts
+             * @description Active flags per detector
+             */
+            counts: {
+                [key: string]: number;
+            };
+            /** Flags */
+            flags: components["schemas"]["FlagOut"][];
+            last_scan?: components["schemas"]["ScanSummary"] | null;
+            /** Note */
+            note: string;
+        };
         /**
          * AnomalyEvidence
          * @description Result of anomaly detection (Phase 3). A flagged case is a guard.
@@ -2978,6 +3130,22 @@ export interface components {
             /** Sentences */
             sentences: components["schemas"]["AnswerSentenceOut"][];
         };
+        /** Assumption */
+        Assumption: {
+            /**
+             * Label
+             * @default assumed
+             */
+            label: string;
+            /** Name */
+            name: string;
+            /** Unit */
+            unit: string;
+            /** Used For */
+            used_for: string;
+            /** Value */
+            value: number;
+        };
         /** AuditEntry */
         AuditEntry: {
             /** Acting For Person Id */
@@ -3191,7 +3359,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review";
+            kind: "application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review" | "anomaly_review";
             /** Notes */
             notes?: components["schemas"]["CaseNoteOut"][];
             /** Opened Reason */
@@ -3288,7 +3456,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review";
+            kind: "application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review" | "anomaly_review";
             /** Opened Reason */
             opened_reason: string;
             /** Priority */
@@ -3725,6 +3893,19 @@ export interface components {
              * @default 30
              */
             wrong_reject: number;
+        };
+        /** CostOut */
+        CostOut: {
+            /** All To A Person Per Claim Units */
+            all_to_a_person_per_claim_units: number | null;
+            /** Decisions */
+            decisions: number;
+            /** Per Claim Pkr Assumed */
+            per_claim_pkr_assumed: number | null;
+            /** Per Claim Units */
+            per_claim_units: number | null;
+            /** Units Saved Per Claim */
+            units_saved_per_claim: number | null;
         };
         /** DataRequestOut */
         DataRequestOut: {
@@ -4317,6 +4498,102 @@ export interface components {
              */
             notice: string;
         };
+        /** DemoPersona */
+        DemoPersona: {
+            /**
+             * Display
+             * @description +92 999NNNNNNN
+             */
+            display: string;
+            /**
+             * Msisdn
+             * @description Mock number, 0999-NNNNNNN
+             */
+            msisdn: string;
+            /** Name */
+            name: string;
+            /** Symbols */
+            symbols: string[];
+            /**
+             * Tracking Code
+             * @description The tracking code of the latest application, when there is one (demo only)
+             */
+            tracking_code: string | null;
+        };
+        /** DemoPersonasOut */
+        DemoPersonasOut: {
+            /** Demo Pin */
+            demo_pin: string;
+            /** Personas */
+            personas: components["schemas"]["DemoPersona"][];
+            /** Service Code */
+            service_code: string;
+        };
+        /** DemoSmsMessage */
+        DemoSmsMessage: {
+            /** At */
+            at: string;
+            /** Body */
+            body: string;
+            /** Id */
+            id: string;
+            /** Template */
+            template: string;
+        };
+        /** DemoSmsOut */
+        DemoSmsOut: {
+            /** Accepted */
+            accepted: boolean;
+            /** Command */
+            command: string;
+            /** Messages */
+            messages: components["schemas"]["DemoSmsMessage"][];
+            /** Reply Sent */
+            reply_sent: boolean;
+        };
+        /** DemoUssdOut */
+        DemoUssdOut: {
+            /**
+             * Kind
+             * @description CON (the session goes on) or END
+             */
+            kind: string;
+            /** Text */
+            text: string;
+        };
+        /** DetectorStatus */
+        DetectorStatus: {
+            /**
+             * Abstained Reason
+             * @description Why the detector did not judge (not enough data), as a code
+             */
+            abstained_reason?: string | null;
+            /** Data Points */
+            data_points?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Detector
+             * @enum {string}
+             */
+            detector: "shared_payout" | "application_spike" | "helper_burst" | "repeated_identity";
+            /**
+             * Flags
+             * @description Findings in the last run
+             */
+            flags: number;
+            /** Params */
+            params?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "flagged" | "clear" | "abstained";
+            /** Title */
+            title: string;
+        };
         /** DiffChange */
         DiffChange: {
             /**
@@ -4537,6 +4814,15 @@ export interface components {
             other_person_ref?: string | null;
             /** Score */
             score: number;
+        };
+        /** DurationOut */
+        DurationOut: {
+            /** Median Seconds */
+            median_seconds: number | null;
+            /** N */
+            n: number;
+            /** P90 Seconds */
+            p90_seconds: number | null;
         };
         /** ErasureIn */
         ErasureIn: {
@@ -4833,6 +5119,55 @@ export interface components {
              */
             verified: boolean;
         };
+        /** FlagOut */
+        FlagOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Status */
+            case_status: string;
+            /** Cheapest Check */
+            cheapest_check: string | null;
+            /**
+             * Confidence
+             * @description A heuristic score of the pattern, not a calibrated probability
+             */
+            confidence: number | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * Detector
+             * @enum {string}
+             */
+            detector: "shared_payout" | "application_spike" | "helper_burst" | "repeated_identity";
+            /**
+             * Evidence
+             * @description Chips: numbers and short labels, never raw identifiers
+             */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /**
+             * Evidence Count
+             * @description How many applications are behind the pattern
+             */
+            evidence_count: number;
+            /**
+             * Evidence Ids
+             * @description Application ids, capped
+             */
+            evidence_ids: string[];
+            /** Pattern Key */
+            pattern_key: string;
+            /** Priority */
+            priority: number;
+            /** Resolution */
+            resolution: string | null;
+            /** Title */
+            title: string;
+        };
         /**
          * FormValueOut
          * @description Ready to send in `PATCH /v1/applications/{id}` once the person has confirmed the read-back.
@@ -4849,10 +5184,80 @@ export interface components {
             /** Value */
             value: number | boolean | string | null;
         };
+        /** FraudOut */
+        FraudOut: {
+            /** Anomaly Cases */
+            anomaly_cases: {
+                [key: string]: number;
+            };
+            /**
+             * Duplicate Candidates
+             * @description Person pairs the matcher put in the same or possible band
+             */
+            duplicate_candidates: number;
+            /**
+             * Duplicates Caught
+             * @description Decisions held by a duplicate guard
+             */
+            duplicates_caught: number;
+            /** Duplicates Linked By A Person */
+            duplicates_linked_by_a_person: number;
+            /**
+             * Forged Cards Flagged
+             * @description Decisions where the document check raised the suspect-document guard
+             */
+            forged_cards_flagged: number;
+            /** Held For A Person By A Guard */
+            held_for_a_person_by_a_guard: number;
+            /** Identity Mismatches */
+            identity_mismatches: number;
+            /**
+             * Payments Stopped
+             * @description Payments cancelled or reversed
+             */
+            payments_stopped: number;
+            /** Payments Stopped Pkr */
+            payments_stopped_pkr: number;
+            /** Scams Confirmed By A Person */
+            scams_confirmed_by_a_person: number;
+            /**
+             * Scams Flagged
+             * @description Checked messages the scam classifier labelled as a scam type (flagged, not proven)
+             */
+            scams_flagged: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HandoffOut */
+        HandoffOut: {
+            /** By Route */
+            by_route: {
+                [key: string]: number;
+            };
+            /** Decisions */
+            decisions: number;
+            /**
+             * Handoff Rate
+             * @description Share of decisions sent to a person
+             */
+            handoff_rate: number | null;
+            /**
+             * Not Automatic Rate
+             * @description Share not decided automatically (asked for proof or sent to a person)
+             */
+            not_automatic_rate: number | null;
+            /** Rate */
+            rate: {
+                [key: string]: number | null;
+            };
+            /**
+             * Silent Guesses
+             * @description Automatic decisions that break the invariant; must be 0
+             */
+            silent_guesses: number;
         };
         /**
          * HandoffPackage
@@ -4943,6 +5348,33 @@ export interface components {
              * @enum {string}
              */
             status: "match" | "partial" | "mismatch" | "not_found" | "unavailable";
+        };
+        /** ImpactOut */
+        ImpactOut: {
+            /** Assumptions */
+            assumptions: components["schemas"]["Assumption"][];
+            cost_per_claim: components["schemas"]["CostOut"];
+            /** Department */
+            department: string;
+            fraud_stopped: components["schemas"]["FraudOut"];
+            /** Generated At */
+            generated_at: string;
+            handoff: components["schemas"]["HandoffOut"];
+            /**
+             * Measured From
+             * @description Row counts behind each block, so a reader can see how much data there is
+             */
+            measured_from: {
+                [key: string]: unknown;
+            };
+            /** Notes */
+            notes: string[];
+            payments: components["schemas"]["app__modules__analytics__schemas__PaymentsOut"];
+            replay: components["schemas"]["app__modules__analytics__schemas__ReplayOut"];
+            time_saved: components["schemas"]["TimeSavedOut"];
+            time_to_decision: components["schemas"]["TimeToDecisionOut"];
+            /** Window Days */
+            window_days: number;
         };
         /** InfoOut */
         InfoOut: {
@@ -5211,7 +5643,7 @@ export interface components {
             };
             /** Departments */
             departments: number;
-            payments: components["schemas"]["PaymentsOut"];
+            payments: components["schemas"]["app__modules__pulse__schemas__PaymentsOut"];
             scam: components["schemas"]["ScamOut"];
         };
         /** LiveStats */
@@ -5685,17 +6117,6 @@ export interface components {
              */
             four_eyes_limit_pkr: number;
         };
-        /** PaymentsOut */
-        PaymentsOut: {
-            /** Sent */
-            sent: number;
-            /** Sent Amount Pkr */
-            sent_amount_pkr: number;
-            /** Settled */
-            settled: number;
-            /** Settled Amount Pkr */
-            settled_amount_pkr: number;
-        };
         /** PersonBucketOut */
         PersonBucketOut: {
             /** Display Name */
@@ -5845,7 +6266,7 @@ export interface components {
             live: components["schemas"]["LiveOut"];
             /** Notice */
             notice: string;
-            replay: components["schemas"]["ReplayOut"];
+            replay: components["schemas"]["app__modules__pulse__schemas__ReplayOut"];
         };
         /** QrResult */
         QrResult: {
@@ -6088,22 +6509,6 @@ export interface components {
              * @description auto | ask_more | human; an auto case with outcome rejected is a hard-rule rejection
              */
             route: string;
-        };
-        /** ReplayOut */
-        ReplayOut: {
-            /** Available */
-            available: boolean;
-            /** Cases */
-            cases: components["schemas"]["ReplayCase"][];
-            /** Cases Scored */
-            cases_scored: number;
-            headline: components["schemas"]["HeadlineOut"] | null;
-            /** Model Version */
-            model_version: string | null;
-            /** Replay Source */
-            replay_source: string;
-            /** Rule Version No */
-            rule_version_no: number | null;
         };
         /** ReplayResult */
         ReplayResult: {
@@ -6447,6 +6852,46 @@ export interface components {
             /** Urls */
             urls: components["schemas"]["UrlOut"][];
         };
+        /** ScanQueuedOut */
+        ScanQueuedOut: {
+            /** Already Queued */
+            already_queued: boolean;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Status */
+            status: string;
+        };
+        /** ScanSummary */
+        ScanSummary: {
+            /** Applications Scanned */
+            applications_scanned: number;
+            /** Cases Opened */
+            cases_opened: number;
+            /** Cases Refreshed */
+            cases_refreshed: number;
+            /** Detectors */
+            detectors: components["schemas"]["DetectorStatus"][];
+            /** Ran At */
+            ran_at: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Suppressed
+             * @description Findings a person already reviewed in full
+             */
+            suppressed: number;
+            /**
+             * Trigger
+             * @description manual | job | event
+             */
+            trigger: string;
+        };
         /** ScopeOut */
         ScopeOut: {
             /** Description */
@@ -6555,6 +7000,33 @@ export interface components {
             noise: number;
             /** Value */
             value: string;
+        };
+        /** SmsAccepted */
+        SmsAccepted: {
+            /** Accepted */
+            accepted: boolean;
+            /**
+             * Command
+             * @description status, verify, stop, help, unknown, bad_argument, duplicate, rejected or throttled
+             */
+            command: string;
+            /** Reply Sent */
+            reply_sent: boolean;
+        };
+        /** SmsIn */
+        SmsIn: {
+            /**
+             * Message Id
+             * @description The aggregator's message id; a repeat of the same id is answered once
+             */
+            message_id?: string | null;
+            /**
+             * Msisdn
+             * @description The caller's number. Only mock numbers (0999-NNNNNNN or +92 999NNNNNNN) are accepted
+             */
+            msisdn: string;
+            /** Text */
+            text: string;
         };
         /** SmsOutboxItem */
         SmsOutboxItem: {
@@ -6868,6 +7340,36 @@ export interface components {
             /** Server Time */
             server_time: string;
         };
+        /** TimeSavedOut */
+        TimeSavedOut: {
+            /** Automatic Decisions */
+            automatic_decisions: number;
+            /** Hands On Hours Saved */
+            hands_on_hours_saved: number;
+            /** Hands On Source */
+            hands_on_source: string;
+            /** Label */
+            label: string;
+            /** Minutes Per Manual Review Used */
+            minutes_per_manual_review_used: number;
+            /** Waiting Hours Avoided */
+            waiting_hours_avoided: number | null;
+        };
+        /** TimeToDecisionOut */
+        TimeToDecisionOut: {
+            /** @description Submission to decision, from the application's and the decision's timestamps */
+            automatic: components["schemas"]["DurationOut"];
+            /** Automatic Engine Latency Ms P50 */
+            automatic_engine_latency_ms_p50: number | null;
+            /** @description Case opened to resolved, application-linked cases */
+            human_case: components["schemas"]["DurationOut"];
+            /** Human Case By Kind */
+            human_case_by_kind: {
+                [key: string]: components["schemas"]["DurationOut"];
+            };
+            /** @description Officer's first look to action (review_seconds) */
+            human_review_hands_on: components["schemas"]["DurationOut"];
+        };
         /** TimelineItem */
         TimelineItem: {
             /** At */
@@ -7145,6 +7647,30 @@ export interface components {
             id: string;
             /** Lang */
             lang: string;
+        };
+        /** UssdIn */
+        UssdIn: {
+            /**
+             * Msisdn
+             * @description The caller's number. Only mock numbers (0999-NNNNNNN or +92 999NNNNNNN) are accepted
+             */
+            msisdn: string;
+            /**
+             * Service Code
+             * @default *786#
+             */
+            service_code: string;
+            /**
+             * Session Id
+             * @description The aggregator's session id
+             */
+            session_id: string;
+            /**
+             * Text
+             * @description The `*`-joined input history; empty on the first dial
+             * @default
+             */
+            text: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -7506,6 +8032,53 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** PaymentsOut */
+        app__modules__analytics__schemas__PaymentsOut: {
+            /** Amount Pkr */
+            amount_pkr: number;
+            /** Average Pkr */
+            average_pkr: number | null;
+            /** By Status */
+            by_status: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            /** Count */
+            count: number;
+            /** Settled Pkr */
+            settled_pkr: number;
+        };
+        /** ReplayOut */
+        app__modules__analytics__schemas__ReplayOut: {
+            /** Abstention Rate */
+            abstention_rate?: number | null;
+            /** Accuracy Of Automatic */
+            accuracy_of_automatic?: number | null;
+            /** All Human Cost Per Case */
+            all_human_cost_per_case?: number | null;
+            /** Cases */
+            cases?: number | null;
+            /** Cost Per Case */
+            cost_per_case?: number | null;
+            /** Ece */
+            ece?: number | null;
+            /** False Approvals */
+            false_approvals?: number | null;
+            /** False Rejections */
+            false_rejections?: number | null;
+            /** Label */
+            label: string;
+            /** Stored Run */
+            stored_run?: boolean | null;
+            /**
+             * Synthetic
+             * @default true
+             */
+            synthetic: boolean;
+            /** Unnecessary Handoffs */
+            unnecessary_handoffs?: number | null;
+        };
         /** SwitchIn */
         app__modules__auth__schemas__SwitchIn: {
             /** Role */
@@ -7541,6 +8114,33 @@ export interface components {
             person_id: string;
             /** Pin */
             pin: string;
+        };
+        /** PaymentsOut */
+        app__modules__pulse__schemas__PaymentsOut: {
+            /** Sent */
+            sent: number;
+            /** Sent Amount Pkr */
+            sent_amount_pkr: number;
+            /** Settled */
+            settled: number;
+            /** Settled Amount Pkr */
+            settled_amount_pkr: number;
+        };
+        /** ReplayOut */
+        app__modules__pulse__schemas__ReplayOut: {
+            /** Available */
+            available: boolean;
+            /** Cases */
+            cases: components["schemas"]["ReplayCase"][];
+            /** Cases Scored */
+            cases_scored: number;
+            headline: components["schemas"]["HeadlineOut"] | null;
+            /** Model Version */
+            model_version: string | null;
+            /** Replay Source */
+            replay_source: string;
+            /** Rule Version No */
+            rule_version_no: number | null;
         };
         /** ThresholdsOut */
         app__modules__pulse__schemas__ThresholdsOut: {
@@ -7812,6 +8412,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiKeyCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_impact_v1_admin_impact_get: {
+        parameters: {
+            query?: {
+                /** @description Window in days */
+                days?: number;
+                /** @description An assumption, used only until officer review times are measured */
+                assumed_minutes_per_manual_review?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImpactOut"];
                 };
             };
             /** @description Validation Error */
@@ -8587,6 +9221,46 @@ export interface operations {
             };
         };
     };
+    list_anomalies_v1_anomalies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnomaliesOut"];
+                };
+            };
+        };
+    };
+    run_now_v1_anomalies_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanQueuedOut"];
+                };
+            };
+        };
+    };
     staff_appeals_v1_appeals_get: {
         parameters: {
             query?: {
@@ -9328,7 +10002,7 @@ export interface operations {
             query?: {
                 /** @description A status, 'active' (default) or 'all' */
                 status?: "open" | "assigned" | "in_review" | "waiting_proof" | "escalated" | "resolved" | "closed" | "active" | "all";
-                kind?: ("application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review") | null;
+                kind?: ("application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review" | "anomaly_review") | null;
                 /** @description 'me', 'unassigned' or a user id */
                 assignee?: string | null;
                 /** @description priority (most urgent first), confidence (least sure first) or age (oldest first) */
@@ -9584,6 +10258,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sms_inbound_v1_channels_sms_inbound_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsAccepted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ussd_v1_channels_ussd_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UssdIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example CON Rahat (prototype)
+                     *     1 English
+                     *     2 Roman Urdu
+                     */
+                    "text/plain": string;
                 };
             };
             /** @description Validation Error */
@@ -10025,6 +10770,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DemoAccountsOut"];
+                };
+            };
+        };
+    };
+    demo_sms_thread_v1_demo_sms_get: {
+        parameters: {
+            query: {
+                msisdn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoSmsMessage"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_sms_v1_demo_sms_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoSmsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_ussd_v1_demo_ussd_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UssdIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoUssdOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_personas_v1_demo_ussd_personas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoPersonasOut"];
                 };
             };
         };

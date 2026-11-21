@@ -228,6 +228,46 @@
         "title": "AgentDecisionOut",
         "type": "object"
       },
+      "AnomaliesOut": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Active flags per detector",
+            "title": "Counts",
+            "type": "object"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/FlagOut"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "last_scan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScanSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flags",
+          "counts",
+          "note"
+        ],
+        "title": "AnomaliesOut",
+        "type": "object"
+      },
       "AnomalyEvidence": {
         "description": "Result of anomaly detection (Phase 3). A flagged case is a guard.",
         "properties": {
@@ -1617,6 +1657,39 @@
         "title": "AskOut",
         "type": "object"
       },
+      "Assumption": {
+        "properties": {
+          "label": {
+            "default": "assumed",
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "used_for": {
+            "title": "Used For",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "unit",
+          "used_for"
+        ],
+        "title": "Assumption",
+        "type": "object"
+      },
       "AuditEntry": {
         "properties": {
           "acting_for_person_id": {
@@ -2246,7 +2319,8 @@
               "complaint",
               "appeal",
               "correction",
-              "scam_review"
+              "scam_review",
+              "anomaly_review"
             ],
             "title": "Kind",
             "type": "string"
@@ -2558,7 +2632,8 @@
               "complaint",
               "appeal",
               "correction",
-              "scam_review"
+              "scam_review",
+              "anomaly_review"
             ],
             "title": "Kind",
             "type": "string"
@@ -3573,6 +3648,67 @@
           "reason"
         ],
         "title": "CostMatrixSave",
+        "type": "object"
+      },
+      "CostOut": {
+        "properties": {
+          "all_to_a_person_per_claim_units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "All To A Person Per Claim Units"
+          },
+          "decisions": {
+            "title": "Decisions",
+            "type": "integer"
+          },
+          "per_claim_pkr_assumed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Claim Pkr Assumed"
+          },
+          "per_claim_units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Claim Units"
+          },
+          "units_saved_per_claim": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Saved Per Claim"
+          }
+        },
+        "required": [
+          "decisions",
+          "per_claim_units",
+          "all_to_a_person_per_claim_units",
+          "units_saved_per_claim",
+          "per_claim_pkr_assumed"
+        ],
+        "title": "CostOut",
         "type": "object"
       },
       "DataRequestOut": {
@@ -5062,6 +5198,223 @@
         "title": "DemoAccountsOut",
         "type": "object"
       },
+      "DemoPersona": {
+        "additionalProperties": false,
+        "properties": {
+          "display": {
+            "description": "+92 999NNNNNNN",
+            "title": "Display",
+            "type": "string"
+          },
+          "msisdn": {
+            "description": "Mock number, 0999-NNNNNNN",
+            "title": "Msisdn",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tracking code of the latest application, when there is one (demo only)",
+            "title": "Tracking Code"
+          }
+        },
+        "required": [
+          "name",
+          "msisdn",
+          "display",
+          "tracking_code",
+          "symbols"
+        ],
+        "title": "DemoPersona",
+        "type": "object"
+      },
+      "DemoPersonasOut": {
+        "additionalProperties": false,
+        "properties": {
+          "demo_pin": {
+            "title": "Demo Pin",
+            "type": "string"
+          },
+          "personas": {
+            "items": {
+              "$ref": "#/components/schemas/DemoPersona"
+            },
+            "title": "Personas",
+            "type": "array"
+          },
+          "service_code": {
+            "title": "Service Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "personas",
+          "demo_pin",
+          "service_code"
+        ],
+        "title": "DemoPersonasOut",
+        "type": "object"
+      },
+      "DemoSmsMessage": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "template": {
+            "title": "Template",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "body",
+          "template"
+        ],
+        "title": "DemoSmsMessage",
+        "type": "object"
+      },
+      "DemoSmsOut": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "command": {
+            "title": "Command",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/DemoSmsMessage"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "reply_sent": {
+            "title": "Reply Sent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted",
+          "command",
+          "reply_sent",
+          "messages"
+        ],
+        "title": "DemoSmsOut",
+        "type": "object"
+      },
+      "DemoUssdOut": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "description": "CON (the session goes on) or END",
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "title": "DemoUssdOut",
+        "type": "object"
+      },
+      "DetectorStatus": {
+        "properties": {
+          "abstained_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the detector did not judge (not enough data), as a code",
+            "title": "Abstained Reason"
+          },
+          "data_points": {
+            "additionalProperties": true,
+            "title": "Data Points",
+            "type": "object"
+          },
+          "detector": {
+            "enum": [
+              "shared_payout",
+              "application_spike",
+              "helper_burst",
+              "repeated_identity"
+            ],
+            "title": "Detector",
+            "type": "string"
+          },
+          "flags": {
+            "description": "Findings in the last run",
+            "title": "Flags",
+            "type": "integer"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "flagged",
+              "clear",
+              "abstained"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detector",
+          "title",
+          "status",
+          "flags"
+        ],
+        "title": "DetectorStatus",
+        "type": "object"
+      },
       "DiffChange": {
         "properties": {
           "kind": {
@@ -5590,6 +5943,43 @@
           "score"
         ],
         "title": "DuplicateEvidence",
+        "type": "object"
+      },
+      "DurationOut": {
+        "properties": {
+          "median_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Seconds"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "p90_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90 Seconds"
+          }
+        },
+        "required": [
+          "n",
+          "median_seconds",
+          "p90_seconds"
+        ],
+        "title": "DurationOut",
         "type": "object"
       },
       "ErasureIn": {
@@ -6289,6 +6679,115 @@
         "title": "FieldValue[str]",
         "type": "object"
       },
+      "FlagOut": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_status": {
+            "title": "Case Status",
+            "type": "string"
+          },
+          "cheapest_check": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cheapest Check"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A heuristic score of the pattern, not a calibrated probability",
+            "title": "Confidence"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "detector": {
+            "enum": [
+              "shared_payout",
+              "application_spike",
+              "helper_burst",
+              "repeated_identity"
+            ],
+            "title": "Detector",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "description": "Chips: numbers and short labels, never raw identifiers",
+            "title": "Evidence",
+            "type": "object"
+          },
+          "evidence_count": {
+            "description": "How many applications are behind the pattern",
+            "title": "Evidence Count",
+            "type": "integer"
+          },
+          "evidence_ids": {
+            "description": "Application ids, capped",
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "pattern_key": {
+            "title": "Pattern Key",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_status",
+          "detector",
+          "title",
+          "pattern_key",
+          "confidence",
+          "priority",
+          "evidence",
+          "evidence_count",
+          "evidence_ids",
+          "cheapest_check",
+          "resolution",
+          "created_at"
+        ],
+        "title": "FlagOut",
+        "type": "object"
+      },
       "FormValueOut": {
         "description": "Ready to send in `PATCH /v1/applications/{id}` once the person has confirmed the read-back.",
         "properties": {
@@ -6327,6 +6826,77 @@
         "title": "FormValueOut",
         "type": "object"
       },
+      "FraudOut": {
+        "properties": {
+          "anomaly_cases": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Anomaly Cases",
+            "type": "object"
+          },
+          "duplicate_candidates": {
+            "description": "Person pairs the matcher put in the same or possible band",
+            "title": "Duplicate Candidates",
+            "type": "integer"
+          },
+          "duplicates_caught": {
+            "description": "Decisions held by a duplicate guard",
+            "title": "Duplicates Caught",
+            "type": "integer"
+          },
+          "duplicates_linked_by_a_person": {
+            "title": "Duplicates Linked By A Person",
+            "type": "integer"
+          },
+          "forged_cards_flagged": {
+            "description": "Decisions where the document check raised the suspect-document guard",
+            "title": "Forged Cards Flagged",
+            "type": "integer"
+          },
+          "held_for_a_person_by_a_guard": {
+            "title": "Held For A Person By A Guard",
+            "type": "integer"
+          },
+          "identity_mismatches": {
+            "title": "Identity Mismatches",
+            "type": "integer"
+          },
+          "payments_stopped": {
+            "description": "Payments cancelled or reversed",
+            "title": "Payments Stopped",
+            "type": "integer"
+          },
+          "payments_stopped_pkr": {
+            "title": "Payments Stopped Pkr",
+            "type": "integer"
+          },
+          "scams_confirmed_by_a_person": {
+            "title": "Scams Confirmed By A Person",
+            "type": "integer"
+          },
+          "scams_flagged": {
+            "description": "Checked messages the scam classifier labelled as a scam type (flagged, not proven)",
+            "title": "Scams Flagged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "forged_cards_flagged",
+          "identity_mismatches",
+          "duplicates_caught",
+          "duplicate_candidates",
+          "duplicates_linked_by_a_person",
+          "scams_flagged",
+          "scams_confirmed_by_a_person",
+          "anomaly_cases",
+          "payments_stopped",
+          "payments_stopped_pkr",
+          "held_for_a_person_by_a_guard"
+        ],
+        "title": "FraudOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -6338,6 +6908,74 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HandoffOut": {
+        "properties": {
+          "by_route": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Route",
+            "type": "object"
+          },
+          "decisions": {
+            "title": "Decisions",
+            "type": "integer"
+          },
+          "handoff_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of decisions sent to a person",
+            "title": "Handoff Rate"
+          },
+          "not_automatic_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share not decided automatically (asked for proof or sent to a person)",
+            "title": "Not Automatic Rate"
+          },
+          "rate": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Rate",
+            "type": "object"
+          },
+          "silent_guesses": {
+            "description": "Automatic decisions that break the invariant; must be 0",
+            "title": "Silent Guesses",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decisions",
+          "by_route",
+          "rate",
+          "handoff_rate",
+          "not_automatic_rate",
+          "silent_guesses"
+        ],
+        "title": "HandoffOut",
         "type": "object"
       },
       "HandoffPackage": {
@@ -6544,6 +7182,80 @@
           "status"
         ],
         "title": "IdentityCheck",
+        "type": "object"
+      },
+      "ImpactOut": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "cost_per_claim": {
+            "$ref": "#/components/schemas/CostOut"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "fraud_stopped": {
+            "$ref": "#/components/schemas/FraudOut"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "handoff": {
+            "$ref": "#/components/schemas/HandoffOut"
+          },
+          "measured_from": {
+            "additionalProperties": true,
+            "description": "Row counts behind each block, so a reader can see how much data there is",
+            "title": "Measured From",
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "payments": {
+            "$ref": "#/components/schemas/app__modules__analytics__schemas__PaymentsOut"
+          },
+          "replay": {
+            "$ref": "#/components/schemas/app__modules__analytics__schemas__ReplayOut"
+          },
+          "time_saved": {
+            "$ref": "#/components/schemas/TimeSavedOut"
+          },
+          "time_to_decision": {
+            "$ref": "#/components/schemas/TimeToDecisionOut"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "generated_at",
+          "window_days",
+          "department",
+          "handoff",
+          "time_to_decision",
+          "fraud_stopped",
+          "cost_per_claim",
+          "payments",
+          "time_saved",
+          "replay",
+          "assumptions",
+          "measured_from",
+          "notes"
+        ],
+        "title": "ImpactOut",
         "type": "object"
       },
       "InfoOut": {
@@ -7219,7 +7931,7 @@
             "type": "integer"
           },
           "payments": {
-            "$ref": "#/components/schemas/PaymentsOut"
+            "$ref": "#/components/schemas/app__modules__pulse__schemas__PaymentsOut"
           },
           "scam": {
             "$ref": "#/components/schemas/ScamOut"
@@ -8419,34 +9131,6 @@
         "title": "PaymentSettingsOut",
         "type": "object"
       },
-      "PaymentsOut": {
-        "properties": {
-          "sent": {
-            "title": "Sent",
-            "type": "integer"
-          },
-          "sent_amount_pkr": {
-            "title": "Sent Amount Pkr",
-            "type": "integer"
-          },
-          "settled": {
-            "title": "Settled",
-            "type": "integer"
-          },
-          "settled_amount_pkr": {
-            "title": "Settled Amount Pkr",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "sent",
-          "sent_amount_pkr",
-          "settled",
-          "settled_amount_pkr"
-        ],
-        "title": "PaymentsOut",
-        "type": "object"
-      },
       "PersonBucketOut": {
         "properties": {
           "display_name": {
@@ -8798,7 +9482,7 @@
             "type": "string"
           },
           "replay": {
-            "$ref": "#/components/schemas/ReplayOut"
+            "$ref": "#/components/schemas/app__modules__pulse__schemas__ReplayOut"
           }
         },
         "required": [
@@ -9481,72 +10165,6 @@
           "kind"
         ],
         "title": "ReplayCase",
-        "type": "object"
-      },
-      "ReplayOut": {
-        "properties": {
-          "available": {
-            "title": "Available",
-            "type": "boolean"
-          },
-          "cases": {
-            "items": {
-              "$ref": "#/components/schemas/ReplayCase"
-            },
-            "title": "Cases",
-            "type": "array"
-          },
-          "cases_scored": {
-            "title": "Cases Scored",
-            "type": "integer"
-          },
-          "headline": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/HeadlineOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "model_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model Version"
-          },
-          "replay_source": {
-            "title": "Replay Source",
-            "type": "string"
-          },
-          "rule_version_no": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rule Version No"
-          }
-        },
-        "required": [
-          "available",
-          "replay_source",
-          "rule_version_no",
-          "model_version",
-          "cases_scored",
-          "cases",
-          "headline"
-        ],
-        "title": "ReplayOut",
         "type": "object"
       },
       "ReplayResult": {
@@ -10534,6 +11152,84 @@
         "title": "ScamReportOut",
         "type": "object"
       },
+      "ScanQueuedOut": {
+        "properties": {
+          "already_queued": {
+            "title": "Already Queued",
+            "type": "boolean"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "already_queued"
+        ],
+        "title": "ScanQueuedOut",
+        "type": "object"
+      },
+      "ScanSummary": {
+        "properties": {
+          "applications_scanned": {
+            "title": "Applications Scanned",
+            "type": "integer"
+          },
+          "cases_opened": {
+            "title": "Cases Opened",
+            "type": "integer"
+          },
+          "cases_refreshed": {
+            "title": "Cases Refreshed",
+            "type": "integer"
+          },
+          "detectors": {
+            "items": {
+              "$ref": "#/components/schemas/DetectorStatus"
+            },
+            "title": "Detectors",
+            "type": "array"
+          },
+          "ran_at": {
+            "title": "Ran At",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "suppressed": {
+            "description": "Findings a person already reviewed in full",
+            "title": "Suppressed",
+            "type": "integer"
+          },
+          "trigger": {
+            "description": "manual | job | event",
+            "title": "Trigger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "ran_at",
+          "trigger",
+          "applications_scanned",
+          "cases_opened",
+          "cases_refreshed",
+          "suppressed",
+          "detectors"
+        ],
+        "title": "ScanSummary",
+        "type": "object"
+      },
       "ScopeOut": {
         "properties": {
           "description": {
@@ -10782,6 +11478,70 @@
           "flagged"
         ],
         "title": "SliceRow",
+        "type": "object"
+      },
+      "SmsAccepted": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "command": {
+            "description": "status, verify, stop, help, unknown, bad_argument, duplicate, rejected or throttled",
+            "title": "Command",
+            "type": "string"
+          },
+          "reply_sent": {
+            "title": "Reply Sent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted",
+          "command",
+          "reply_sent"
+        ],
+        "title": "SmsAccepted",
+        "type": "object"
+      },
+      "SmsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "message_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The aggregator's message id; a repeat of the same id is answered once",
+            "title": "Message Id"
+          },
+          "msisdn": {
+            "description": "The caller's number. Only mock numbers (0999-NNNNNNN or +92 999NNNNNNN) are accepted",
+            "maxLength": 20,
+            "minLength": 8,
+            "title": "Msisdn",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 320,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "text"
+        ],
+        "title": "SmsIn",
         "type": "object"
       },
       "SmsOutboxItem": {
@@ -11569,6 +12329,94 @@
         "title": "SyncOut",
         "type": "object"
       },
+      "TimeSavedOut": {
+        "properties": {
+          "automatic_decisions": {
+            "title": "Automatic Decisions",
+            "type": "integer"
+          },
+          "hands_on_hours_saved": {
+            "title": "Hands On Hours Saved",
+            "type": "number"
+          },
+          "hands_on_source": {
+            "title": "Hands On Source",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "minutes_per_manual_review_used": {
+            "title": "Minutes Per Manual Review Used",
+            "type": "number"
+          },
+          "waiting_hours_avoided": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waiting Hours Avoided"
+          }
+        },
+        "required": [
+          "automatic_decisions",
+          "minutes_per_manual_review_used",
+          "hands_on_source",
+          "hands_on_hours_saved",
+          "waiting_hours_avoided",
+          "label"
+        ],
+        "title": "TimeSavedOut",
+        "type": "object"
+      },
+      "TimeToDecisionOut": {
+        "properties": {
+          "automatic": {
+            "$ref": "#/components/schemas/DurationOut",
+            "description": "Submission to decision, from the application's and the decision's timestamps"
+          },
+          "automatic_engine_latency_ms_p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Automatic Engine Latency Ms P50"
+          },
+          "human_case": {
+            "$ref": "#/components/schemas/DurationOut",
+            "description": "Case opened to resolved, application-linked cases"
+          },
+          "human_case_by_kind": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DurationOut"
+            },
+            "title": "Human Case By Kind",
+            "type": "object"
+          },
+          "human_review_hands_on": {
+            "$ref": "#/components/schemas/DurationOut",
+            "description": "Officer's first look to action (review_seconds)"
+          }
+        },
+        "required": [
+          "automatic",
+          "automatic_engine_latency_ms_p50",
+          "human_case",
+          "human_review_hands_on",
+          "human_case_by_kind"
+        ],
+        "title": "TimeToDecisionOut",
+        "type": "object"
+      },
       "TimelineItem": {
         "properties": {
           "at": {
@@ -12236,6 +13084,46 @@
           "lang"
         ],
         "title": "UserOut",
+        "type": "object"
+      },
+      "UssdIn": {
+        "additionalProperties": false,
+        "properties": {
+          "msisdn": {
+            "description": "The caller's number. Only mock numbers (0999-NNNNNNN or +92 999NNNNNNN) are accepted",
+            "maxLength": 20,
+            "minLength": 8,
+            "title": "Msisdn",
+            "type": "string"
+          },
+          "service_code": {
+            "default": "*786#",
+            "maxLength": 20,
+            "pattern": "^\\*[0-9*]{1,18}#$",
+            "title": "Service Code",
+            "type": "string"
+          },
+          "session_id": {
+            "description": "The aggregator's session id",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "description": "The `*`-joined input history; empty on the first dial",
+            "maxLength": 200,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "msisdn"
+        ],
+        "title": "UssdIn",
         "type": "object"
       },
       "ValidationError": {
@@ -13182,6 +14070,180 @@
         "title": "ApprovalOut",
         "type": "object"
       },
+      "app__modules__analytics__schemas__PaymentsOut": {
+        "properties": {
+          "amount_pkr": {
+            "title": "Amount Pkr",
+            "type": "integer"
+          },
+          "average_pkr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Pkr"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            "title": "By Status",
+            "type": "object"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "settled_pkr": {
+            "title": "Settled Pkr",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count",
+          "amount_pkr",
+          "by_status",
+          "settled_pkr",
+          "average_pkr"
+        ],
+        "title": "PaymentsOut",
+        "type": "object"
+      },
+      "app__modules__analytics__schemas__ReplayOut": {
+        "properties": {
+          "abstention_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstention Rate"
+          },
+          "accuracy_of_automatic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy Of Automatic"
+          },
+          "all_human_cost_per_case": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "All Human Cost Per Case"
+          },
+          "cases": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cases"
+          },
+          "cost_per_case": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Per Case"
+          },
+          "ece": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ece"
+          },
+          "false_approvals": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "False Approvals"
+          },
+          "false_rejections": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "False Rejections"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stored_run": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stored Run"
+          },
+          "synthetic": {
+            "default": true,
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "unnecessary_handoffs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unnecessary Handoffs"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "ReplayOut",
+        "type": "object"
+      },
       "app__modules__auth__schemas__SwitchIn": {
         "additionalProperties": false,
         "properties": {
@@ -13281,6 +14343,100 @@
           "pin"
         ],
         "title": "SwitchIn",
+        "type": "object"
+      },
+      "app__modules__pulse__schemas__PaymentsOut": {
+        "properties": {
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          },
+          "sent_amount_pkr": {
+            "title": "Sent Amount Pkr",
+            "type": "integer"
+          },
+          "settled": {
+            "title": "Settled",
+            "type": "integer"
+          },
+          "settled_amount_pkr": {
+            "title": "Settled Amount Pkr",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sent",
+          "sent_amount_pkr",
+          "settled",
+          "settled_amount_pkr"
+        ],
+        "title": "PaymentsOut",
+        "type": "object"
+      },
+      "app__modules__pulse__schemas__ReplayOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayCase"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "cases_scored": {
+            "title": "Cases Scored",
+            "type": "integer"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HeadlineOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "replay_source": {
+            "title": "Replay Source",
+            "type": "string"
+          },
+          "rule_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Version No"
+          }
+        },
+        "required": [
+          "available",
+          "replay_source",
+          "rule_version_no",
+          "model_version",
+          "cases_scored",
+          "cases",
+          "headline"
+        ],
+        "title": "ReplayOut",
         "type": "object"
       },
       "app__modules__pulse__schemas__ThresholdsOut": {
@@ -13760,6 +14916,75 @@
         "summary": "Replace the secret; the old key stops at once and the new one keeps its end date",
         "tags": [
           "admin: API keys"
+        ]
+      }
+    },
+    "/v1/admin/impact": {
+      "get": {
+        "operationId": "get_impact_v1_admin_impact_get",
+        "parameters": [
+          {
+            "description": "Window in days",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 90,
+              "description": "Window in days",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "An assumption, used only until officer review times are measured",
+            "in": "query",
+            "name": "assumed_minutes_per_manual_review",
+            "required": false,
+            "schema": {
+              "default": 10.0,
+              "description": "An assumption, used only until officer review times are measured",
+              "maximum": 240,
+              "minimum": 1,
+              "title": "Assumed Minutes Per Manual Review",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Impact report: handoff rate, time, fraud flagged, cost per claim, payments",
+        "tags": [
+          "admin: impact"
         ]
       }
     },
@@ -15142,6 +16367,64 @@
         "summary": "Reject a proposed action: nothing runs",
         "tags": [
           "agent"
+        ]
+      }
+    },
+    "/v1/anomalies": {
+      "get": {
+        "operationId": "list_anomalies_v1_anomalies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomaliesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Anomaly flags by detector and the last run",
+        "tags": [
+          "anomalies"
+        ]
+      }
+    },
+    "/v1/anomalies/run": {
+      "post": {
+        "operationId": "run_now_v1_anomalies_run_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanQueuedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Run detection now (queued as a job)",
+        "tags": [
+          "anomalies"
         ]
       }
     },
@@ -16706,7 +17989,8 @@
                     "complaint",
                     "appeal",
                     "correction",
-                    "scam_review"
+                    "scam_review",
+                    "anomaly_review"
                   ],
                   "type": "string"
                 },
@@ -17223,6 +18507,105 @@
         "summary": "Reopen a resolved case",
         "tags": [
           "cases"
+        ]
+      }
+    },
+    "/v1/channels/sms/inbound": {
+      "post": {
+        "operationId": "sms_inbound_v1_channels_sms_inbound_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsAccepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Inbound SMS: STATUS, VERIFY, STOP and HELP (English and Roman Urdu). The reply is sent as an SMS",
+        "tags": [
+          "channels (feature phone)"
+        ]
+      }
+    },
+    "/v1/channels/ussd": {
+      "post": {
+        "operationId": "ussd_v1_channels_ussd_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UssdIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "example": "CON Rahat (prototype)\n1 English\n2 Roman Urdu",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "USSD gateway: one request in an aggregator's shape. Answers plain text starting with CON or END",
+        "tags": [
+          "channels (feature phone)"
         ]
       }
     },
@@ -18229,6 +19612,155 @@
         "summary": "Demo sign-ins (not available in prod)",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/v1/demo/sms": {
+      "get": {
+        "operationId": "demo_sms_thread_v1_demo_sms_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "msisdn",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 8,
+              "title": "Msisdn",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemoSmsMessage"
+                  },
+                  "title": "Response Demo Sms Thread V1 Demo Sms Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Messages sent to a mock number by the channel (demo only)",
+        "tags": [
+          "channels (feature phone)"
+        ]
+      },
+      "post": {
+        "operationId": "demo_sms_v1_demo_sms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoSmsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Simulator relay for one inbound text (demo only)",
+        "tags": [
+          "channels (feature phone)"
+        ]
+      }
+    },
+    "/v1/demo/ussd": {
+      "post": {
+        "operationId": "demo_ussd_v1_demo_ussd_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UssdIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoUssdOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Simulator relay for one USSD key press (demo only)",
+        "tags": [
+          "channels (feature phone)"
+        ]
+      }
+    },
+    "/v1/demo/ussd/personas": {
+      "get": {
+        "operationId": "demo_personas_v1_demo_ussd_personas_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoPersonasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Demo numbers for the simulator (demo only)",
+        "tags": [
+          "channels (feature phone)"
         ]
       }
     },
