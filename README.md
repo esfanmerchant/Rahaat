@@ -5,7 +5,7 @@
 
 **Rahat is one multi-tenant platform that helps a low-literacy widow, a scam-targeted shopkeeper and a community helper serving 40 families apply for and track a mock Relief Payment, by voice and pictures, on a weak connection. Unlike a chatbot, it decides, explains, protects, and says "I am not sure" and hands the case to a person with a briefing, because a wrong approval is priced at 31 times a human review.**
 
-**Live:** https://rahat-zeta.vercel.app (sign-ins on [`/demo`](https://rahat-zeta.vercel.app/demo), API docs on `/docs`). Backup URL: given at the demo. Demo script: [docs/DEMO.md](docs/DEMO.md). Evaluation numbers and commands: [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
+**Live:** https://rahat-zeta.vercel.app (sign-ins on [`/demo`](https://rahat-zeta.vercel.app/demo), the decision engine visualised on [`/live`](https://rahat-zeta.vercel.app/live), API docs on `/docs`). Backup URL: given at the demo. Demo script: [docs/DEMO.md](docs/DEMO.md). Evaluation numbers and commands: [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
 
 ## What judges can try (demo accounts)
 
@@ -28,7 +28,8 @@ Specimen ID cards for the camera step are in `data/demo_cards/`.
 | Explain | Two views of every decision (plain text for the citizen in English and Urdu, full trace for staff and auditors); replay gives the identical result |
 | Protect | Scam checker (English, Urdu, Roman Urdu), forged-card checks (signed QR, print against QR, image signals), prompt-injection guards, Row Level Security, consent enforced in the database |
 | Say "I am not sure" | Every AI component returns a typed decision and can abstain; handoff package for the officer; silent-guess count is 0 on the held-out set |
-| Work for everyone | Urdu voice with read-back, one question per screen with pictograms, offline outbox, citizen JavaScript 87.9 KB gzipped (budget 100) |
+| Work for everyone | Urdu voice with read-back, one question per screen with pictograms, offline outbox, citizen JavaScript 92.9 KB gzipped (budget 100) |
+| Show it | "Noor" visual language from the Sindhi ajrak (docs/DESIGN.md): a self-drawing eight-point-star emblem, a verdict reveal with a chime, a night "mission control" for staff, and `/live`, the real decision engine replaying the synthetic eval set in WebGL with live counters (a static diagram when WebGL, motion or data is limited) |
 | SaaS | Departments (tenants), roles, API keys with scopes, rate limits, audit chain, mock identity, payment and SMS services, job queue, `/healthz`, `/metrics` |
 
 ## Run it locally
