@@ -38,7 +38,7 @@ from app.core.security import check_pin_strength, hash_secret, verify_secret
 from app.db import models
 from app.modules.applications.timeline import symbols_for
 from app.modules.consent.access_log import VIEW_ACTION, record_view
-from app.modules.consent.rules import active_consent
+from app.modules.consent.rules import active_consent, people_with_active_consent
 from app.modules.helpers import tickets
 from app.modules.helpers.schemas import (
     DelegationCreate,
@@ -249,6 +249,19 @@ def _latest_application(db: Session, tenant_id: UUID, person_id: UUID) -> models
     ).first()
 
 
+def _latest_applications(db: Session, tenant_id: UUID, person_ids: list[UUID]) -> dict[UUID, models.Application]:
+    """`_latest_application` for a whole page of families, in one query."""
+    if not person_ids:
+        return {}
+    rows = db.scalars(
+        select(models.Application)
+        .where(models.Application.tenant_id == tenant_id, models.Application.person_id.in_(person_ids))
+        .order_by(models.Application.person_id, models.Application.created_at.desc(), models.Application.id.desc())
+        .distinct(models.Application.person_id)
+    ).all()
+    return {row.person_id: row for row in rows}
+
+
 def _family_application(application: models.Application | None) -> FamilyApplication | None:
     if application is None:
         return None
@@ -304,14 +317,23 @@ def families(db: Session, principal: Principal, *, cursor: str | None = None, li
     record = tickets.latest_switch(db, tenant_id=principal.tenant_id, session_id=principal.session_id)
     current = record.person_id if record is not None and record.active and record.expires_at and record.expires_at > now else None
     seen = _recently_listed(db, principal, now)
+    # Three queries for the whole page, not three per family: each one is a network round trip to the database.
+    live_ids = [person_id for _, person_id, _, status in page if status == "live"]
+    consented = people_with_active_consent(db, tenant_id=principal.tenant_id, person_ids=live_ids)
+    # RLS lets a live delegation read the person; without the department consent the helper is shown nothing more.
+    readable = [person_id for person_id in live_ids if person_id in consented]
+    people = (
+        {p.id: p for p in db.scalars(select(models.Person).where(models.Person.tenant_id == principal.tenant_id,
+                                                                 models.Person.id.in_(readable))).all()}  # fmt: skip
+        if readable else {}
+    )
+    latest = _latest_applications(db, principal.tenant_id, list(people))
     items: list[FamilyOut] = []
     shown: list[UUID] = []
     for _, person_id, chosen_delegation, status in page:
-        live = status == "live"
-        consent = active_consent(db, tenant_id=principal.tenant_id, person_id=person_id) is not None if live else False
-        # RLS lets a live delegation read the person; without the department consent the helper is shown nothing more.
-        person = db.get(models.Person, person_id) if live and consent else None
-        application = _latest_application(db, principal.tenant_id, person_id) if person is not None else None
+        consent = person_id in consented
+        person = people.get(person_id)
+        application = latest.get(person_id) if person is not None else None
         if person is not None:
             shown.append(person_id)
         items.append(FamilyOut(
@@ -323,8 +345,8 @@ def families(db: Session, principal: Principal, *, cursor: str | None = None, li
         ))  # fmt: skip
     for person_id in shown:
         if str(person_id) not in seen:
-            record_view(db, principal, person_id, what="family_list", purpose="helper_assist")
-    db.commit()
+            record_view(db, principal, person_id, what="family_list", purpose="helper_assist", flush=False)
+    db.commit()  # sends the pending view rows in one batch
     live_count = sum(1 for c in chosen if c[3] == "live") if not cursor else sum(1 for i in items if i.delegation_status == "live")
     return FamiliesOut(
         items=items, next_cursor=_encode_cursor(page[-1][0], page[-1][1]) if more and page else None, live_count=live_count,

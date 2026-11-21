@@ -44,6 +44,28 @@ def active_consent(db: Session, *, tenant_id: UUID, person_id: UUID, purpose: st
     ).first()
 
 
+def people_with_active_consent(db: Session, *, tenant_id: UUID, person_ids: Iterable[UUID],
+                               purpose: str = APPLICATION_PURPOSE) -> set[UUID]:  # fmt: skip
+    """Of `person_ids`, those with a live department consent for `purpose`: `active_consent` for a list, in one query."""
+    wanted = list(dict.fromkeys(person_ids))
+    if not wanted:
+        return set()
+    now = datetime.now(UTC)
+    return set(
+        db.scalars(
+            select(models.Consent.person_id).where(
+                models.Consent.tenant_id == tenant_id,
+                models.Consent.person_id.in_(wanted),
+                models.Consent.grantee_type == "tenant",
+                models.Consent.grantee_id == tenant_id,
+                models.Consent.purpose == purpose,
+                models.Consent.status == "active",
+                or_(models.Consent.expires_at.is_(None), models.Consent.expires_at > now),
+            )
+        ).all()
+    )
+
+
 def _refuse(ctx: PersonContext, code: str, action: str, details: dict[str, object]) -> None:
     metrics.ACCESS_DENIED.labels("consent").inc()
     audit.write_independent(

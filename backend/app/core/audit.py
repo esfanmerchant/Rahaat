@@ -3,6 +3,12 @@
 Each tenant has one chain. A row's hash covers its own content and the previous row's hash, so editing,
 deleting or reordering any row breaks every hash after it. Appends are serialised per tenant with an
 advisory lock. The app role cannot UPDATE or DELETE this table.
+
+The lock is transaction-scoped, so once a transaction holds it no one else can append to that chain until
+it ends. The first write in a transaction takes the lock and reads the head; later writes in the same
+transaction reuse the head they left behind (one round trip each instead of three, which matters with a
+hosted database). Any transaction end, a savepoint included, forgets the remembered heads, so a rolled-back
+savepoint can never leave a stale head behind.
 """
 
 from __future__ import annotations
@@ -14,8 +20,8 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, text
-from sqlalchemy.orm import Session
+from sqlalchemy import event, select, text
+from sqlalchemy.orm import Session, SessionTransaction
 
 from app.core.context import current_request_id
 from app.core.db import system_session
@@ -28,6 +34,12 @@ GENESIS_HASH = "0" * 64
 PLATFORM_TENANT_ID = UUID("00000000-0000-0000-0000-000000000000")  # chain for events that belong to no tenant
 
 _LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('audit:' || :tenant_id, 0))")
+_HEADS = "audit_chain_heads"  # Session.info key: {tenant_id: (seq, hash)} of chains this transaction holds the lock for
+
+
+@event.listens_for(Session, "after_transaction_end")
+def _forget_chain_heads(session: Session, transaction: SessionTransaction) -> None:
+    session.info.pop(_HEADS, None)
 
 
 def canonical_json(value: Any) -> str:
@@ -80,24 +92,30 @@ def write(
     model_version: str | None = None,
     rule_version_id: UUID | None = None,
     details: dict[str, Any] | None = None,
+    flush: bool = True,
 ) -> models.AuditLog:
     """Append one row to the tenant's chain inside the caller's transaction.
 
     The row is committed or rolled back together with the change it describes. Never put raw personal
-    data in `details`; store ids and hashes.
+    data in `details`; store ids and hashes. `flush=False` leaves the INSERT pending, so a caller writing many
+    rows sends them in one batch at its next flush or commit.
     """
     if actor_role == "api_client" and actor_type == "user":
         actor_type = "api_key"  # services pass the principal's id; a key is never recorded as a person
-    db.execute(_LOCK, {"tenant_id": str(tenant_id)})
-    last = db.execute(
-        select(models.AuditLog.seq, models.AuditLog.hash)
-        .where(models.AuditLog.tenant_id == tenant_id)
-        .order_by(models.AuditLog.seq.desc())
-        .limit(1)
-    ).first()
+    heads: dict[UUID, tuple[int, str]] = db.info.setdefault(_HEADS, {})
+    head = heads.get(tenant_id)
+    if head is None:
+        db.execute(_LOCK, {"tenant_id": str(tenant_id)})
+        last = db.execute(
+            select(models.AuditLog.seq, models.AuditLog.hash)
+            .where(models.AuditLog.tenant_id == tenant_id)
+            .order_by(models.AuditLog.seq.desc())
+            .limit(1)
+        ).first()
+        head = (last.seq, last.hash) if last else (0, GENESIS_HASH)
     row = models.AuditLog(
         tenant_id=tenant_id,
-        seq=(last.seq + 1) if last else 1,
+        seq=head[0] + 1,
         ts=datetime.now(UTC),
         actor_type=actor_type,
         actor_id=str(actor_id) if actor_id else None,
@@ -113,12 +131,16 @@ def write(
         rule_version_id=rule_version_id,
         request_id=current_request_id(),
         details=canonical_json(details or {}),
-        prev_hash=last.hash if last else GENESIS_HASH,
+        prev_hash=head[1],
         hash="",
     )
     row.hash = _row_hash(row)
     db.add(row)
-    db.flush()
+    if flush:
+        db.flush()
+    # The lock is ours until this transaction ends, and its end forgets this dict. (Should a transaction somehow
+    # end in between, `heads` is no longer in db.info and this line changes nothing.)
+    heads[tenant_id] = (row.seq, row.hash)
     return row
 
 

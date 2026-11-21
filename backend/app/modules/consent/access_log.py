@@ -54,13 +54,16 @@ STAFF_ROLES: Final = frozenset({"officer", "admin", "auditor"})
 
 
 def record_view(db: Session, principal: Principal, person_id: UUID, *, what: str, ref_id: UUID | str | None = None,
-                purpose: str | None = None, details: dict[str, Any] | None = None) -> None:  # fmt: skip
-    """Write the `person.data_viewed` row for one read, in the caller's transaction. The caller commits."""
+                purpose: str | None = None, details: dict[str, Any] | None = None, flush: bool = True) -> None:  # fmt: skip
+    """Write the `person.data_viewed` row for one read, in the caller's transaction. The caller commits.
+
+    A caller recording many reads at once passes `flush=False` so the rows go to the database in one batch.
+    """
     audit.write(
         db, tenant_id=principal.tenant_id, action=VIEW_ACTION, actor_type="api_key" if principal.auth_kind == "api_key" else "user",
         actor_id=principal.user_id, actor_role=principal.role, acting_for_person_id=person_id, object_type="person",
         object_id=person_id, reason=purpose or DEFAULT_PURPOSE.get(principal.role, "service"),
-        details={"what": what, "ref_id": str(ref_id) if ref_id else None, **(details or {})},
+        details={"what": what, "ref_id": str(ref_id) if ref_id else None, **(details or {})}, flush=flush,
     )  # fmt: skip
 
 

@@ -76,6 +76,42 @@ def test_concurrent_writers_keep_one_unbroken_chain(factory: Any) -> None:
     assert report.ok and report.checked == 40, "appends are serialised per tenant"
 
 
+def _actions(tenant_id: Any) -> list[str]:
+    with open_session(SYSTEM) as db:
+        return list(db.scalars(text("SELECT action FROM audit_log WHERE tenant_id = :t ORDER BY seq"), {"t": tenant_id}).all())
+
+
+def test_many_writes_in_one_transaction_and_a_rolled_back_savepoint_keep_the_chain_whole(factory: Any) -> None:
+    tenant = factory.tenant()
+    with system_session() as db:
+        for index in range(3):
+            audit.write(db, tenant_id=tenant.id, action=f"batch.{index}", actor_type="system")
+        for index in range(3, 6):  # left pending and sent together at the next flush
+            audit.write(db, tenant_id=tenant.id, action=f"batch.{index}", actor_type="system", flush=False)
+        try:
+            with db.begin_nested():
+                audit.write(db, tenant_id=tenant.id, action="batch.undone", actor_type="system")
+                raise RuntimeError("roll the savepoint back")
+        except RuntimeError:
+            pass
+        audit.write(db, tenant_id=tenant.id, action="batch.after", actor_type="system")
+    report = _verify(tenant.id)
+    assert report.ok and report.checked == 7 and report.head_seq == 7, "the undone row leaves no gap and no stale head"
+    assert _actions(tenant.id) == [f"batch.{index}" for index in range(6)] + ["batch.after"]
+
+
+def test_a_new_transaction_reads_the_head_again(factory: Any) -> None:
+    tenant = factory.tenant()
+    with system_session() as db:
+        audit.write(db, tenant_id=tenant.id, action="mine.first", actor_type="system")
+        db.commit()  # the lock is released here, so the remembered head must be forgotten too
+        _write(tenant.id, 2, "someone.else")  # another writer appends in between
+        audit.write(db, tenant_id=tenant.id, action="mine.second", actor_type="system")
+    report = _verify(tenant.id)
+    assert report.ok and report.checked == 4
+    assert _actions(tenant.id) == ["mine.first", "someone.else.0", "someone.else.1", "mine.second"]
+
+
 def test_auditor_can_verify_and_browse_but_officer_cannot(client: TestClient, factory: Any) -> None:
     tenant = factory.tenant()
     auditor, officer = factory.account(tenant, "auditor"), factory.account(tenant, "officer")
