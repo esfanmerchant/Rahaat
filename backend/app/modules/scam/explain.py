@@ -59,7 +59,7 @@ HEADLINES: dict[str, dict[str, str]] = {
     "likely_scam": {"en": "This message is most likely a scam.", "ur": "یہ پیغام غالباً دھوکا ہے۔"},
     "might_be_scam": {"en": "This message might be a scam.", "ur": "یہ پیغام دھوکا ہو سکتا ہے۔"},
     "not_sure": {"en": "We are not sure about this message.", "ur": "ہمیں اس پیغام کا یقین نہیں۔"},
-    "looks_real": {"en": "We found no signs of a scam.", "ur": "ہمیں دھوکے کی کوئی نشانی نہیں ملی۔"},
+    "looks_real": {"en": "This message looks real.", "ur": "یہ پیغام اصلی لگتا ہے۔"},
     "confirmed_real": {"en": "This is a real message from Rahat.", "ur": "یہ راحت کا اصلی پیغام ہے۔"},
 }
 

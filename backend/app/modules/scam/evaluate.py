@@ -192,7 +192,7 @@ def _print(report: dict[str, Any]) -> None:
 
 
 def store(report: dict[str, Any], tenant_slug: str | None = None) -> int:
-    """One eval_runs row (kind scam) per tenant, an audit row each, and the model in the registry."""
+    """One eval_runs row (kind scam) per department (or the one named), an audit row each, and the model in the registry."""
     from sqlalchemy import select
 
     from app.core import audit
@@ -201,9 +201,8 @@ def store(report: dict[str, Any], tenant_slug: str | None = None) -> int:
 
     stored = 0
     with system_session() as db:  # narrow: a CLI writing evaluation rows, like the seed
-        query = select(models.Tenant)
-        if tenant_slug:
-            query = query.where(models.Tenant.slug == tenant_slug)
+        query = select(models.Tenant).order_by(models.Tenant.slug)
+        query = query.where(models.Tenant.slug == tenant_slug) if tenant_slug else query.where(models.Tenant.kind == "department")
         for tenant in db.scalars(query).all():
             run_id = uuid.uuid4()
             db.add(models.EvalRun(id=run_id, tenant_id=tenant.id, kind="scam", model_version=report["model_version"], status="done",

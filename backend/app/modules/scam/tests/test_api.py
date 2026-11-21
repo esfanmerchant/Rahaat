@@ -260,3 +260,22 @@ def test_the_seed_step_adds_a_scam_map_once(client: Any, factory: Any) -> None:
     assert campaigns["items"] and all(c["size_in_window"] >= 5 for c in campaigns["items"])
     assert all("0999-" not in c["sample_text"] for c in campaigns["items"])
     assert len(client.get("/v1/scam/warnings", headers=factory.headers(client, factory.account(tenant, "citizen"))).json()["items"]) == 1
+
+
+def test_the_evaluation_is_stored_for_the_eval_dashboard(factory: Any) -> None:
+    from app.modules.scam import corpus, evaluate
+
+    tenant = factory.tenant()
+    rows = corpus.load()
+    subset = [r for i, r in enumerate(rows) if r["split"] == "train" or i % 15 == 0]
+    report = evaluate.run(rows=subset)
+    assert report["test_messages"] > 50 and report["synthetic"] is True
+    assert evaluate.store(report, tenant.slug) == 1
+    with system_session() as db:
+        run = db.scalar(select(models.EvalRun).where(models.EvalRun.tenant_id == tenant.id, models.EvalRun.kind == "scam"))
+        assert run is not None and run.model_version == runtime.get_model().version
+        assert {"false_alarm_rate", "miss_rate", "abstention_rate", "silent_guesses"} <= set(run.metrics["full"])
+        assert run.artifacts["full"]["per_class"]["relief_scam"]["support"] > 0
+        registry = db.scalar(select(models.ModelRegistry).where(models.ModelRegistry.tenant_id == tenant.id, models.ModelRegistry.name == "scam"))
+        assert registry is not None and registry.version == run.model_version
+        assert db.scalar(select(models.AuditLog.id).where(models.AuditLog.tenant_id == tenant.id, models.AuditLog.action == "eval.recorded"))

@@ -141,10 +141,13 @@ def _scam_reasons(signals: Signals, parts: dict[str, float], forced: list[str]) 
     reasons = list(forced)
     for name in ordered:
         code = SIGNAL_REASON[name]
-        if code == "has_link" and any(r.startswith("link_") for r in reasons):
-            continue
         if code not in reasons:
             reasons.append(code)
+    # A specific reason makes its general cousin redundant in a three-sentence answer.
+    if any(r.startswith("link_") for r in reasons):
+        reasons = [r for r in reasons if r != "has_link"]
+    if "asks_fee" in reasons or "pay_to_receive" in reasons:
+        reasons = [r for r in reasons if r != "asks_money"]
     if not any(r in SIGNAL_REASON.values() for r in reasons) and not forced:
         reasons.append("reads_like_scam")
     if not signals.codes and "rahat" in signals.text.lower() and "rahat_without_code" not in reasons:
