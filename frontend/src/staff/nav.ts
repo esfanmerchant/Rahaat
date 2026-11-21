@@ -16,6 +16,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
+  { slug: 'guide', label: 'Guide', roles: 'staff', workItem: 'D2.14', built: true },
   { slug: 'overview', label: 'Overview', roles: 'staff', workItem: 'D2.13', built: true },
   { slug: 'queue', label: 'Queue', roles: ['officer'], workItem: 'D2.2', built: true },
   { slug: 'approvals', label: 'Approvals', roles: ['officer'], workItem: 'D2.9', built: true },
@@ -65,4 +66,27 @@ export function navFor(role: string): NavItem[] {
 
 export function findNavItem(slug: string): NavItem | undefined {
   return NAV_ITEMS.find((item) => item.slug === slug);
+}
+
+/**
+ * The pages pinned in the rail for each role (the ones that matter most). Everything else the role may open is
+ * behind "More". Findability only: navFor() and the server decide what a role can actually open.
+ */
+export const RAIL_PINNED: Record<StaffRole, readonly string[]> = {
+  officer: ['guide', 'overview', 'queue', 'approvals', 'decisions', 'scam-map', 'impact'],
+  admin: ['guide', 'overview', 'rules', 'twin', 'mocks', 'keys', 'usage'],
+  auditor: ['guide', 'overview', 'audit', 'decisions', 'evals', 'costs'],
+};
+
+/** The rail's pinned items for a role, in order, limited to pages the role can open. */
+export function railFor(role: string): NavItem[] {
+  if (!isStaffNavRole(role)) return [];
+  const all = navFor(role);
+  return RAIL_PINNED[role].map((slug) => all.find((i) => i.slug === slug)).filter((i): i is NavItem => Boolean(i));
+}
+
+/** Every other page the role may open: the "More" grid. */
+export function moreFor(role: string): NavItem[] {
+  const pinned = new Set(railFor(role).map((i) => i.slug));
+  return navFor(role).filter((i) => !pinned.has(i.slug));
 }

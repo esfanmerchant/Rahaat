@@ -20,6 +20,7 @@ import { DuplicatesPage } from './pages/DuplicatesPage';
 import { KeysPage } from './pages/KeysPage';
 import { LabPage } from './pages/LabPage';
 import { JobsPage, MocksPage } from './pages/AdminPages';
+import { GuidePage } from './pages/GuidePage';
 import { HealthPage } from './pages/HealthPage';
 import { ImpactPage } from './pages/ImpactPage';
 import { AnomaliesPage } from './pages/AnomaliesPage';
@@ -118,7 +119,8 @@ function StaffIndex() {
   return (
     <StaffGuard>
       {(s) => {
-        const first = navFor(s.active.role)[0];
+        const pages = navFor(s.active.role);
+        const first = pages.find((p) => p.slug === 'overview') ?? pages[0];
         return first ? (
           <Redirect to={`/staff/${first.slug}`} />
         ) : (
@@ -160,6 +162,8 @@ function StaffSection({ section }: { section?: string }) {
 
 function SectionPage({ item }: { item: NavItem }) {
   switch (item.slug) {
+    case 'guide':
+      return <GuidePage />;
     case 'overview':
       return <OverviewPage />;
     case 'queue':

@@ -1,0 +1,121 @@
+/* Guide page: dense rows, one grid per row, stacked on a phone. Tokens come from staff.css. */
+.gd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gd-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--st-edge);
+  background: var(--st-panel-2);
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+.gd-chip:hover {
+  color: var(--st-noor-text);
+  border-color: var(--st-noor);
+}
+.gd-group {
+  margin-bottom: 18px;
+  scroll-margin-top: 12px;
+}
+.gd-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--st-noor-text);
+}
+.gd-count {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--st-panel-2);
+  border: 1px solid var(--st-edge);
+  color: var(--color-ink-muted);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.gd-rows {
+  border: 1px solid var(--st-edge);
+  border-radius: 12px;
+  background: var(--st-panel);
+  overflow: hidden;
+}
+.gd-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 1.7fr);
+  gap: 4px 16px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--st-edge);
+  font-size: 13px;
+  align-items: start;
+}
+.gd-row:first-child {
+  border-top: 0;
+}
+.gd-row:not(.gd-head):hover {
+  background: var(--st-panel-2);
+}
+.gd-head {
+  background: var(--st-panel-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-subtle);
+}
+.gd-req {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.gd-where {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gd-place {
+  display: flex;
+  flex-direction: column;
+}
+.gd-link {
+  font-weight: 600;
+  color: var(--st-noor-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gd-link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.gd-note {
+  font-size: 11px;
+  color: var(--color-ink-subtle);
+}
+.gd-look {
+  color: var(--color-ink-muted);
+}
+.gd-empty {
+  padding: 24px 0;
+  color: var(--color-ink-muted);
+}
+@media (max-width: 767px) {
+  .gd-head {
+    display: none;
+  }
+  .gd-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+    padding: 10px 12px;
+  }
+  .gd-link,
+  .gd-look,
+  .gd-note {
+    overflow-wrap: anywhere;
+  }
+}
