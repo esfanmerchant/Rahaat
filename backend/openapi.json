@@ -2815,7 +2815,7 @@
             "title": "Eval Run Id"
           },
           "thresholds": {
-            "$ref": "#/components/schemas/ThresholdsOut"
+            "$ref": "#/components/schemas/app__modules__evals__schemas__ThresholdsOut"
           }
         },
         "required": [
@@ -3296,7 +3296,7 @@
             "type": "boolean"
           },
           "thresholds": {
-            "$ref": "#/components/schemas/ThresholdsOut"
+            "$ref": "#/components/schemas/app__modules__evals__schemas__ThresholdsOut"
           }
         },
         "required": [
@@ -4671,6 +4671,20 @@
         "title": "DraftUpdate",
         "type": "object"
       },
+      "DrainOut": {
+        "properties": {
+          "ran": {
+            "description": "Jobs run by this call",
+            "title": "Ran",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ran"
+        ],
+        "title": "DrainOut",
+        "type": "object"
+      },
       "DryRunIn": {
         "additionalProperties": false,
         "properties": {
@@ -5577,6 +5591,58 @@
         "title": "HandoffPackage",
         "type": "object"
       },
+      "HeadlineOut": {
+        "properties": {
+          "approved": {
+            "title": "Approved",
+            "type": "integer"
+          },
+          "asked_for_proof": {
+            "title": "Asked For Proof",
+            "type": "integer"
+          },
+          "cases": {
+            "title": "Cases",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "sent_to_person": {
+            "title": "Sent To Person",
+            "type": "integer"
+          },
+          "silent_guesses": {
+            "title": "Silent Guesses",
+            "type": "integer"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/app__modules__pulse__schemas__ThresholdsOut"
+          },
+          "wrong_approvals": {
+            "title": "Wrong Approvals",
+            "type": "integer"
+          },
+          "wrong_rejections": {
+            "title": "Wrong Rejections",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cases",
+          "approved",
+          "rejected",
+          "asked_for_proof",
+          "sent_to_person",
+          "wrong_approvals",
+          "wrong_rejections",
+          "silent_guesses",
+          "thresholds"
+        ],
+        "title": "HeadlineOut",
+        "type": "object"
+      },
       "Hypothesis": {
         "properties": {
           "label": {
@@ -6263,6 +6329,49 @@
           "api_key_default_per_minute"
         ],
         "title": "LimitsOut",
+        "type": "object"
+      },
+      "LiveOut": {
+        "properties": {
+          "applications_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Applications By Status",
+            "type": "object"
+          },
+          "audit_chain_length": {
+            "title": "Audit Chain Length",
+            "type": "integer"
+          },
+          "decisions_by_route": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "auto (approved), ask_more, human and reject (hard-rule rejection)",
+            "title": "Decisions By Route",
+            "type": "object"
+          },
+          "departments": {
+            "title": "Departments",
+            "type": "integer"
+          },
+          "payments": {
+            "$ref": "#/components/schemas/PaymentsOut"
+          },
+          "scam": {
+            "$ref": "#/components/schemas/ScamOut"
+          }
+        },
+        "required": [
+          "applications_by_status",
+          "decisions_by_route",
+          "payments",
+          "scam",
+          "audit_chain_length",
+          "departments"
+        ],
+        "title": "LiveOut",
         "type": "object"
       },
       "LiveStats": {
@@ -7350,6 +7459,34 @@
         "title": "PaymentSettingsOut",
         "type": "object"
       },
+      "PaymentsOut": {
+        "properties": {
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          },
+          "sent_amount_pkr": {
+            "title": "Sent Amount Pkr",
+            "type": "integer"
+          },
+          "settled": {
+            "title": "Settled",
+            "type": "integer"
+          },
+          "settled_amount_pkr": {
+            "title": "Settled Amount Pkr",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sent",
+          "sent_amount_pkr",
+          "settled",
+          "settled_amount_pkr"
+        ],
+        "title": "PaymentsOut",
+        "type": "object"
+      },
       "PersonBucketOut": {
         "properties": {
           "display_name": {
@@ -7598,6 +7735,42 @@
           "name"
         ],
         "title": "ProgramOut",
+        "type": "object"
+      },
+      "PulseOut": {
+        "properties": {
+          "cache_seconds": {
+            "title": "Cache Seconds",
+            "type": "integer"
+          },
+          "elapsed_ms": {
+            "title": "Elapsed Ms",
+            "type": "integer"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "live": {
+            "$ref": "#/components/schemas/LiveOut"
+          },
+          "notice": {
+            "title": "Notice",
+            "type": "string"
+          },
+          "replay": {
+            "$ref": "#/components/schemas/ReplayOut"
+          }
+        },
+        "required": [
+          "generated_at",
+          "cache_seconds",
+          "notice",
+          "live",
+          "replay",
+          "elapsed_ms"
+        ],
+        "title": "PulseOut",
         "type": "object"
       },
       "QrResult": {
@@ -8228,6 +8401,113 @@
           "n"
         ],
         "title": "ReliabilityOut",
+        "type": "object"
+      },
+      "ReplayCase": {
+        "properties": {
+          "correct": {
+            "description": "An automatic outcome matched the label. Deferrals to proof or a person are never counted wrong.",
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "kind": {
+            "description": "Synthetic case kind: a fraud type, eligible_and_genuine, not_eligible or not_genuine",
+            "title": "Kind",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "p_ok": {
+            "title": "P Ok",
+            "type": "number"
+          },
+          "reason_code": {
+            "title": "Reason Code",
+            "type": "string"
+          },
+          "route": {
+            "description": "auto | ask_more | human; an auto case with outcome rejected is a hard-rule rejection",
+            "title": "Route",
+            "type": "string"
+          }
+        },
+        "required": [
+          "route",
+          "outcome",
+          "p_ok",
+          "correct",
+          "reason_code",
+          "kind"
+        ],
+        "title": "ReplayCase",
+        "type": "object"
+      },
+      "ReplayOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayCase"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "cases_scored": {
+            "title": "Cases Scored",
+            "type": "integer"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HeadlineOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "replay_source": {
+            "title": "Replay Source",
+            "type": "string"
+          },
+          "rule_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Version No"
+          }
+        },
+        "required": [
+          "available",
+          "replay_source",
+          "rule_version_no",
+          "model_version",
+          "cases_scored",
+          "cases",
+          "headline"
+        ],
+        "title": "ReplayOut",
         "type": "object"
       },
       "ReplayResult": {
@@ -8928,6 +9208,24 @@
           "checked_at"
         ],
         "title": "ScamCheckOut",
+        "type": "object"
+      },
+      "ScamOut": {
+        "properties": {
+          "blocked": {
+            "title": "Blocked",
+            "type": "integer"
+          },
+          "reports": {
+            "title": "Reports",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reports",
+          "blocked"
+        ],
+        "title": "ScamOut",
         "type": "object"
       },
       "ScamReportList": {
@@ -10014,51 +10312,6 @@
           "server_time"
         ],
         "title": "SyncOut",
-        "type": "object"
-      },
-      "ThresholdsOut": {
-        "properties": {
-          "approve": {
-            "title": "Approve",
-            "type": "number"
-          },
-          "approve_formula": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Approve Formula"
-          },
-          "queue_days": {
-            "default": 1.0,
-            "title": "Queue Days",
-            "type": "number"
-          },
-          "reject": {
-            "title": "Reject",
-            "type": "number"
-          },
-          "reject_formula": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reject Formula"
-          }
-        },
-        "required": [
-          "approve",
-          "reject"
-        ],
-        "title": "ThresholdsOut",
         "type": "object"
       },
       "TimelineItem": {
@@ -11330,6 +11583,51 @@
         "title": "SwitchIn",
         "type": "object"
       },
+      "app__modules__evals__schemas__ThresholdsOut": {
+        "properties": {
+          "approve": {
+            "title": "Approve",
+            "type": "number"
+          },
+          "approve_formula": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approve Formula"
+          },
+          "queue_days": {
+            "default": 1.0,
+            "title": "Queue Days",
+            "type": "number"
+          },
+          "reject": {
+            "title": "Reject",
+            "type": "number"
+          },
+          "reject_formula": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reject Formula"
+          }
+        },
+        "required": [
+          "approve",
+          "reject"
+        ],
+        "title": "ThresholdsOut",
+        "type": "object"
+      },
       "app__modules__helpers__schemas__SwitchIn": {
         "additionalProperties": false,
         "properties": {
@@ -11351,6 +11649,29 @@
           "pin"
         ],
         "title": "SwitchIn",
+        "type": "object"
+      },
+      "app__modules__pulse__schemas__ThresholdsOut": {
+        "properties": {
+          "approve": {
+            "title": "Approve",
+            "type": "number"
+          },
+          "confidence_floor": {
+            "title": "Confidence Floor",
+            "type": "number"
+          },
+          "reject": {
+            "title": "Reject",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reject",
+          "approve",
+          "confidence_floor"
+        ],
+        "title": "ThresholdsOut",
         "type": "object"
       }
     },
@@ -11916,6 +12237,55 @@
           }
         ],
         "summary": "Background jobs, newest first",
+        "tags": [
+          "admin: jobs"
+        ]
+      }
+    },
+    "/v1/admin/jobs/drain": {
+      "get": {
+        "operationId": "drain_jobs_v1_admin_jobs_drain_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrainOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run due jobs now (Vercel Cron; bearer CRON_SECRET)",
         "tags": [
           "admin: jobs"
         ]
@@ -16738,6 +17108,27 @@
         "summary": "Programs in this department, with the active rule version",
         "tags": [
           "applications"
+        ]
+      }
+    },
+    "/v1/public/pulse": {
+      "get": {
+        "operationId": "get_pulse_v1_public_pulse_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PulseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Live counts and a synthetic replay for the /live page",
+        "tags": [
+          "public"
         ]
       }
     },
