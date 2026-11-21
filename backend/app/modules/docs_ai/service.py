@@ -235,9 +235,15 @@ def check_document(
 
 def _locate(rgb: np.ndarray) -> Any:
     """Find the card by its outline and, when it is fully in frame, fine-tune the fit on the static print."""
-    from app.modules.docs_ai.geometry import locate_card, refine
+    from app.modules.docs_ai.geometry import from_header, locate_card, refine
 
     geom = locate_card(rgb)
+    if geom.matrix is None or geom.touches_border or not geom.header_found:
+        # The outline is lost, or merged with a light background that reaches the frame: try the header band.
+        banded = from_header(rgb)
+        lost = geom.matrix is None or not geom.header_found
+        if banded.header_found and (lost or not banded.touches_border):
+            geom = banded
     if geom.matrix is not None and not geom.touches_border and geom.header_found:
         geom.matrix, _ = refine(rgb, geom.matrix)
     return geom

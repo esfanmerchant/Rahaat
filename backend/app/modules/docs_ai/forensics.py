@@ -37,6 +37,7 @@ ELA_MIN_TEXT_PX = 40
 
 
 BLUR_STEPS = (0.0, 0.5, 0.8, 1.1, 1.4, 1.7, 2.0, 2.4, 2.8, 3.3)
+ALIGNMENT_MIN = 0.6  # label match needed before printed values are judged
 MAX_JUDGED_BLUR = 2.0  # above this (in card pixels) printed glyphs are too soft to tell apart
 
 
@@ -47,6 +48,7 @@ class PrintCheck:
     digit_gaps: dict[str, float] = field(default_factory=dict)  # largest (best other digit - signed digit) per field
     why: dict[str, str] = field(default_factory=dict)  # for each mismatch, in words for staff
     blur_sigma: float = 0.0
+    alignment: float = 0.0  # how well the static labels sit where the layout puts them (0..1)
 
     @property
     def mismatched(self) -> list[str]:
@@ -157,8 +159,12 @@ def _label_templates() -> tuple[tuple[np.ndarray, tuple[int, int]], ...]:
     return tuple(out)
 
 
-def estimate_blur(red: np.ndarray) -> float:
-    """How soft this photo is, in card pixels: the Gaussian blur that makes the static labels match best."""
+def estimate_blur(red: np.ndarray) -> tuple[float, float]:
+    """How soft this photo is, in card pixels: the Gaussian blur that makes the static labels match best.
+
+    Also returns how well the labels matched at that blur. A low score means the card is not where the
+    layout says it is (a poor fit), so printed values cannot be judged.
+    """
     windows = []
     for templ, (x, y) in _label_templates():
         m = 8
@@ -168,7 +174,7 @@ def estimate_blur(red: np.ndarray) -> float:
         score = float(np.mean([_ncc_max(win, _soften(t, sigma))[0] for win, t in windows]))
         if score > best_score:
             best_sigma, best_score = sigma, score
-    return best_sigma
+    return best_sigma, best_score
 
 
 def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
@@ -179,16 +185,16 @@ def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
     """
     red = card_rgb[..., 0].astype(np.float32)  # the SPECIMEN watermark nearly vanishes in the red channel
     glare = card_rgb.min(axis=2) >= SATURATED  # white in every channel: the card itself is never that bright
-    sigma = estimate_blur(red)
-    out = PrintCheck(blur_sigma=sigma)
+    sigma, alignment = estimate_blur(red)
+    out = PrintCheck(blur_sigma=sigma, alignment=round(alignment, 3))
     margin, glyph_slack = 12, 4
     for name, _ in L.FIELDS:
         value = signed.get(name)
         tpl = _template(name, value) if value else None
         if tpl is None:
             continue
-        if sigma > MAX_JUDGED_BLUR:
-            out.fields[name] = "unclear"
+        if sigma > MAX_JUDGED_BLUR or alignment < ALIGNMENT_MIN:
+            out.fields[name] = "unclear"  # too soft, or the fit is off: never call that a mismatch
             continue
         t = _soften(tpl.pixels, sigma)
         x, y = tpl.origin

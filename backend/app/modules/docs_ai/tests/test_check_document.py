@@ -260,3 +260,33 @@ def test_concurrent_checks_agree_with_sequential_ones(images: dict[str, bytes]) 
         results = list(pool.map(lambda n: (n, run(images[n]).model_dump()), names * 2))
     for name, result in results:
         assert result == expected[name], name
+
+
+@pytest.mark.parametrize(
+    ("name", "quality", "hint", "choice"),
+    [
+        ("clean", "ok", None, "genuine"),
+        ("blurry", "blurry", "doc_retake_blurry", None),
+        ("glare_qr", "glare", "doc_retake_glare", None),
+        ("wrong_qr", "ok", None, "suspect"),
+    ],
+)
+def test_light_table(light_table_images: dict[str, bytes], name: str, quality: str, hint: str | None, choice: str | None) -> None:
+    check = run(light_table_images[name])
+    assert (check.quality, check.retake_hint, check.authenticity.choice) == (quality, hint, choice)
+
+
+def test_a_poor_fit_is_never_called_a_mismatch(images: dict[str, bytes]) -> None:
+    """If the card is not where the layout says (a bad fit), printed values are 'unclear', not forged."""
+    from app.modules.docs_ai.forensics import print_check
+    from app.modules.docs_ai.geometry import locate_card, rectify
+    from app.modules.docs_ai.imageio import decode
+
+    rgb = decode(images["clean"]).rgb
+    geom = locate_card(rgb)
+    assert geom.matrix is not None
+    good = print_check(rectify(rgb, geom.matrix), PERSON.as_dict())
+    assert set(good.fields.values()) == {"match"} and good.alignment >= 0.8
+    shifted = geom.matrix @ np.array([[1.0, 0.0, 28.0], [0.0, 1.0, -22.0], [0.0, 0.0, 1.0]])
+    off = print_check(rectify(rgb, shifted), PERSON.as_dict())
+    assert "mismatch" not in off.fields.values()

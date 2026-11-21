@@ -15,7 +15,7 @@ import numpy as np
 
 from app.modules.docs_ai import layout as L
 
-Method = Literal["outline", "full_frame", "qr_anchor", "none"]
+Method = Literal["outline", "full_frame", "qr_anchor", "header", "none"]
 
 MIN_AREA_SHARE = 0.08
 BORDER_TOUCH_PX = 3
@@ -213,34 +213,90 @@ def _reference_gray() -> np.ndarray:
     return np.asarray(cv2.cvtColor(np.asarray(card), cv2.COLOR_RGB2GRAY), dtype=np.float32)
 
 
-def refine(rgb: np.ndarray, matrix: np.ndarray) -> tuple[np.ndarray, int]:
-    """Re-fit the homography to the static print. Returns the matrix and how many anchors agreed."""
+def _refine_pass(rgb: np.ndarray, matrix: np.ndarray, search: int, min_score: float, max_move: float) -> tuple[np.ndarray, int]:
     import cv2
 
     ref = _reference_gray()
     observed = cv2.cvtColor(rectify(rgb, matrix), cv2.COLOR_RGB2GRAY).astype(np.float32)
     card_pts, seen_pts = [], []
-    s = ANCHOR_SEARCH
     for x0, y0, x1, y1 in _ANCHORS:
         templ = ref[y0:y1, x0:x1]
-        wx0, wy0 = max(0, x0 - s), max(0, y0 - s)
-        window = observed[wy0 : min(L.CARD_H, y1 + s), wx0 : min(L.CARD_W, x1 + s)]
+        wx0, wy0 = max(0, x0 - search), max(0, y0 - search)
+        window = observed[wy0 : min(L.CARD_H, y1 + search), wx0 : min(L.CARD_W, x1 + search)]
         if window.shape[0] < templ.shape[0] or window.shape[1] < templ.shape[1]:
             continue
         res = cv2.matchTemplate(window, templ, cv2.TM_CCOEFF_NORMED)
         _, score, _, (bx, by) = cv2.minMaxLoc(res)
-        if score < ANCHOR_MIN_SCORE:
+        if score < min_score:
             continue
-        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-        card_pts.append((cx, cy))
+        card_pts.append(((x0 + x1) / 2, (y0 + y1) / 2))
         seen_pts.append((wx0 + bx + (x1 - x0) / 2, wy0 + by + (y1 - y0) / 2))
     if len(card_pts) < 6:
         return matrix, len(card_pts)
     image_pts = _project(matrix, np.array(seen_pts))
-    refined, inliers = cv2.findHomography(np.array(card_pts, dtype=np.float32), image_pts.astype(np.float32), cv2.RANSAC, 2.0)
+    refined, inliers = cv2.findHomography(np.array(card_pts, dtype=np.float32), image_pts.astype(np.float32), cv2.RANSAC, 2.5)
     if refined is None or inliers is None or int(inliers.sum()) < 6:
         return matrix, len(card_pts)
     moved = np.abs(_project(refined, CARD_CORNERS) - _project(matrix, CARD_CORNERS)).max()
-    if moved > 0.06 * L.CARD_W:  # a big jump means the anchors disagree with the outline; keep the outline
+    if moved > max_move * L.CARD_W:  # a big jump means the anchors disagree with each other; keep what we had
         return matrix, int(inliers.sum())
     return np.asarray(refined), int(inliers.sum())
+
+
+def refine(rgb: np.ndarray, matrix: np.ndarray) -> tuple[np.ndarray, int]:
+    """Re-fit the homography to the static print, coarse then fine. Returns the matrix and how many anchors agreed."""
+    matrix, _ = _refine_pass(rgb, matrix, search=60, min_score=0.5, max_move=0.12)
+    return _refine_pass(rgb, matrix, search=ANCHOR_SEARCH, min_score=ANCHOR_MIN_SCORE, max_move=0.06)
+
+
+def from_header(rgb: np.ndarray) -> CardGeometry:
+    """Locate the card from its green header band, which spans the card's full width.
+
+    Used when the outline is lost: a light table merges with the card, and a blurred or glared QR cannot anchor it.
+    """
+    import cv2
+
+    blurred = cv2.GaussianBlur(rgb, (5, 5), 0).astype(np.int16)
+    r, g, b = blurred[..., 0], blurred[..., 1], blurred[..., 2]
+    raw = ((g - r > 25) & (g >= b - 4) & (g > 40)).astype(np.uint8) * 255
+    closed = cv2.morphologyEx(raw, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15)))
+    green = cv2.morphologyEx(closed, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7)))
+    contours, _ = cv2.findContours(green, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return CardGeometry("none")
+    band = max(contours, key=cv2.contourArea)
+    h, w = rgb.shape[:2]
+    pts = band.reshape(-1, 2)
+    band_cut = bool(
+        (
+            (pts[:, 0] <= BORDER_TOUCH_PX)
+            | (pts[:, 1] <= BORDER_TOUCH_PX)
+            | (pts[:, 0] >= w - 1 - BORDER_TOUCH_PX)
+            | (pts[:, 1] >= h - 1 - BORDER_TOUCH_PX)
+        ).any()
+    )
+    rect = cv2.minAreaRect(band)
+    bw, bh = rect[1]
+    long, short = max(bw, bh), min(bw, bh)
+    if short < 8 or not 6.0 <= long / short <= 14.0 or long * short < 0.01 * w * h:
+        return CardGeometry("none")
+    box = np.asarray(cv2.boxPoints(rect), dtype=np.float64)
+    edges = [(box[i], box[(i + 1) % 4]) for i in range(4)]
+    long_edges = sorted(edges, key=lambda e: -float(np.linalg.norm(e[1] - e[0])))[:2]
+    height = L.CARD_H * long / L.CARD_W
+    best: CardGeometry | None = None
+    best_score = -1.0
+    for top, other in ((long_edges[0], long_edges[1]), (long_edges[1], long_edges[0])):
+        a, c = top
+        mid_top, mid_other = (a + c) / 2, (other[0] + other[1]) / 2
+        normal = (mid_other - mid_top) / max(1e-6, float(np.linalg.norm(mid_other - mid_top)))
+        tl, tr = (a, c) if (c - a)[0] * normal[1] - (c - a)[1] * normal[0] > 0 else (c, a)
+        corners = np.array([tl, tr, tr + normal * height, tl + normal * height], dtype=np.float32)
+        matrix = _homography(corners)
+        score = header_score(rectify(rgb, matrix))
+        if score > best_score:
+            inside = bool(((corners[:, 0] >= -2) & (corners[:, 0] <= w + 1) & (corners[:, 1] >= -2) & (corners[:, 1] <= h + 1)).all())
+            best_score = score
+            # A band that reaches the frame edge may be cut short, so its width cannot be trusted: call it cut off.
+            best = CardGeometry("header", matrix, touches_border=band_cut or not inside, header_found=score >= 0.5, area_share=0.0)
+    return best if best is not None else CardGeometry("none")

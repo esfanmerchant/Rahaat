@@ -93,3 +93,12 @@ def _on_white_page(card_png: bytes) -> bytes:
     buf = io.BytesIO()
     page.save(buf, "PNG")
     return buf.getvalue()
+
+
+@pytest.fixture(scope="session")
+def light_table_images(key) -> dict[str, bytes]:  # type: ignore[no-untyped-def]
+    """A light surface merges with the card's outline, so the card must be found another way."""
+    from app.modules.docs_ai.variants import Shot, make_variant
+
+    shot = Shot(background=(214, 208, 200), angle=-4.0, seed=11)
+    return {name: make_variant(name, PERSON, key, shot=shot, other=OTHER).image for name in ("clean", "blurry", "glare_qr", "wrong_qr")}
