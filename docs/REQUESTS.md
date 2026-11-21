@@ -92,7 +92,8 @@ Why: the command palette promises "open a case by id or tracking code", but staf
 Until then: the palette and pulse use the existing list endpoints and say so in their hints.
 
 ## Person-level security for appeals
-From: Track A (WP-A)   To: Lead (models and migrations)   Status: open
+From: Track A (WP-A)   To: Lead (models and migrations)   Status: declined (Sat 21 Nov, 23:10; tried as migration 0009 and withdrawn)
+Lead's answer: with the person policy an officer's read after a consent withdrawal becomes a silent 404 the service cannot see, so the denial is no longer audited and the list cannot show the appeal without its code; C06 requires blocked attempts on record. Both tests that encode this failed. The service-level check (read through the consent-checked application, 403 `consent_required`, audited) stays the control, with tenant RLS underneath; raw SQL as `rahat_app` is already out of scope (DECISIONS 5).
 What: `appeals` has a `person_id` but only the tenant policy. Add `rls.enable_person_rls(op, "appeals", "person_id")` in a new migration (as for `applications`).
 Why: appeals name a person's application and the citizen's reason. The service already reads the application through its own consent-checked policy and filters by person, but the database should say the same.
 Until then: officers reach an appeal only through the appeals service, which reads the person's application under Row Level Security and answers 403 `consent_required` without consent; citizens see only their own rows.
