@@ -20,6 +20,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { slug: 'approvals', label: 'Approvals', roles: ['officer'], workItem: 'D2.9', built: true },
   { slug: 'payments', label: 'Payments', roles: ['officer'], workItem: 'D2.9', built: true },
   { slug: 'rules', label: 'Rules', roles: ['admin'], workItem: 'D2.4', built: true },
+  { slug: 'scam-map', label: 'Scam Map', roles: ['officer', 'admin'], workItem: 'D2.12', built: true },
+  { slug: 'scam-reports', label: 'Scam reports', roles: 'staff', workItem: 'D2.12', built: true },
+  { slug: 'mistakes', label: 'Mistakes', roles: 'staff', workItem: 'D2.12', built: true },
   { slug: 'outbox', label: 'Outbox', roles: ['officer', 'admin'], workItem: 'D2.9', built: true },
   { slug: 'users', label: 'Users', roles: ['admin'], workItem: 'D2.11', built: false },
   { slug: 'keys', label: 'Keys', roles: ['admin'], workItem: 'D2.11', built: false },
@@ -28,6 +31,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { slug: 'mocks', label: 'Mock services', roles: ['admin'], workItem: 'D2.11', built: true },
   { slug: 'audit', label: 'Audit', roles: ['auditor', 'admin'], workItem: 'D2.7', built: true },
   { slug: 'decisions', label: 'Decisions', roles: ['auditor'], workItem: 'D2.3', built: true },
+  { slug: 'settings', label: 'Settings', roles: 'staff', workItem: 'D2.12', built: true },
   { slug: 'health', label: 'System health', roles: 'staff', workItem: 'D2.11', built: true },
 ];
 

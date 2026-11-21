@@ -17,6 +17,10 @@ import { HealthPage } from './pages/HealthPage';
 import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
 import { OutboxPage } from './pages/OutboxPage';
 import { QueuePage } from './pages/QueuePage';
+import { MistakesPage } from './pages/MistakesPage';
+import { ScamMapPage } from './pages/ScamMapPage';
+import { ScamReportsPage } from './pages/ScamReportsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { RulesPage } from './pages/RulesPage';
 import { StaffLogin } from './StaffLogin';
 import { StaffShell, StaffSignOutButton } from './StaffShell';
@@ -155,6 +159,14 @@ function SectionPage({ item }: { item: NavItem }) {
       return <JobsPage />;
     case 'mocks':
       return <MocksPage />;
+    case 'scam-map':
+      return <ScamMapPage />;
+    case 'scam-reports':
+      return <ScamReportsPage />;
+    case 'mistakes':
+      return <MistakesPage />;
+    case 'settings':
+      return <SettingsPage />;
     case 'health':
       return <HealthPage />;
     default:
