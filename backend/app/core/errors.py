@@ -121,7 +121,15 @@ def install_error_handlers(app: FastAPI) -> None:
         return problem(422, "invalid_input", Unprocessable.title, "Check the fields listed in 'errors'.", extra={"errors": errors})
 
     @app.exception_handler(StarletteHTTPException)
-    async def _http(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+    async def _http(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        if exc.status_code in (404, 405):
+            # No route matched, so no policy charged the caller: probing for endpoints counts against the network.
+            from app.core import ratelimit  # imported here because ratelimit imports this module
+
+            try:
+                ratelimit.charge_anonymous(request.url.path)
+            except TooManyRequests as limited:
+                return problem(limited.status, limited.code, limited.title, limited.detail, extra=limited.extra, headers=limited.headers)
         code = {401: "not_authenticated", 403: "forbidden", 404: "not_found", 405: "method_not_allowed"}.get(
             exc.status_code, "http_error"
         )

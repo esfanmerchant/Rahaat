@@ -37,6 +37,15 @@ def test_anonymous_calls_are_limited_per_network_and_health_is_exempt(app: Any, 
         assert elsewhere.get("/v1/system/info").status_code == 200, "another network has its own bucket"
 
 
+def test_probing_for_endpoints_counts_against_the_network(client: TestClient, strict_limits: Callable[..., None]) -> None:
+    strict_limits(anonymous=3)
+    assert client.get("/v1/no-such-endpoint").status_code == 404
+    assert client.get("/v1/another-guess").status_code == 404
+    assert client.delete("/v1/system/info").status_code == 405
+    _assert_limited(client.get("/v1/third-guess"), "ip")
+    assert client.get("/healthz").status_code == 200
+
+
 def test_failed_credentials_count_against_the_network(client: TestClient, strict_limits: Callable[..., None]) -> None:
     strict_limits(anonymous=3)
     for token in ("not-a-token", "rk_0123456789_" + "A" * 43, "eyJhbGciOiJub25lIn0.e30."):
