@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 13:40 PKT, by the lead session. Phase 1 is in progress: six track agents are working in the worktrees under `.wt/`.
+Last updated: Sat 21 Nov 2026, 14:05 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -17,9 +17,9 @@ Last updated: Sat 21 Nov 2026, 13:40 PKT, by the lead session. Phase 1 is in pro
 - [x] F9 Frontend scaffold: Vite + Preact + Tailwind PWA, citizen and staff shells, `/demo`, i18n (en, ur; Sindhi falls back to Urdu), typed client generated from OpenAPI, working sign-in for all roles; citizen JS 28.4 KB gzipped (budget 100)
 - [x] F10 Root npm scripts
 - [x] F11 CI on GitHub Actions is green: backend tests on Linux against a Postgres service, frontend build and budget, mock-data lint, secret scan, Docker image build
-- [ ] F12 The Docker image builds in CI, and the start script was run natively in demo mode with generated secrets (migrate, seed, serve: all passed). **Not deployed** (needs a host account). The built image has not been run.
+- [x] F12 Live on this PC (`npm run live:start`): a pinned release worktree, its own embedded database, generated secrets, the API on 127.0.0.1:8080, and a Cloudflare quick tunnel (`npm run live:status` prints the URL). The Docker image also builds in CI but has not been run. **The quick-tunnel URL changes when the tunnel restarts**: switch to Tailscale Funnel for a stable URL before submitting.
 
-**Gate 0** is not passed yet. The one thing still needed is a live URL where all five roles can sign in. Code is on https://github.com/esfanmerchant/Rahaat and CI is green.
+**Gate 0 passed** on Sat 21 Nov, 14:00. Through the public URL: all 11 demo accounts signed in (admin, officer, auditor, helper, citizen, in both departments); `/healthz` and `/readyz` 200; the citizen, staff, demo and docs pages load; HSTS, CSP, `nosniff` and `DENY` framing headers present; refresh cookie HttpOnly, Secure, SameSite=Lax; dev stubs absent (404); audit chain verifies. Code is on https://github.com/esfanmerchant/Rahaat and CI is green.
 
 Verified locally on Sat 21 Nov, 12:57:
 - `npm run verify` green: ruff, mypy, frontend type check, 71 backend tests, frontend build, bundle budget, mock-data lint.

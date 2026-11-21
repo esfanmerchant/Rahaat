@@ -14,8 +14,6 @@ Until then: what you are doing instead
 
 ---
 
-(no requests yet)
-
 ## Case priority direction in the officer queue
 From: lead   To: Track D2   Status: open
 What: `Case.priority` is 0 for the most urgent (see `app/db/models/casework.py`). The queue sorts higher numbers first. Sort ascending by default.
