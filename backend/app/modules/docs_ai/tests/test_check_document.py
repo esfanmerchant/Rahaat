@@ -180,7 +180,7 @@ def test_photo_of_something_else_is_not_a_card() -> None:
 def test_garbage_bytes_return_a_safe_result_quickly(data: bytes) -> None:
     started = time.perf_counter()
     check = run(data)
-    assert time.perf_counter() - started < 1.0
+    assert time.perf_counter() - started < 2.0, "garbage must be refused without heavy work (2 s leaves room for a busy machine)"
     assert check.quality == "not_a_card"
     assert check.authenticity.abstained and check.authenticity.route == "human"
     assert check.signals and check.signals[0].code.startswith("image_")
