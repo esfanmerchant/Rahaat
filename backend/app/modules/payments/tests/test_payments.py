@@ -93,10 +93,11 @@ def test_no_payment_without_an_approved_decision(factory: Any, mocks: None) -> N
     decision_id = t.decision(tenant.id, in_review, citizen.person_id, version_id, outcome="approved")
     with pytest.raises(PaymentRefused):
         _request(tenant.id, citizen.person_id, {"application_id": in_review, "decision_id": decision_id})
-    approved_but_human = t.application(tenant.id, citizen.person_id, program_id, status="approved")
-    needs_human = t.decision(tenant.id, approved_but_human, citizen.person_id, version_id, outcome="needs_human")
+    other = factory.account(tenant, "citizen")  # one open application per person and program
+    approved_but_human = t.application(tenant.id, other.person_id, program_id, status="approved")
+    needs_human = t.decision(tenant.id, approved_but_human, other.person_id, version_id, outcome="needs_human")
     with pytest.raises(PaymentRefused):
-        _request(tenant.id, citizen.person_id, {"application_id": approved_but_human, "decision_id": needs_human})
+        _request(tenant.id, other.person_id, {"application_id": approved_but_human, "decision_id": needs_human})
     assert t.rows(models.Payment, models.Payment.tenant_id == tenant.id) == []
 
 

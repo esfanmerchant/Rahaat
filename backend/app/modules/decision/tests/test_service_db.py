@@ -153,7 +153,8 @@ def test_rule_change_applies_to_the_next_decision_and_old_decisions_keep_their_v
     assert first.outcome == "approved" and first.rule_version_id == setup.v1_id
 
     v2 = _publish_cap(client, factory, setup, author, approver, cap=20_000)
-    second = _record(citizen, setup, case)  # same evidence, nothing restarted
+    neighbour = factory.account(tenant, "citizen")  # one open application per person and program
+    second = _record(neighbour, setup, case)  # same evidence, nothing restarted
     assert str(second.rule_version_id) == v2
     assert second.outcome != "approved"
     assert {t["rule_id"]: t["result"] for t in second.rule_trace}["income_cap"] == "fail"

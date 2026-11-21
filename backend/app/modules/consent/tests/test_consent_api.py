@@ -69,8 +69,14 @@ def test_grant_is_idempotent_and_takes_the_person_from_the_request_not_the_body(
 def test_withdrawal_holds_applications_and_blocks_access_on_the_next_request(client: TestClient, world: World, fakes: Fakes,
                                                                                uploads: Any) -> None:  # fmt: skip
     tid, pid = world.tenant.id, world.citizen.person_id
-    draft = new_app(client, world).json()
     submitted = new_app(client, world).json()
+    with system_session() as db:  # a second program, since a person has one open application per program
+        second = models.Program(tenant_id=tid, slug="utility-subsidy", name="Utility subsidy (prototype)")
+        db.add(second)
+        db.flush()
+        second_id = second.id
+    draft = client.post("/v1/applications", headers=world.h("citizen"),
+                        json={"program_id": str(second_id), "client_op_id": uuid.uuid4().hex}).json()
     client.patch(f"/v1/applications/{submitted['id']}", json={"base_version": 1, "form_patch": eligible_patch()}, headers=world.h("citizen"))
     fakes.outcome = "needs_human"
     assert client.post(f"/v1/applications/{submitted['id']}/submit", headers=world.h("citizen")).json()["application"]["status"] == "in_review"
