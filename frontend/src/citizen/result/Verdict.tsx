@@ -7,20 +7,28 @@ import { t, type MessageKey } from '../../shared/i18n';
 
 export type VerdictKind = 'approved' | 'needs_proof' | 'needs_human' | 'rejected' | 'pending';
 
-/** The lamp handed from one hand to another: "a person will check". Two cupped hands, a lamp that crosses between them. */
-function Handover() {
+/**
+ * "A person will check": a small emblem on the start side, its lamp (a noor dot) travels along a dotted arc to
+ * the person-help picture on the end side, which then glows. Nothing is clipped; the arc and the travel mirror
+ * in RTL (the CSS reads --rh-dir). Under reduced motion only the final state shows.
+ */
+function Handover({ big = false }: { big?: boolean }) {
+  const box = big ? 'size-24' : 'size-[4.5rem]';
   return (
-    <svg viewBox="0 0 200 120" width="200" height="120" class="max-w-full overflow-visible" aria-hidden="true" focusable="false">
-      <g fill="#1b2552" stroke="#8ea2ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M0 98H62Q88 98 96 74Q98 70 93 70Q86 70 83 80Q80 88 62 88H0z" />
-        <path d="M200 98H138Q112 98 104 74Q102 70 107 70Q114 70 117 80Q120 88 138 88H200z" />
-      </g>
-      <g class="rh-handover">
-        <circle cx="64" cy="58" r="26" fill="#ffd36e" opacity=".22" />
-        <path d="M54 76h20l-3 7H57z" fill="#ffd36e" />
-        <path d="M64 44c7 7 9 12 4 18-2 2-6 2-8 0-5-6-3-11 4-18z" fill="#ffd36e" />
-      </g>
-    </svg>
+    <div class="flex w-full max-w-md items-center gap-3" aria-hidden="true">
+      <Emblem size={72} tone="night" class={`${box} drop-shadow-glow`} />
+      <div class="rh-arc min-w-0 flex-1">
+        <svg viewBox="0 0 200 72" preserveAspectRatio="none" class="absolute inset-0 size-full overflow-visible" focusable="false">
+          <path d="M0 36Q100 -22 200 36" fill="none" stroke="#a7aed6" stroke-width="2.5" stroke-dasharray="1 8" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+        </svg>
+        <span class="rh-arc-lamp">
+          <span />
+        </span>
+      </div>
+      <span class={`rh-arc-end grid ${box} shrink-0 place-items-center rounded-full border-2 border-night-line bg-night-2 text-noor`}>
+        <Pictogram name="person-help" size={big ? 56 : 44} />
+      </span>
+    </div>
   );
 }
 
@@ -63,20 +71,20 @@ export function Verdict({ kind, title, icon, headingRef }: { kind: VerdictKind; 
 
   if (kind === 'approved') {
     return (
-      <div class="rh-night-sky relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl px-4 py-8 text-center shadow-glow">
+      <div class="rh-night-sky relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl px-4 py-8 text-center shadow-glow lg:gap-5 lg:py-14">
         <div aria-hidden="true" class="rh-lattice-night absolute inset-0" />
         <div class="relative grid place-items-center">
-          <span aria-hidden="true" class="rh-lampglow absolute size-60 rounded-full bg-noor/25 blur-md" />
+          <span aria-hidden="true" class="rh-lampglow absolute size-60 rounded-full bg-noor/25 blur-md lg:size-80" />
           <span aria-hidden="true" class="absolute size-32 rounded-full border-2 border-noor hidden motion-safe:block motion-safe:animate-ring" />
-          <Emblem size={144} tone="night" animate class="relative" />
+          <Emblem size={144} tone="night" animate class="relative lg:size-52" />
         </div>
-        {heading('relative text-noor')}
+        {heading('relative text-noor lg:text-4xl')}
       </div>
     );
   }
   if (kind === 'needs_proof') {
     return (
-      <div class="rh-slide-in flex flex-col items-center gap-3 rounded-2xl border-4 border-warning bg-warning-soft px-4 py-6 text-center text-warning-ink shadow-lift">
+      <div class="rh-slide-in flex flex-col items-center gap-3 rounded-2xl border-4 border-warning bg-warning-soft px-4 py-6 text-center text-warning-ink shadow-lift lg:gap-5 lg:py-12">
         <span class="grid size-28 place-items-center rounded-full bg-paper">
           <Pictogram name={FALL.needs_proof.icon} size={72} />
         </span>
@@ -86,9 +94,12 @@ export function Verdict({ kind, title, icon, headingRef }: { kind: VerdictKind; 
   }
   if (kind === 'needs_human' || kind === 'pending') {
     return (
-      <div class="rh-night-sky flex flex-col items-center gap-2 rounded-2xl px-4 py-6 text-center shadow-float">
-        <Handover />
-        {heading('text-night-ink')}
+      <div class="rh-night-sky relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl px-4 py-8 text-center shadow-float lg:gap-6 lg:py-14">
+        <div aria-hidden="true" class="rh-lattice-night absolute inset-0" />
+        <div class="relative flex w-full justify-center">
+          <Handover big />
+        </div>
+        {heading('relative text-night-ink lg:text-3xl')}
       </div>
     );
   }

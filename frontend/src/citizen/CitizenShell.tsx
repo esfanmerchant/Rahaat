@@ -79,7 +79,7 @@ export function CitizenShell({ onBack, prompt, speech, autoPlay = true, progress
             id="main"
             class={
               `${COLUMN} flex flex-1 flex-col gap-6 px-4 py-4 lg:flex-none ` +
-              (surface === 'card' ? 'lg:rounded-2xl lg:border lg:border-line lg:bg-paper lg:p-10 lg:shadow-lift' : 'lg:px-8')
+              (surface === 'card' ? 'lg:rounded-2xl lg:border lg:border-line lg:bg-paper lg:p-8 lg:shadow-lift' : 'lg:px-8')
             }
           >
             {children}

@@ -168,7 +168,7 @@
   .rh-arc {
     container-type: inline-size;
     position: relative;
-    height: 3.5rem;
+    height: 4.5rem;
     --rh-dir: 1;
   }
   [dir="rtl"] .rh-arc {
@@ -177,7 +177,7 @@
   .rh-arc-lamp {
     position: absolute;
     inset-inline-start: 0;
-    bottom: 0.25rem;
+    bottom: 1.8125rem;
     width: 0.875rem;
     height: 0.875rem;
     transform: translateX(calc(var(--rh-dir) * (100cqw - 0.875rem)));
@@ -218,7 +218,7 @@
       animation-timing-function: cubic-bezier(0.3, 0.7, 0.6, 1);
     }
     50% {
-      transform: translateY(-1.75rem);
+      transform: translateY(-1.8125rem);
       animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.3);
     }
     100% {

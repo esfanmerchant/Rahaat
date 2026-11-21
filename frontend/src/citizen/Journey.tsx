@@ -33,11 +33,11 @@ export function stepsDone(status: ApplicationStatus | null): number {
   }
 }
 
-export function Journey({ status }: { status: ApplicationStatus | null }) {
+export function Journey({ status, bare = false }: { status: ApplicationStatus | null; bare?: boolean }) {
   const done = stepsDone(status);
   const stopped = status === 'rejected' || status === 'withdrawn';
   return (
-    <section class="rh-night-sky rounded-2xl px-4 py-5 shadow-float" aria-label={t('journey_title')}>
+    <section class={bare ? 'py-1' : 'rh-night-sky rounded-2xl px-4 py-5 shadow-float'} aria-label={t('journey_title')}>
       <h2 class="mb-3 text-base font-semibold text-night-muted">{t('journey_title')}</h2>
       <ol class="flex items-start">
         {JOURNEY_STEPS.map((step, index) => {

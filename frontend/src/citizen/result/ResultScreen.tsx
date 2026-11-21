@@ -135,8 +135,9 @@ export function ResultScreen() {
   const icon = pictogramFor(decision?.explanation.pictogram) ?? spec.icon;
   const outcome = decision?.outcome;
   return (
-    <CitizenShell onBack={() => route('/')} speech={speech}>
+    <CitizenShell onBack={() => route('/')} speech={speech} pane={{ kind: 'journey', reveal: true }} surface="bare">
       <Verdict kind={outcome ?? 'pending'} title={spec.title} icon={icon} headingRef={headingRef} />
+      <div class="flex flex-1 flex-col gap-6 lg:flex-none lg:rounded-2xl lg:border lg:border-line lg:bg-paper lg:p-8 lg:shadow-lift">
       {decision ? (
         <ExplanationText explanation={decision.explanation} />
       ) : (
@@ -165,6 +166,7 @@ export function ResultScreen() {
         <Button size="md" variant="quiet" icon="home" block onClick={() => route('/')}>
           {t('go_home')}
         </Button>
+      </div>
       </div>
     </CitizenShell>
   );

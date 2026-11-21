@@ -111,6 +111,8 @@ export function ContextPane({ spec }: { spec: PaneSpec }) {
     >
       <div aria-hidden="true" class="rh-lattice-night absolute inset-0" />
       <HomeLights class="opacity-70" />
+      {/* A large, faint emblem turning slowly in the corner: the lamp the whole product is about. */}
+      <Emblem size={520} tone="night" class="pointer-events-none absolute -bottom-40 -end-40 opacity-[0.07] motion-safe:animate-spin-slow" />
       <div class="relative flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-10 py-8 xl:px-14">
         <Brand size={spec.kind === 'apply' ? 64 : signedIn ? 88 : 140} />
 
@@ -132,8 +134,8 @@ export function ContextPane({ spec }: { spec: PaneSpec }) {
         {signedIn && spec.kind === 'apply' ? (
           <>
             <div class="flex items-center gap-5">
-              <span class="grid size-28 shrink-0 place-items-center rounded-full border-2 border-noor/60 bg-night-2 text-noor shadow-glow">
-                <Pictogram name={STEP_ICON[spec.step]} size={64} />
+              <span class="grid size-36 shrink-0 place-items-center rounded-full border-2 border-noor/60 bg-night-2 text-noor shadow-glow">
+                <Pictogram name={STEP_ICON[spec.step]} size={80} />
               </span>
               <p class="text-lg text-night-muted">{t('pane_listen_hint')}</p>
             </div>

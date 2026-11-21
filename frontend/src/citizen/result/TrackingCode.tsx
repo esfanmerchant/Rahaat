@@ -42,7 +42,7 @@ export function TrackingCode({ code, symbols }: { code: string | null | undefine
       </ul>
       {code ? (
         <Seal>
-          <p class={`rh-ltr rh-num font-mono font-bold tracking-wider text-ink ${code.length > 6 ? 'text-xl' : 'text-3xl'}`}>{code}</p>
+          <p class={`rh-ltr rh-num font-mono font-bold tracking-wider text-ink ${code.length > 6 ? 'text-lg' : 'text-2xl'}`}>{code}</p>
         </Seal>
       ) : null}
       <p class="text-center text-base text-ink-muted">{t('track_code_hint')}</p>

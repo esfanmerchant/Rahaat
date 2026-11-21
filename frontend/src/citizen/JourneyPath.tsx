@@ -1,3 +1,4 @@
+import type { ComponentChildren } from 'preact';
 import { t, type MessageKey } from '../shared/i18n';
 
 export type StarState = 'done' | 'current' | 'next';
@@ -34,7 +35,7 @@ export interface PathItem {
  * line that is lit up to the current step. `done` is how many steps are finished; the next one is current.
  */
 export function StarPath({ items, done, title, compact = false, stopped = false }: { items: readonly PathItem[]; done: number; title: MessageKey; compact?: boolean; stopped?: boolean }) {
-  const size = compact ? 32 : 44;
+  const size = compact ? 32 : 52;
   return (
     <section aria-label={t(title)} class="flex flex-col gap-3">
       <h2 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-night-muted">
@@ -52,7 +53,7 @@ export function StarPath({ items, done, title, compact = false, stopped = false 
                 {last ? null : <span aria-hidden="true" class={`w-0.5 flex-1 ${index < done ? 'bg-noor' : 'bg-night-line'} ${compact ? 'min-h-1.5' : 'min-h-3'}`} />}
               </div>
               <span
-                class={`flex items-center ${last ? '' : compact ? 'pb-1.5' : 'pb-3'} ${compact ? 'text-base' : 'text-xl'} font-semibold ${state === 'next' ? 'text-night-muted' : state === 'current' ? 'text-noor' : 'text-night-ink'}`}
+                class={`flex items-center ${last ? '' : compact ? 'pb-1.5' : 'pb-3'} ${compact ? 'text-base' : 'text-2xl'} font-semibold ${state === 'next' ? 'text-night-muted' : state === 'current' ? 'text-noor' : 'text-night-ink'}`}
               >
                 {t(item.label)}
               </span>
@@ -73,5 +74,31 @@ export function StarBullet({ class: className = '' }: { class?: string }) {
         <rect x="6" y="6" width="12" height="12" transform="rotate(45 12 12)" />
       </g>
     </svg>
+  );
+}
+
+/** A section header on paper: a small star bullet, then the title, on one rhythm (8 px grid) everywhere. */
+export function SectionTitle({ id, children }: { id?: string; children: string }) {
+  return (
+    <h2 id={id} class="flex items-center gap-2 text-lg font-bold text-ink-muted">
+      <StarBullet class="text-noor-strong" />
+      {children}
+    </h2>
+  );
+}
+
+/** A timeline star on paper: emerald once it happened, lamp gold (and pulsing) for where things stand now. The picture sits in the middle. */
+export function PaperStar({ now, children }: { now: boolean; children: ComponentChildren }) {
+  return (
+    <span class={`relative grid size-14 shrink-0 place-items-center ${now ? 'text-night' : 'text-white'}`}>
+      {now ? <span aria-hidden="true" class="absolute inset-0 rounded-full bg-noor/50 hidden motion-safe:block motion-safe:animate-ring" /> : null}
+      <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true" class={`absolute inset-0 ${now ? 'drop-shadow-glow' : ''}`}>
+        <g fill={now ? '#ffd36e' : '#0b6a46'} stroke={now ? '#b8860b' : '#064b31'} stroke-width="1.5" stroke-linejoin="round">
+          <rect x="9" y="9" width="30" height="30" />
+          <rect x="9" y="9" width="30" height="30" transform="rotate(45 24 24)" />
+        </g>
+      </svg>
+      <span class="relative">{children}</span>
+    </span>
   );
 }

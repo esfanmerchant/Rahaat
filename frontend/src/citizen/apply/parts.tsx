@@ -88,10 +88,12 @@ export function StepLayout({ step, prompt, speech, icon, title, busy = false, ch
     go(route, previous ? stepPath(previous) : '/', 'back');
   };
   return (
-    <CitizenShell onBack={busy ? undefined : back} prompt={prompt} speech={speech} progress={<ProgressDots step={step} />}>
+    <CitizenShell onBack={busy ? undefined : back} prompt={prompt} speech={speech} progress={<ProgressDots step={step} />} pane={{ kind: 'apply', step }}>
       <div class="flex items-center gap-4">
-        <Pictogram name={icon} size={64} class="text-primary" />
-        <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold">
+        <span class="grid size-20 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+          <Pictogram name={icon} size={56} />
+        </span>
+        <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold lg:text-[1.75rem]">
           {title}
         </h1>
       </div>
@@ -121,10 +123,10 @@ export function AnswerButton({ icon, label, selected, onSelect, tone = 'text-pri
       disabled={disabled}
       onClick={onSelect}
       class={
-        'flex min-h-tap-lg w-full items-center gap-3 rounded-lg border-2 px-3 py-2 text-start text-xl font-semibold ' +
+        'rh-tile flex min-h-tap-lg w-full items-center gap-3 rounded-xl border-2 px-3 py-2 text-start text-xl font-semibold lg:min-h-40 lg:flex-col lg:justify-center lg:gap-3 lg:rounded-2xl lg:px-4 lg:py-5 lg:text-center ' +
         (selected
           ? 'rh-select border-primary bg-primary-soft text-primary-strong'
-          : 'border-line-strong bg-paper text-ink transition-transform duration-100 hover:bg-surface active:scale-[0.97] active:bg-surface')
+          : 'border-line-strong bg-paper text-ink hover:bg-surface active:bg-surface')
       }
     >
       <span class="relative shrink-0">
@@ -145,7 +147,7 @@ export function AnswerButton({ icon, label, selected, onSelect, tone = 'text-pri
 
 export function AnswerGroup({ labelledBy, children }: { labelledBy?: string; children?: ComponentChildren }) {
   return (
-    <div role="radiogroup" aria-labelledby={labelledBy} class="flex flex-col gap-3">
+    <div role="radiogroup" aria-labelledby={labelledBy} class="flex flex-col gap-3 lg:grid lg:grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] lg:gap-4 lg:has-[>:nth-child(4):last-child]:grid-cols-2">
       {children}
     </div>
   );

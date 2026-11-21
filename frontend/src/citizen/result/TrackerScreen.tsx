@@ -7,6 +7,7 @@ import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { lang, messageKeyFor, t } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { InlineFailure, Notice } from '../apply/parts';
+import { PaperStar, SectionTitle } from '../JourneyPath';
 import { PhotoButtons, PhotoPreview } from '../apply/PhotoParts';
 import { usePhotoUpload } from '../apply/usePhotoUpload';
 import { CitizenShell } from '../CitizenShell';
@@ -55,8 +56,10 @@ function Tracker({ app }: { app: ApplicationOut }) {
       </h1>
       <TrackingCode code={app.tracking_code} symbols={app.tracking_symbols ?? []} />
 
-      <div class="flex items-center gap-3 rounded-lg border-2 border-line-strong p-3">
-        <Pictogram name={statusIcon(app.status)} size={48} class="text-primary" />
+      <div class="flex items-center gap-3 rounded-2xl border-2 border-line-strong bg-surface/60 p-4">
+        <span class="grid size-14 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+          <Pictogram name={statusIcon(app.status)} size={36} />
+        </span>
         <p class="text-xl font-semibold">{t(statusKey(app.status))}</p>
       </div>
 
@@ -68,35 +71,31 @@ function Tracker({ app }: { app: ApplicationOut }) {
 
       {app.decision ? (
         <section aria-labelledby="track-latest" class="flex flex-col gap-2">
-          <h2 id="track-latest" class="text-lg font-semibold text-ink-muted">
-            {t('track_latest')}
-          </h2>
+          <SectionTitle id="track-latest">{t('track_latest')}</SectionTitle>
           <ExplanationText explanation={app.decision.explanation} />
         </section>
       ) : null}
 
       {timeline.length > 0 ? (
-        <section aria-labelledby="track-timeline" class="flex flex-col gap-2">
-          <h2 id="track-timeline" class="text-lg font-semibold text-ink-muted">
-            {t('track_timeline')}
-          </h2>
+        <section aria-labelledby="track-timeline" class="flex flex-col gap-3">
+          <SectionTitle id="track-timeline">{t('track_timeline')}</SectionTitle>
           <ol class="flex flex-col">
             {timeline.map((item, index) => {
               const label = messageKeyFor(item.label_key) ?? statusKey(item.status);
               const last = index === timeline.length - 1;
               return (
-                <li key={`${item.at}-${index}`} class="flex gap-3">
+                <li key={`${item.at}-${index}`} class="flex gap-4" aria-current={last ? 'step' : undefined}>
                   <div class="flex flex-col items-center">
-                    <span
-                      class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 ${last ? 'border-primary bg-primary text-white' : 'border-primary bg-paper text-primary'}`}
-                    >
-                      <Pictogram name={statusIcon(item.status)} size={28} />
-                    </span>
-                    {last ? null : <span class="w-1 flex-1 bg-primary-soft" aria-hidden="true" />}
+                    <PaperStar now={last}>
+                      <Pictogram name={statusIcon(item.status)} size={26} />
+                    </PaperStar>
+                    {last ? null : <span class="min-h-4 w-1 flex-1 rounded-full bg-primary/40" aria-hidden="true" />}
                   </div>
-                  <div class="flex flex-col pb-4">
+                  <div class="flex flex-col pb-5 pt-2">
                     <p class="text-lg font-semibold">{t(label)}</p>
-                    <p class="text-sm text-ink-muted">{formatDate(item.at, code)}</p>
+                    <time dateTime={item.at} class="text-sm text-ink-muted">
+                      {formatDate(item.at, code)}
+                    </time>
                   </div>
                 </li>
               );

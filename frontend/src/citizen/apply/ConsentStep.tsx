@@ -50,7 +50,7 @@ export function ConsentStep() {
       {needed ? <Notice tone="warn" icon="lock" text={t('apply_need_consent')} /> : null}
       <ul class="flex flex-col gap-3">
         {ROWS.map((row) => (
-          <li key={row.body} class="flex items-start gap-3 rounded-lg border-2 border-line bg-surface p-3">
+          <li key={row.body} class="flex items-start gap-3 rounded-xl border-2 border-line bg-surface p-3 lg:gap-4 lg:p-4">
             <Pictogram name={row.icon} size={48} class="text-primary" />
             <div class="flex flex-col">
               <span class="text-base font-semibold text-ink-muted">{t(row.label)}</span>
