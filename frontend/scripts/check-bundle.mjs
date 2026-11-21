@@ -4,7 +4,7 @@
 //   - initial: the entry and everything it imports statically (loads on first paint);
 //   - lazy citizen: dynamic imports reachable from there (for example workbox-window,
 //     or a lazy citizen screen), which can also load on citizen routes.
-// Staff, demo and live chunks (src/staff/**, src/live/**, three.js) are excluded: citizens never load them.
+// Staff, demo, live and ussd chunks (src/staff/**, src/live/**, src/ussd/**, three.js) are excluded: citizens never load them.
 // Both initial and lazy citizen JS count against the budget, so the number is honest.
 //
 // Exit 1 when over budget, when staff code is statically reachable from the
@@ -35,11 +35,13 @@ const isExcluded = (key) => {
   return (
     /(^|\/)src\/staff\//.test(chunk.src ?? key) ||
     /(^|\/)src\/live\//.test(chunk.src ?? key) ||
-    /^assets\/(staff|demo|live|live-three)-/.test(chunk.file) ||
+    /(^|\/)src\/ussd\//.test(chunk.src ?? key) ||
+    /^assets\/(staff|demo|live|live-three|ussd)-/.test(chunk.file) ||
     chunk.name === 'staff' ||
     chunk.name === 'demo' ||
     chunk.name === 'live' ||
-    chunk.name === 'live-three'
+    chunk.name === 'live-three' ||
+    chunk.name === 'ussd'
   );
 };
 
@@ -103,7 +105,7 @@ const add = (keys, group) => {
 };
 add(initial, 'initial');
 add(lazyCitizen, 'lazy citizen');
-add(excluded, 'excluded (staff/demo/live)');
+add(excluded, 'excluded (staff/demo/live/ussd)');
 
 const kb = (bytes) => `${(bytes / 1000).toFixed(1)} KB`;
 const pad = (value, width) => String(value).padEnd(width);
@@ -120,18 +122,18 @@ const sum = (group) => rows.filter((r) => r.group === group).reduce((total, r) =
 const initialGzip = sum('initial');
 const lazyGzip = sum('lazy citizen');
 const citizenGzip = initialGzip + lazyGzip;
-const staffGzip = sum('excluded (staff/demo/live)');
+const staffGzip = sum('excluded (staff/demo/live/ussd)');
 
 console.log('-'.repeat(22 + fileWidth + 24));
 console.log(`citizen initial JS (gzip):      ${kb(initialGzip)}`);
 console.log(`citizen lazy JS (gzip):         ${kb(lazyGzip)}`);
 console.log(`CITIZEN TOTAL JS (gzip):        ${kb(citizenGzip)}   budget ${kb(BUDGET_BYTES)}, target ${kb(TARGET_BYTES)}`);
-console.log(`staff + demo + live JS (gzip, excluded): ${kb(staffGzip)}`);
+console.log(`staff + demo + live + ussd JS (gzip, excluded): ${kb(staffGzip)}`);
 console.log('(the service worker script is not page JS and is not counted)\n');
 
 let failed = false;
 if (leaked.length > 0) {
-  console.error(`FAIL: staff/demo/live code is statically imported by the citizen entry: ${leaked.map((k) => manifest[k].file).join(', ')}`);
+  console.error(`FAIL: staff/demo/live/ussd code is statically imported by the citizen entry: ${leaked.map((k) => manifest[k].file).join(', ')}`);
   failed = true;
 }
 if (citizenGzip > BUDGET_BYTES) {
