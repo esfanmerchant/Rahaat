@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { Emblem } from '../shared/components/Emblem';
 import { PROTOTYPE_LABEL_EN, PROTOTYPE_LABEL_UR } from '../shared/components/PrototypeFooter';
 import { Counter } from './Counter';
@@ -7,13 +7,92 @@ import type { HoverInfo, LabelPoint, SceneHandle } from './scene';
 import { detectCapability, LANE_COLOR, LANE_LABEL, NOOR, SHIELD_COLOR, type Capability, type Pulse } from './types';
 import { usePulse } from './usePulse';
 
-const LABELS: Record<string, string> = {
-  horizon: 'Synthetic cases',
-  gate: 'Cost-matrix gate',
-  homes: 'Homes reached',
-  desk: 'A person will check',
-  shield: 'Scam shield',
+/** Scene labels: English, a short Urdu line, and where each one prefers to sit relative to its object (screen px). */
+const LABELS: Record<string, { en: string; ur: string; off: [number, number] }> = {
+  horizon: { en: 'Synthetic cases', ur: 'مصنوعی کیسز', off: [0, -70] },
+  gate: { en: 'Cost-matrix gate', ur: 'لاگت پر مبنی فیصلہ', off: [0, -62] },
+  homes: { en: 'Homes reached', ur: 'پہنچنے والے گھر', off: [60, 60] },
+  desk: { en: 'A person will check', ur: 'ایک شخص جانچے گا', off: [60, -60] },
+  shield: { en: 'Scam shield', ur: 'دھوکے سے حفاظت', off: [-130, 10] },
 };
+const GAP = 24;
+
+interface LabelRefs {
+  boxes: Record<string, HTMLElement | null>;
+  lines: Record<string, SVGLineElement | null>;
+  dots: Record<string, SVGCircleElement | null>;
+}
+
+/** Places the labels so none overlap (at least GAP px apart) or sit under a panel, then draws a leader line to each object. */
+function layoutLabels(list: LabelPoint[], refs: LabelRefs, W: number, H: number): void {
+  const obstacles = [...document.querySelectorAll('[data-label-avoid]')].map((e) => e.getBoundingClientRect());
+  const items = list
+    .map((l) => {
+      const el = refs.boxes[l.id];
+      const def = LABELS[l.id];
+      if (!el || !def || !l.visible || el.offsetWidth === 0) return null;
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      return { id: l.id, ax: l.x, ay: l.y, w, h, x: l.x + def.off[0] - w / 2, y: l.y + def.off[1] - h / 2 };
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
+  for (let pass = 0; pass < 10; pass++) {
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const a = items[i]!;
+        const b = items[j]!;
+        const dx = Math.abs(a.x + a.w / 2 - (b.x + b.w / 2));
+        const dy = b.y + b.h / 2 - (a.y + a.h / 2);
+        const needY = (a.h + b.h) / 2 + GAP;
+        if (dx < (a.w + b.w) / 2 + GAP && Math.abs(dy) < needY) {
+          const push = (needY - Math.abs(dy)) / 2 + 0.5;
+          const dir = dy >= 0 ? 1 : -1;
+          a.y -= push * dir;
+          b.y += push * dir;
+        }
+      }
+    }
+    for (const it of items) {
+      for (const o of obstacles) {
+        if (it.x < o.right + GAP / 2 && it.x + it.w > o.left - GAP / 2 && it.y < o.bottom + GAP / 2 && it.y + it.h > o.top - GAP / 2) {
+          const up = o.top - GAP - it.h;
+          const down = o.bottom + GAP;
+          it.y = Math.abs(up - it.y) < Math.abs(down - it.y) ? up : down;
+        }
+      }
+      it.x = Math.min(Math.max(16, it.x), Math.max(16, W - it.w - 16));
+      it.y = Math.min(Math.max(112, it.y), Math.max(112, H - it.h - 96));
+    }
+  }
+  const seen = new Set<string>();
+  for (const it of items) {
+    seen.add(it.id);
+    const el = refs.boxes[it.id]!;
+    el.style.transform = `translate(${Math.round(it.x)}px, ${Math.round(it.y)}px)`;
+    el.style.opacity = '1';
+    const above = it.y + it.h / 2 < it.ay;
+    const line = refs.lines[it.id];
+    const dot = refs.dots[it.id];
+    if (line) {
+      line.setAttribute('x1', String(Math.round(it.x + it.w / 2)));
+      line.setAttribute('y1', String(Math.round(above ? it.y + it.h : it.y)));
+      line.setAttribute('x2', String(Math.round(it.ax)));
+      line.setAttribute('y2', String(Math.round(it.ay)));
+      line.style.opacity = '1';
+    }
+    if (dot) {
+      dot.setAttribute('cx', String(Math.round(it.ax)));
+      dot.setAttribute('cy', String(Math.round(it.ay)));
+      dot.style.opacity = '1';
+    }
+  }
+  for (const id of Object.keys(LABELS)) {
+    if (seen.has(id)) continue;
+    if (refs.boxes[id]) refs.boxes[id]!.style.opacity = '0';
+    if (refs.lines[id]) refs.lines[id]!.style.opacity = '0';
+    if (refs.dots[id]) refs.dots[id]!.style.opacity = '0';
+  }
+}
 
 const WHY: Record<NonNullable<Capability['reason']>, string> = {
   'webgl-unavailable': 'WebGL is not available on this device, so this is the static view of the same numbers.',
@@ -40,11 +119,26 @@ function summary(p: Pulse): string {
   return parts.join(' ');
 }
 
+/** A live counter. When it rises between two refreshes it flashes noor and shows +N for a few seconds. */
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
+  const prev = useRef(value);
+  const [delta, setDelta] = useState(0);
+  useEffect(() => {
+    if (value > prev.current) {
+      setDelta(value - prev.current);
+      prev.current = value;
+      const id = window.setTimeout(() => setDelta(0), 3400);
+      return () => window.clearTimeout(id);
+    }
+    prev.current = value;
+    return undefined;
+  }, [value]);
+  const hot = delta > 0;
   return (
-    <div class="flex items-baseline justify-between gap-3">
+    <div class={`-mx-1 flex items-baseline justify-between gap-3 rounded px-1 transition-colors duration-700 ${hot ? 'bg-noor/30' : ''}`}>
       <dt class="text-night-muted">{label}</dt>
-      <dd class={`m-0 text-base font-bold ${tone ?? 'text-night-ink'}`}>
+      <dd class={`m-0 text-base font-bold transition-colors duration-700 ${hot ? 'text-noor [text-shadow:0_0_12px_#ffd36e]' : (tone ?? 'text-night-ink')}`}>
+        {hot ? <span class="mr-1.5 text-xs font-black text-noor motion-safe:animate-rise">+{delta.toLocaleString('en-US')}</span> : null}
         <Counter value={value} />
       </dd>
     </div>
@@ -77,14 +171,52 @@ function Legend() {
   );
 }
 
-function HoverCard({ info, box }: { info: HoverInfo; box: { w: number; h: number } }) {
-  const left = Math.min(Math.max(8, info.x + 16), box.w - 270);
-  const top = Math.min(Math.max(8, info.y - 8), box.h - 150);
+interface HoverEls {
+  ring: HTMLDivElement | null;
+  card: HTMLDivElement | null;
+  line: SVGLineElement | null;
+}
+
+/** Puts the ring on the picked particle, the card beside it, and a short leader line between them. */
+function placeHover(els: HoverEls, x: number, y: number, W: number): void {
+  const { ring, card, line } = els;
+  if (!ring || !card || !line) return;
+  ring.style.transform = `translate(${Math.round(x - 16)}px, ${Math.round(y - 16)}px)`;
+  const cw = card.offsetWidth || 256;
+  const ch = card.offsetHeight || 120;
+  const right = x + 70 + cw < W - 8;
+  const cx = right ? x + 70 : Math.max(8, x - 70 - cw);
+  const cy = Math.max(8, y - 70);
+  card.style.transform = `translate(${Math.round(cx)}px, ${Math.round(cy)}px)`;
+  line.setAttribute('x1', String(Math.round(x + (right ? 16 : -16))));
+  line.setAttribute('y1', String(Math.round(y)));
+  line.setAttribute('x2', String(Math.round(right ? cx : cx + cw)));
+  line.setAttribute('y2', String(Math.round(Math.min(cy + ch - 14, Math.max(cy + 14, y)))));
+}
+
+function HoverCard({ info, els }: { info: HoverInfo; els: { current: HoverEls } }) {
+  return (
+    <div class="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+      <svg class="absolute inset-0 size-full" aria-hidden="true">
+        <line ref={(e) => { els.current.line = e; }} stroke={LANE_COLOR[info.lane]} stroke-width="1.5" stroke-opacity="0.9" />
+      </svg>
+      <div
+        ref={(e) => { els.current.ring = e; }}
+        aria-hidden="true"
+        class="absolute left-0 top-0 size-8 rounded-full border-2"
+        style={{ borderColor: LANE_COLOR[info.lane], boxShadow: `0 0 14px ${LANE_COLOR[info.lane]}` }}
+      />
+      <HoverBody info={info} cardRef={(e) => { els.current.card = e; }} />
+    </div>
+  );
+}
+
+function HoverBody({ info, cardRef }: { info: HoverInfo; cardRef: (e: HTMLDivElement | null) => void }) {
   return (
     <div
+      ref={cardRef}
       role="status"
-      class="pointer-events-none absolute z-20 w-64 rounded-xl border border-night-line bg-night-2 p-3 text-sm shadow-float"
-      style={{ left: `${left}px`, top: `${top}px` }}
+      class="absolute left-0 top-0 w-64 rounded-xl border border-night-line bg-night-2 p-3 text-sm shadow-float"
     >
       <p class="m-0 flex items-center gap-2 font-bold">
         <span class="inline-block size-2.5 rounded-full" style={{ background: LANE_COLOR[info.lane] }} />
@@ -105,11 +237,32 @@ function HoverCard({ info, box }: { info: HoverInfo; box: { w: number; h: number
   );
 }
 
-function SceneLayer({ pulse, onFail, setHover }: { pulse: Pulse | null; onFail: () => void; setHover: (h: HoverInfo | null) => void }) {
+function HoverLayer({ info, els, pos, W }: { info: HoverInfo; els: { current: HoverEls }; pos: { current: { x: number; y: number } }; W: number }) {
+  useLayoutEffect(() => {
+    placeHover(els.current, pos.current.x, pos.current.y, W);
+  }, [info]);
+  return <HoverCard info={info} els={els} />;
+}
+
+function SceneLayer({
+  pulse,
+  onFail,
+  setHover,
+  onPick,
+  replayRef,
+}: {
+  pulse: Pulse | null;
+  onFail: () => void;
+  setHover: (h: HoverInfo | null) => void;
+  onPick: (x: number, y: number) => void;
+  replayRef: { current: (() => void) | null };
+}) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const handle = useRef<SceneHandle | null>(null);
-  const labelEls = useRef<Record<string, HTMLElement | null>>({});
+  const refs = useRef<LabelRefs>({ boxes: {}, lines: {}, dots: {} });
+  const pickRef = useRef(onPick);
+  pickRef.current = onPick;
   const [ready, setReady] = useState(false);
   const failRef = useRef(onFail);
   failRef.current = onFail;
@@ -126,16 +279,11 @@ function SceneLayer({ pulse, onFail, setHover }: { pulse: Pulse | null; onFail: 
         created = m.createScene(canvas.current, host.current, {
           onHover: (h) => hoverRef.current(h),
           onFail: () => failRef.current(),
-          onLabels: (list: LabelPoint[]) => {
-            for (const l of list) {
-              const el = labelEls.current[l.id];
-              if (!el) continue;
-              el.style.transform = `translate(${Math.round(l.x)}px, ${Math.round(l.y)}px) translate(-50%, -50%)`;
-              el.style.opacity = l.visible ? '1' : '0';
-            }
-          },
+          onPickMove: (x, y) => pickRef.current(x, y),
+          onLabels: (list: LabelPoint[]) => layoutLabels(list, refs.current, host.current?.clientWidth ?? window.innerWidth, host.current?.clientHeight ?? window.innerHeight),
         });
         handle.current = created;
+        replayRef.current = () => created?.replayIntro();
         setReady(true);
       })
       .catch(() => failRef.current());
@@ -143,6 +291,7 @@ function SceneLayer({ pulse, onFail, setHover }: { pulse: Pulse | null; onFail: 
       dead = true;
       created?.dispose();
       handle.current = null;
+      replayRef.current = null;
     };
   }, []);
 
@@ -167,16 +316,42 @@ function SceneLayer({ pulse, onFail, setHover }: { pulse: Pulse | null; onFail: 
         class="block size-full touch-none cursor-grab outline-none focus-visible:ring-2 focus-visible:ring-noor active:cursor-grabbing"
       />
       <div aria-hidden="true" class="pointer-events-none absolute inset-0 hidden overflow-hidden md:block">
-        {Object.entries(LABELS).map(([id, text]) => (
-          <span
+        <svg class="absolute inset-0 size-full">
+          {Object.keys(LABELS).map((id) => (
+            <g key={id}>
+              <line
+                ref={(el) => {
+                  refs.current.lines[id] = el;
+                }}
+                stroke="#ffd36e"
+                stroke-opacity="0.55"
+                stroke-width="1"
+                style={{ opacity: 0 }}
+              />
+              <circle
+                ref={(el) => {
+                  refs.current.dots[id] = el;
+                }}
+                r="3"
+                fill="#ffd36e"
+                style={{ opacity: 0 }}
+              />
+            </g>
+          ))}
+        </svg>
+        {Object.entries(LABELS).map(([id, def]) => (
+          <div
             key={id}
             ref={(el) => {
-              labelEls.current[id] = el;
+              refs.current.boxes[id] = el;
             }}
-            class="absolute left-0 top-0 whitespace-nowrap text-xs font-bold uppercase tracking-wider text-night-ink opacity-0 transition-opacity [text-shadow:0_0_8px_#070b1d,0_0_3px_#070b1d]"
+            class="absolute left-0 top-0 whitespace-nowrap text-center opacity-0 transition-opacity [text-shadow:0_0_8px_#070b1d,0_0_3px_#070b1d]"
           >
-            {text}
-          </span>
+            <div class="text-xs font-bold uppercase tracking-wider text-night-ink">{def.en}</div>
+            <div lang="ur" dir="rtl" class="text-sm leading-[1.8] text-night-muted">
+              {def.ur}
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -201,6 +376,13 @@ export default function LivePage() {
   const [panels, setPanels] = useState(() => window.innerWidth >= 768);
   const root = useRef<HTMLElement>(null);
   const [box, setBox] = useState({ w: window.innerWidth, h: window.innerHeight });
+  const inScene = cap.ok && !sceneFailed;
+  const [introKey, setIntroKey] = useState(0);
+  const [titleOn, setTitleOn] = useState(false);
+  const [hudOn, setHudOn] = useState(false);
+  const hoverEls = useRef<HoverEls>({ ring: null, card: null, line: null });
+  const replay = useRef<(() => void) | null>(null);
+  const pickPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const prev = document.title;
@@ -224,9 +406,40 @@ export default function LivePage() {
     };
   }, []);
 
+  // the intro: the title fades in, then the numbers count up after the gate first lights (Space or R plays it again)
+  useEffect(() => {
+    if (!inScene) {
+      setTitleOn(true);
+      setHudOn(true);
+      return undefined;
+    }
+    setTitleOn(false);
+    setHudOn(false);
+    const a = window.setTimeout(() => setTitleOn(true), 450);
+    const b = window.setTimeout(() => setHudOn(true), 2500);
+    return () => {
+      window.clearTimeout(a);
+      window.clearTimeout(b);
+    };
+  }, [introKey, inScene]);
+  useEffect(() => {
+    if (!inScene) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'BUTTON' || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      if (e.code === 'Space' || e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        replay.current?.();
+        setIntroKey((k) => k + 1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [inScene]);
+
   const pulse = state.kind === 'ready' ? state.pulse : null;
   const head = pulse?.replay.headline ?? null;
-  const scene = cap.ok && !sceneFailed;
+  const scene = inScene;
   const why = !cap.ok && cap.reason ? WHY[cap.reason] : sceneFailed ? WHY['webgl-unavailable'] : null;
   const toggleFull = () => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -238,7 +451,19 @@ export default function LivePage() {
   return (
     <main ref={root} dir="ltr" lang="en" class="fixed inset-0 overflow-hidden bg-night text-night-ink" aria-label="Rahat Live">
       {scene ? (
-        <SceneLayer pulse={pulse} onFail={() => setSceneFailed(true)} setHover={setHover} />
+        <SceneLayer
+          pulse={pulse}
+          onFail={() => setSceneFailed(true)}
+          setHover={(h) => {
+            if (h) pickPos.current = { x: h.x, y: h.y };
+            setHover(h);
+          }}
+          onPick={(x, y) => {
+            pickPos.current = { x, y };
+            placeHover(hoverEls.current, x, y, box.w);
+          }}
+          replayRef={replay}
+        />
       ) : (
         <div class="rh-lattice-night absolute inset-0 overflow-y-auto">
           <div class="mx-auto flex min-h-full max-w-[1280px] flex-col justify-center pb-72 pt-32 md:pb-40">
@@ -246,7 +471,7 @@ export default function LivePage() {
           </div>
         </div>
       )}
-      {scene && hover ? <HoverCard info={hover} box={box} /> : null}
+      {scene && hover ? <HoverLayer info={hover} els={hoverEls} pos={pickPos} W={box.w} /> : null}
 
       <p class="sr-only" aria-live="polite">
         {pulse ? summary(pulse) : 'Loading.'}
@@ -254,8 +479,8 @@ export default function LivePage() {
 
       <header class="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-x-2 gap-y-1 p-3 md:grid md:grid-cols-[1fr_auto] md:p-5">
         <div class="pointer-events-auto flex items-center gap-3">
-          <Emblem size={full ? 60 : narrow ? 34 : 44} tone="night" animate />
-          <h1 class={`m-0 flex items-baseline gap-3 font-black tracking-tight ${full ? 'text-4xl' : 'text-xl md:text-3xl'}`}>
+          <Emblem key={introKey} size={full ? 60 : narrow ? 34 : 44} tone="night" animate />
+          <h1 class={`m-0 flex items-baseline gap-3 font-black tracking-tight transition-opacity duration-1000 ${titleOn ? 'opacity-100' : 'opacity-0'} ${full ? 'text-4xl' : 'text-xl md:text-3xl'}`}>
             Rahat Live
             <span lang="ur" dir="rtl" class="font-bold leading-[1.8] text-noor">
               راحت
@@ -313,11 +538,12 @@ export default function LivePage() {
         </p>
       ) : null}
 
-      {pulse ? (
-        <div class="absolute inset-x-0 bottom-0 z-10 flex max-h-[58dvh] flex-col gap-2 overflow-y-auto p-3 pb-[4.75rem] md:max-h-none md:overflow-visible md:p-5 md:pb-10">
+      {pulse && hudOn ? (
+        <div class="animate-fade absolute inset-x-0 bottom-0 z-10 flex max-h-[58dvh] flex-col gap-2 overflow-y-auto p-3 pb-[4.75rem] md:max-h-none md:overflow-visible md:p-5 md:pb-10">
           {showEval && head ? (
             <section
               aria-label="Evaluation headline"
+              data-label-avoid=""
               class="w-full rounded-xl border border-night-line bg-night/80 p-3 md:fixed md:right-5 md:top-[76px] md:w-[34rem] 2xl:w-[44rem]"
             >
               <h2 class="m-0 mb-2 text-xs font-bold uppercase tracking-wider text-noor">Measured on the synthetic labelled cases</h2>
@@ -353,8 +579,11 @@ export default function LivePage() {
 
           {panels ? (
             <>
-              <section aria-label="Live counters" class="w-full rounded-xl border border-night-line bg-night/80 p-3 text-sm md:w-72">
-                <h2 class="m-0 mb-2 text-xs font-bold uppercase tracking-wider text-noor">Live in the demo departments</h2>
+              <section aria-label="Live counters" data-label-avoid="" class="w-full rounded-xl border border-night-line bg-night/80 p-3 text-sm md:w-72">
+                <h2 class="m-0 mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-noor">
+                  <span aria-hidden="true" class="inline-block size-2 rounded-full bg-emerald-glow shadow-glow-emerald motion-safe:animate-pulse" />
+                  Live in the demo departments
+                </h2>
                 <dl class="m-0 grid gap-1">
                   <Stat label="Applications" value={Object.values(pulse.live.applications_by_status).reduce((a, b) => a + b, 0)} />
                   <Stat label="Decisions: automatic" value={pulse.live.decisions_by_route.auto ?? 0} tone="text-emerald-glow" />
