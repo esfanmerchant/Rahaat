@@ -100,6 +100,11 @@ def control_mocks(body: MockControlIn, principal: Principal = Depends(_control),
 
 
 @router.get("/sms", response_model=list[SmsOutboxItem], summary="What the mock SMS gateway delivered (numbers masked)")
-def mock_sms(_: Principal = Depends(_read), limit: int = Query(50, ge=1, le=200)) -> list[SmsOutboxItem]:
+def mock_sms(principal: Principal = Depends(_read), db: Session = Depends(get_db), limit: int = Query(50, ge=1, le=200)) -> list[SmsOutboxItem]:
     _demo_only()
+    if get_integration_settings().transport_effective() == "inprocess":
+        # In-process (serverless) the gateway's memory does not last between requests: read the department's copies.
+        from app.modules.notifications.service import simulated_sms
+
+        return [SmsOutboxItem(**item) for item in simulated_sms(db, principal.tenant_id, limit)]
     return [SmsOutboxItem(**{k: str(v) for k, v in item.items() if k in SmsOutboxItem.model_fields}) for item in service.mock_sms_outbox(limit)]

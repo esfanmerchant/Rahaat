@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from typing import Any
 
@@ -20,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import audit
-from app.core.crypto import blind_index, decrypt_field
+from app.core.crypto import blind_index, decrypt_field, encrypt_field
 from app.core.db import system_session
 from app.core.logging import get_logger
 from app.core.mockdata import mask_identifier
@@ -33,6 +33,8 @@ log = get_logger("rahat.notifications")
 
 SMS_JOB = "notification.sms"
 CHANNELS = ("in_app", "sms")
+# How long the simulated phone shows a sign-up code to an admin: the code's own lifetime.
+SIM_CODE_TTL = timedelta(minutes=10)
 _PAYLOAD_KEYS = ("tracking_code", "amount_pkr", "rail_ref", "proof_kind", "application_id", "payment_id", "case_id")
 
 
@@ -146,9 +148,16 @@ def _send_one_time(
 
     result = send_sms(phone, text)
     now = datetime.now(UTC)
+    row_payload: dict[str, Any] = {"_to": mask_identifier(phone)}
+    if code != text and _gateway_in_process():
+        # Serverless: the in-process mock gateway forgets between requests, so the simulated phone's copy is kept
+        # here, encrypted with the department key. Only the admin's simulated-SMS view reads it, for ten minutes.
+        tenant = db.get(models.Tenant, tenant_id)
+        if tenant is not None:
+            row_payload["_sim"] = encrypt_field(tenant.wrapped_dek, text)
     row = models.Notification(
         id=uuid.uuid4(), tenant_id=tenant_id, person_id=person_id, user_id=person.user_id if person else None, channel="sms",
-        template=template, lang=chosen, payload={"_to": mask_identifier(phone)}, body=stored, body_hash=templates.body_hash(text),
+        template=template, lang=chosen, payload=row_payload, body=stored, body_hash=templates.body_hash(text),
         verify_code=None, attempts=1, destination_hash=blind_index(phone, scope=str(tenant_id)),
         status="sent" if result.status == "sent" else "failed", last_error=None if result.status == "sent" else result.status,
         sent_at=now if result.status == "sent" else None, created_at=now,
@@ -158,6 +167,39 @@ def _send_one_time(
     audit.write(db, tenant_id=tenant_id, action="notification.sent_one_time", actor_type="system", object_type="notification",
                 object_id=row.id, result="ok" if result.status == "sent" else "failed", details={"template": template})  # fmt: skip
     return row
+
+
+def _gateway_in_process() -> bool:
+    from app.modules.integrations.settings import get_integration_settings
+
+    return get_integration_settings().transport_effective() == "inprocess"
+
+
+def simulated_sms(db: Session, tenant_id: uuid.UUID, limit: int) -> list[dict[str, str]]:
+    """What the simulated phones received from this department, newest first, in the mock gateway's shape.
+
+    Used when the mock gateway runs in-process (serverless), where its own memory does not survive between requests.
+    Numbers stay masked. A sign-up code shows only here and only within its lifetime; every other copy hides it.
+    """
+    tenant = db.get(models.Tenant, tenant_id)
+    rows = db.scalars(
+        select(models.Notification).where(models.Notification.tenant_id == tenant_id, models.Notification.channel == "sms")
+        .order_by(models.Notification.created_at.desc(), models.Notification.id.desc()).limit(limit)
+    ).all()  # fmt: skip
+    fresh = datetime.now(UTC) - SIM_CODE_TTL
+    out: list[dict[str, str]] = []
+    for row in rows:
+        payload = row.payload or {}
+        body = row.body or ""
+        sim = payload.get("_sim")
+        if isinstance(sim, str) and tenant is not None and row.created_at >= fresh:
+            try:
+                body = decrypt_field(tenant.wrapped_dek, sim)
+            except Exception:  # noqa: BLE001 - a copy that cannot be read shows the hidden text instead
+                log.warning("simulated SMS copy could not be read")
+        out.append({"message_id": f"SMS-{row.id.hex[:10].upper()}", "to": str(payload.get("_to", "")), "sender": "RAHAT", "body": body,
+                    "status": "delivered" if row.status == "sent" else str(row.status), "at": row.created_at.isoformat()})  # fmt: skip
+    return out
 
 
 def send_reply(db: Session, *, tenant_id: uuid.UUID, person_id: uuid.UUID | None, phone: str, template: str, lang: str, text: str,
