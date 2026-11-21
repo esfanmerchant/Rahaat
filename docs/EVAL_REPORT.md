@@ -142,7 +142,7 @@ Weak spots, as measured: **Roman Urdu false alarms are 14.7%** (English 0%, Urdu
 | By language | English 52/52, Roman Urdu 23/23, Urdu 22/22 |
 | By surface | question 66/66, answer 14/14, transcript 11/11, OCR text 5/5, message 1/1 |
 
-(Counts by language and surface overlap: one case can carry both.) Attacks include "ignore previous instructions", role-play, data exfiltration requests and instructions hidden in OCR text. The suite was written by the same people as the guards, so a pass rate of 100% shows the known attacks are covered, not that unknown ones are. The action guard (stopping an agent from paying without an approved decision) is covered by the payments tests, not by this suite (`docs/SECURITY_REPORT.md`).
+(Counts by language and surface overlap: one case can carry both.) Attacks include "ignore previous instructions", role-play, data exfiltration requests and instructions hidden in OCR text. The suite was written by the same people as the guards, so a pass rate of 100% shows the known attacks are covered, not that unknown ones are. The action guard (stopping an agent from paying without an approved decision) has its own tests and the agent injection suite in section 10; it is not part of this 67-attack suite.
 
 ## 5. Rules assistant (RAG) with citations
 
@@ -211,5 +211,29 @@ On Vercel there is no OCR (the function limit is 500 MB), so only the signed QR 
 - **Urdu wording quality** by a native speaker.
 - **Fairness slices** are computed by the Digital Twin (age band, district, gender) but are not reported here.
 - **Load and slow-network behaviour** beyond the 17-call latency sample above.
-- **Anomaly detection and the agent** have no separate quality evaluation in this report.
+- **Anomaly detection** has no separate quality evaluation in this report. The agent is evaluated in section 10, on synthetic labels written by its author, not by independent officers.
 - `p_ok` assumes the evidence is independent.
+
+## 10. Agent with an approval gate (WP-B)
+
+**Command:** `cd backend && uv run python -m app.modules.agent.evaluate` (the injection part alone: `uv run python -m app.modules.agent.redteam`)
+
+**Golden set.** 38 synthetic cases, each labelled with the first action an officer would most likely take, or "abstain". 28 come from the decision engine's own golden inputs (`app/synth/golden.py`): the real engine decides, and its trace, guards and handoff are what the planner sees. 10 are built by hand for branches the engine does not produce (a case already waiting for proof, a verified failure while the model leans approve, tied hypotheses, a paid application, an already resolved case, a non-application case, no trace, no payment amount, an escalated case, and a case whose notes carry an attack). The labels are the policy as its author wrote it. **Agreement therefore shows that the planner implements the stated policy and abstains where the policy says; it is not agreement with independent officers.** On the first run the planner disagreed on 1 of 38 (it proposed approval where the engine had asked for proof because the rules passed on stale income); the fix was a rule in the planner, and the numbers below are after that fix.
+
+| Measure (local planner) | Result |
+|---|---|
+| Agreement with the label | **38 of 38** |
+| Action precision / recall (when it proposes, is it right / does it propose when it should) | 1.00 / 1.00 (19 proposals) |
+| Abstain rate | **50%** (19 of 38), the same as the labelled rate; it never proposed an action on a case labelled "abstain" |
+| Proposals by tool | request_proof 7, escalate 7, approve_and_pay 3, reject_with_reason 2 |
+| Actions that ran without an officer's approval | **0**: every action tool is refused by the action guard at execution when the approval is missing or claimed by the agent or the model (5 action tools times 3 claimed sources, all refused), and the integration tests show no payment, no case change and no message before an approval |
+
+**Injection red team.** 21 attacks (English 13, Urdu 4, Roman Urdu 4) placed in OCR text, officer notes, scam-message and transcript evidence, each tried on 3 base cases (one where nothing permits approval, one where approval is correct, one that escalates), 63 trials. Each trial passes only if the local plan is identical with and without the text, a hosted planner that obeys the attack (mocked) cannot add an action the facts do not permit and no argument carries attack text or an amount, and the action guard refuses any approval claimed by the agent or the model.
+
+| Measure | Result |
+|---|---|
+| Trials passed | **63 of 63** (0 actions created or approved by an attack) |
+| Attacks the input guard also flagged for staff | 16 of 21 (the 5 it missed include a deliberately polite, plain-language plea) |
+| Trials where the attack text was withheld from the hosted planner's prompt | 48 of 63 (flagged text is not shown to the model at all) |
+
+The first run of this suite failed 12 of 63 trials: a mocked obedient model could propose a fixed-template message the attack asked for. No attacker text got through, but a hosted model must not widen the plan, so it may now only choose the action the local ladder chose (or hand the case up), and the suite passes. The attacks were written by the same author as the defences; this shows the known attacks are covered, not that unknown ones are. The hosted (Gemini) planner is tested only over a mock transport; it was not called with a real key.

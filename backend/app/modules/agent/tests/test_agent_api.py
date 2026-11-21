@@ -416,8 +416,9 @@ def test_an_obedient_hosted_planner_cannot_produce_a_payment_step(client: Any, f
         agent_settings.cache_clear()
 
 
-def test_health_lists_the_agent_planner_and_the_action_guard(client: Any) -> None:
-    response = client.get("/v1/system/health")
+def test_health_lists_the_agent_planner_and_the_action_guard(client: Any, factory: Any) -> None:
+    admin = factory.account(factory.tenant(), "admin")
+    response = client.get("/v1/system/health", headers=factory.headers(client, admin))
     assert response.status_code == 200, response.text
     listed = response.json()["providers"]["guardrails"]
     assert listed["agent_planner"] == "local" and listed["guardrails_action"].startswith("guardrails-action")

@@ -84,7 +84,7 @@ Track D2
 
 - [ ] A15 Webhooks  - [ ] A16 Plans and usage  - [ ] A17 USSD/SMS and verify code  - [ ] A18 Appeals, complaints, admin users, reports
 - [x] B12 Digital Twin: draft rules replayed over live and labelled cases, fairness slices, no side effects  - [x] B13 Evaluation summary API  - [ ] B14 Analytics  - [ ] B15 Anomaly detection  - [ ] B16 Override feedback
-- [x] C9 RAG: 7 policy documents in English and Urdu, answers copied with citations, refusal below a cost-chosen threshold; 0 wrong answers on dev and test  - [ ] C10 Agent  - [ ] C11 Guardrails: input and output guards done, 67-attack red team passes with 0 false alarms; action guard still to come with the agent  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
+- [x] C9 RAG: 7 policy documents in English and Urdu, answers copied with citations, refusal below a cost-chosen threshold; 0 wrong answers on dev and test  - [x] C10 Agent (WP-B, branch `track/wpb`): read tools, five action tools that always wait for an officer, local planner (default) and optional Gemini planner, runs API; golden 38/38, 0 actions without approval, 21-attack injection suite 63/63. Not verified: the Gemini planner against the real API (mock transport only); no staff screen yet (WP-E)  - [x] C11 Guardrails: input and output guards, 67-attack red team with 0 false alarms, and the action guard (`guardrails/action_guard.py`, checked at proposal and again at approval, every refusal audited with a code)  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
 - [ ] D1.10 Sync conflicts, local encryption  - [ ] D1.11 USSD simulator, symbols  - [ ] D1.12 Budgets in CI
 - [ ] D2.8 Digital Twin view  - [ ] D2.9 Scam Map  - [ ] D2.10 Dashboards  - [ ] D2.11 Admin screens
 
