@@ -30,7 +30,7 @@ Verified locally on Sat 21 Nov, 12:57:
 
 Verified in CI on Sat 21 Nov, 13:30: all five jobs green on three pushes, including the first real Docker build and the 71 backend tests against a Postgres that requires a password for the runtime role.
 
-Not verified: any deployed host, running the built image, a real phone, slow or offline network, the service worker in a browser, screen readers, and the Urdu wording by a native speaker. Tesseract is not installed on this machine, so OCR cannot run here yet (CI installs it).
+Not verified: any deployed host, running the built image, a real phone, slow or offline network, the service worker in a browser, screen readers, and the Urdu wording by a native speaker. OCR runs locally through RapidOCR (Tesseract is the fallback and is not installed on this machine).
 
 ## Phase 1: the spine (T0)
 
@@ -74,7 +74,7 @@ Track D2
 
 - [x] A9 API keys (scoped, hashed, shown once, a second admin for personal-data scopes)  - [x] A10 Rate limiting (per network, user, key and department lanes)  - [x] A11 Consent centre: who has my data, who looked at it (every staff and helper read is logged by person), corrections, export, erasure request  - [x] A12 Helpers: grant by phone, revoke at once, family PIN switch with short-lived tickets, 40 seeded families  - [x] A13 Offline sync: each op applied once, re-authorised under current consent, field-level merge with conflicts  - [x] A14 Security suite: authorisation matrix over every route, IDOR, raw-SQL RLS probes; docs/SECURITY_REPORT.md
 - [x] B7 Cost of being wrong: curves, ROC/PR, confusion, reliability (ECE 0.033) on 1,223 held-out cases; what-if in ~45 ms; admin cost matrix  - [x] B8 Name matching and dedupe: 456 messy pairs, 0 wrong links; Mohammad/Muhammed with another phone goes to a person  - [x] B9 Handoff package and cheapest question  - [x] B10 Golden tests (silent guesses 0, measured from stored decisions)  - [x] B11 Replay and decision list
-- [x] C4 Voice: Urdu, Roman Urdu and English answers with read-back; 91.8% accurate on unseen families, 0 wrong-but-confident; device speech first, Groq Whisper if a key is set  - [ ] C5 Audio assets  - [ ] C6 Forgery depth and metrics  - [x] C7 Scam reports (redacted), campaigns by MinHash, Scam Map data with k-anonymity (k=5), public warnings, disputes open a case  - [ ] C8 Scam checker by screenshot and voice
+- [x] C4 Voice: Urdu, Roman Urdu and English answers with read-back; 91.8% accurate on unseen families, 0 wrong-but-confident; device speech first, then Gemini (GEMINI_API_KEY) and Groq Whisper (key) on the server; Gemini is SIMULATED in tests (httpx.MockTransport), never run against the real API  - [ ] C5 Audio assets  - [ ] C6 Forgery depth and metrics  - [x] C7 Scam reports (redacted), campaigns by MinHash, Scam Map data with k-anonymity (k=5), public warnings, disputes open a case  - [ ] C8 Scam checker by screenshot and voice
 - [x] D1.5 Offline outbox: encrypted with a key from the PIN, ordered queue with idempotency, conflict re-read, idle lock  - [ ] D1.6 Voice answers  - [x] D1.7 Consent centre: who has my data, share less, take back, share again (access log screen still to wire)  - [x] D1.8 Scam checker: paste or speak, pictogram answers read aloud, links never clickable, confirmed-real messages, ask a person  - [ ] D1.9 Helper Mode
 - [x] D2.4 Rule editor (two admins, four-eyes publish shown)  - [ ] D2.5 Cost of being wrong  - [ ] D2.6 Challenge Lab  - [x] D2.7 Audit explorer
 

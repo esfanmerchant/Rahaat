@@ -25,6 +25,7 @@ dependencies = [
     "opencv-python-headless>=4.10",
     "pytesseract>=0.3.13",
     "segno>=1.6",
+    "rapidocr-onnxruntime==1.4.4",
 ]
 
 [dependency-groups]
@@ -38,6 +39,8 @@ dev = [
 
 [tool.uv]
 package = false
+# rapidocr-onnxruntime requires opencv-python; the slim image has no libGL, so the headless build (a direct dependency) replaces it.
+override-dependencies = ["opencv-python; sys_platform == 'never'"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

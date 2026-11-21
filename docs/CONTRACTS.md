@@ -86,7 +86,7 @@ Stubs live in `backend/app/modules/zz_stubs`. They load only in dev and test, ma
 Functions other tracks call (define them with these names so integration is a one-line import):
 
 - Track B: `app.modules.decision.engine.decide(inp, rules, costs, model) -> DecisionResult` (pure; also re-exported from `decision.service`).
-- Track C: `app.modules.docs_ai.service.check_document(image_bytes, kind, *, document_id) -> DocumentCheck` (pure, never raises; checks run one at a time per process). `citizen_view(check)` gives the citizen's answer and `providers()` the active providers.
+- Track C: `app.modules.docs_ai.service.check_document(image_bytes, kind, *, document_id) -> DocumentCheck` (pure, never raises; checks run one at a time per process). `citizen_view(check)` gives the citizen's answer and `providers()` the active providers (`ocr_rapidocr`, `ocr_tesseract`, `ocr_engine`). OCR engine order: RapidOCR, Tesseract, none. Voice `stt.transcribe` order: Gemini (`GEMINI_API_KEY`, `GEMINI_STT_MODEL`), Groq, local whisper, else 501; Gemini returns `confidence=None`, which the interpreter treats as unknown and always reads back; `audible=false` returns empty text (say it again).
 - Track C: `app.modules.scam.service.classify_message(text, sender) -> TypedDecision[ScamLabel]`.
 
 ## Tests

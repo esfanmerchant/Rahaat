@@ -82,3 +82,7 @@ Short records of choices we must be able to defend to the judges. Newest at the 
 ## 17. Payments: a second person above Rs 15,000
 **Decision.** A payment at or below the tenant's limit (seeded at Rs 15,000) is released as soon as the decision is approved, whether by the engine alone or by an officer. Above the limit a second person, different from whoever approved the case, must release it. The limit is tenant configuration.
 **Why.** The standard Rs 12,000 payment must be able to complete without a human when the engine is confident enough, otherwise nothing ever "acts alone". Larger amounts keep maker-checker. Lowering the limit in the demo shows the gate.
+
+## 18. RapidOCR is the default OCR; Gemini is an optional first speech provider
+**Decision.** `rapidocr-onnxruntime` 1.4.4 (Apache-2.0, PP-OCR ONNX models bundled in the wheel) is tried first for the printed card fields, then Tesseract, then nothing. It runs the recogniser only, on each field band. opencv stays headless: uv `override-dependencies` drops `opencv-python` and the direct `opencv-python-headless` dependency supplies `cv2`, so the slim image needs no libGL and no apt change. Gemini (REST through httpx, key only in a header) is tried before Groq when `GEMINI_API_KEY` is set; it gives no confidence, so a spoken answer from it is always read back for confirmation.
+**Why.** Tesseract is not installed on dev machines, so the OCR-versus-QR mismatch signal never fired locally. RapidOCR needs no binary and no network. With no key, speech behaves as before.

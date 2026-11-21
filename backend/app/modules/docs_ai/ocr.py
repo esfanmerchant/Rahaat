@@ -1,15 +1,18 @@
 """OCR of the printed card fields, behind a small engine interface.
 
-The local engine is Tesseract through `pytesseract`, used only when the binary is installed (it is in CI and in
-the Docker image). Without it `available()` is false and the rest of `check_document` still works. Whatever OCR
+The default local engine is RapidOCR (PP-OCR models in ONNX, bundled in the wheel, no network). Tesseract through
+`pytesseract` is the fallback when its binary is installed. Without either, `available()` is false and the rest of
+`check_document` still works. Whatever OCR
 returns is data: it is normalised with fixed rules and compared with the signed QR, never interpreted.
 """
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import re
 import shutil
+import threading
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Protocol
@@ -105,10 +108,64 @@ class TesseractOcr:
         return out
 
 
+_rapid_lock = threading.Lock()
+_rapid_model: object | None = None
+
+
+def _rapid_instance() -> object | None:
+    """One recogniser per process, built on first use under a lock. None when the package cannot be imported."""
+    global _rapid_model
+    if _rapid_model is None:
+        with _rapid_lock:
+            if _rapid_model is None:
+                try:
+                    from rapidocr_onnxruntime import RapidOCR
+
+                    _rapid_model = RapidOCR()
+                except Exception:  # noqa: BLE001 - missing package or model: "not available", never a crash
+                    return None
+    return _rapid_model
+
+
+class RapidOcr:
+    """PP-OCR recogniser only: each field band is one line, so no text detection and no angle classifier run."""
+
+    name = "rapidocr"
+
+    def __init__(self) -> None:
+        self._available: bool | None = None
+
+    def available(self) -> bool:
+        if self._available is None:
+            self._available = importlib.util.find_spec("rapidocr_onnxruntime") is not None and _rapid_instance() is not None
+        return self._available
+
+    def read_lines(self, bands: list[np.ndarray]) -> list[OcrLine | None]:
+        model = _rapid_instance() if bands else None
+        if model is None:
+            return [None for _ in bands]
+        import cv2
+
+        out: list[OcrLine | None] = []
+        for band in bands:
+            try:
+                img = cv2.cvtColor(band, cv2.COLOR_GRAY2BGR) if band.ndim == 2 else band
+                with _rapid_lock:  # one call at a time: the wrapper keeps per-call state
+                    result, _ = model(img, use_det=False, use_cls=False, use_rec=True)  # type: ignore[operator]
+                text, score = str(result[0][0]).strip(), float(result[0][1])
+                out.append(OcrLine(text, max(0.0, min(1.0, score))) if text else None)
+            except Exception:  # noqa: BLE001 - OCR failure means "not read", never a crash
+                out.append(None)
+        return out
+
+
 @lru_cache(maxsize=1)
 def default_engine() -> OcrEngine:
-    engine = TesseractOcr()
-    return engine if engine.available() else NoOcr()
+    """RapidOCR, then Tesseract, then nothing."""
+    for engine in (RapidOcr(), TesseractOcr()):
+        if engine.available():
+            return engine
+    return NoOcr()
 
 
 # ---------------------------------------------------------------- field parsing (pure, unit-tested with canned text)
