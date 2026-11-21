@@ -125,9 +125,11 @@ export function AgentPanel({ caseId }: { caseId: string }) {
         {runs !== null ? (
           <div class="flex flex-wrap items-center gap-2">
             {isOfficer ? (
-              <Button size="sm" variant="primary" busy={starting} onClick={() => void start()}>
-                {latest && latest.status === 'waiting_approval' ? 'Show the waiting run' : latest ? 'Start assistant again' : 'Start assistant'}
-              </Button>
+              latest && latest.status === 'waiting_approval' ? null : (
+                <Button size="sm" variant="primary" busy={starting} onClick={() => void start()}>
+                  {latest ? 'Run the assistant again' : 'Start assistant'}
+                </Button>
+              )
             ) : (
               <p class="st-chip info">Read-only for {role || 'your role'}. Case text and the rationale are not shown to this role.</p>
             )}
@@ -204,7 +206,7 @@ export function RunView({ run, role, onChange, onReload, compact }: { run: Run; 
             <span class="ms-2 inline-flex flex-wrap gap-1">
               {live.flags.map((f, i) => (
                 <span key={`${f}-${i}`} class="st-chip warn font-mono">
-                  {humanize(f)}
+                  {humanize(f).replace(':', ': ')}
                 </span>
               ))}
             </span>

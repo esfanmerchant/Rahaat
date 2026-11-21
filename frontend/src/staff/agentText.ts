@@ -75,7 +75,7 @@ export function summarize(tool: string, o: Out): string {
         .slice(0, 2)
         .map((h) => `${humanize(str(h.label))} ${typeof h.probability === 'number' ? Math.round(h.probability * 100) : '?'}%`)
         .join(' vs ');
-      return `${str(o['understanding'])}${lead ? ` Leading: ${lead}.` : ''}`;
+      return `${typeof o['understanding'] === 'string' && o['understanding'] ? o['understanding'] : 'No handoff package on this case.'}${lead ? ` Leading: ${lead}.` : ''}`;
     }
     case 'explain_decision': {
       const p = o['p_ok'];
