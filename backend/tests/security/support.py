@@ -232,7 +232,7 @@ def _build_side(client: TestClient, factory: Any, label: str) -> Side:
         job = models.Job(id=uuid.uuid4(), tenant_id=tenant.id, kind="security.probe", status="dead", payload={})
         db.add_all([document, approval, job])
         webhook = models.Webhook(id=uuid.uuid4(), tenant_id=tenant.id, url="mock://receiver", events=["case.opened"], active=True,
-                                 secret_enc=encrypt_field(tenant.wrapped_dek, "whsec_security_probe"), created_by=accounts["admin"].user_id)  # fmt: skip
+                                 secret_enc=encrypt_field(tenant.wrapped_dek, "whsec_security_probe"), created_by=accounts["admin"].user_id)  # fmt: skip  # noqa: E501
         db.add(webhook)
         db.flush()
         delivery = models.WebhookDelivery(id=uuid.uuid4(), tenant_id=tenant.id, webhook_id=webhook.id, event="case.opened",

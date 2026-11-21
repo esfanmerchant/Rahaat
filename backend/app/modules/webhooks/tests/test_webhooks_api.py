@@ -54,7 +54,7 @@ def world(client: Any, factory: Any) -> dict[str, Any]:
     }  # fmt: skip
 
 
-def test_the_secret_is_shown_once_stored_encrypted_and_only_this_departments_admin_manages_it(client: Any, factory: Any, world: dict[str, Any]) -> None:
+def test_the_secret_is_shown_once_stored_encrypted_and_only_this_departments_admin_manages_it(client: Any, factory: Any, world: dict[str, Any]) -> None:  # noqa: E501
     created = _create(client, world["admin"], ["case.opened"])
     secret = created["secret"]
     assert secret.startswith("whsec_") and len(secret) > 30 and created["secret_hint"] == secret[-4:] and created["is_mock_receiver"]
@@ -125,7 +125,7 @@ def test_a_case_opened_event_reaches_the_mock_receiver_signed_and_without_person
     assert item["signature_valid"] is True and item["event"] == "case.opened" and item["delivery_id"] == delivery["id"]
     body = item["body"]
     assert body["event"] == "case.opened" and body["id"] == delivery["id"]
-    assert body["data"] == {"case_id": str(ids["case_id"]), "kind": "application_review", "status": "open", "application_id": str(ids["application_id"])}
+    assert body["data"] == {"case_id": str(ids["case_id"]), "kind": "application_review", "status": "open", "application_id": str(ids["application_id"])}  # noqa: E501
 
     # Payloads carry ids and statuses only: no name, phone or national ID, in what was stored or in what was sent.
     with system_session() as db:
@@ -177,7 +177,7 @@ def test_failures_retry_with_backoff_then_go_dead_and_can_be_redelivered(client:
     assert seen[-1]["status"] == "dead" and seen[-1]["next_attempt_at"] is None and seen[-1]["max_attempts"] == rules.MAX_ATTEMPTS
     assert _deliver(tenant.id, now=clock + timedelta(days=1)) == 0, "a dead delivery is not retried"
     with system_session() as db:
-        dead = db.scalars(select(models.AuditLog).where(models.AuditLog.tenant_id == tenant.id, models.AuditLog.action == "webhook.delivery_dead")).all()
+        dead = db.scalars(select(models.AuditLog).where(models.AuditLog.tenant_id == tenant.id, models.AuditLog.action == "webhook.delivery_dead")).all()  # noqa: E501
         assert len(dead) == 1 and dead[0].reason == "http_503"
 
     _receiver_config(hook["id"], down=False)

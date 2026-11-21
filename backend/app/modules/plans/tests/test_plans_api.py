@@ -60,7 +60,7 @@ def test_the_application_limit_refuses_at_creation_with_a_clear_problem_and_coun
 
     refused = _apply(client, headers, second, op="op-0000002")
     body = refused.json()
-    assert refused.status_code == 429 and body["code"] == "plan_limit_reached" and refused.headers["content-type"].startswith("application/problem+json")
+    assert refused.status_code == 429 and body["code"] == "plan_limit_reached" and refused.headers["content-type"].startswith("application/problem+json")  # noqa: E501
     assert (body["metric"], body["limit"], body["used"]) == ("applications", 1, 1)
     next_month = datetime.fromisoformat(body["resets_at"])
     assert next_month.day == 1 and next_month > datetime.now(UTC) and int(refused.headers["retry-after"]) > 0

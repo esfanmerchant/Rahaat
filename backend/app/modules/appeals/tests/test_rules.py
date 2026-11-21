@@ -14,7 +14,7 @@ DECISION = uuid.uuid4()
 
 
 def _reason(**overrides: object) -> str | None:
-    args: dict[str, object] = {"application_status": "rejected", "decided_at": NOW - timedelta(days=3), "now": NOW, "decision_id": DECISION, "earlier": []}
+    args: dict[str, object] = {"application_status": "rejected", "decided_at": NOW - timedelta(days=3), "now": NOW, "decision_id": DECISION, "earlier": []}  # noqa: E501
     args.update(overrides)
     return rules.ineligible_reason(**args)  # type: ignore[arg-type]
 

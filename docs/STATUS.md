@@ -82,7 +82,7 @@ Track D2
 
 ## Phase 3: bonus features and the rest (T2)
 
-- [ ] A15 Webhooks  - [ ] A16 Plans and usage  - [ ] A17 USSD/SMS and verify code  - [ ] A18 Appeals, complaints, admin users, reports
+- [x] A15 Webhooks: outbox emit from cases, payments and the pipeline; HMAC-signed delivery with backoff and jitter, then dead; resolve-and-pin SSRF guard (private, loopback, metadata, redirects and rebinding refused, tested); delivery log with cursor and redeliver; mock receiver verifies signatures; payloads asserted to carry ids and statuses only  - [x] A16 Plans and usage: `free`, `standard`, `government`; atomic metering at applications, ocr, sms, ai calls and API keys; 429 `plan_limit_reached` with metric, limit, used and reset date; usage report with six months; 14 racing callers for 5 units get exactly 5  - [ ] A17 USSD/SMS and verify code  - [x] A18 Appeals and complaints: a different officer decides (enforced and audited), overturn pays through the payment service, consent and tenant isolation tested (admin users and reports are not part of WP-A and stay open)
 - [x] B12 Digital Twin: draft rules replayed over live and labelled cases, fairness slices, no side effects  - [x] B13 Evaluation summary API  - [ ] B14 Analytics  - [ ] B15 Anomaly detection  - [ ] B16 Override feedback
 - [x] C9 RAG: 7 policy documents in English and Urdu, answers copied with citations, refusal below a cost-chosen threshold; 0 wrong answers on dev and test  - [ ] C10 Agent  - [ ] C11 Guardrails: input and output guards done, 67-attack red team passes with 0 false alarms; action guard still to come with the agent  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
 - [ ] D1.10 Sync conflicts, local encryption  - [ ] D1.11 USSD simulator, symbols  - [ ] D1.12 Budgets in CI
