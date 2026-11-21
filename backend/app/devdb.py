@@ -1,20 +1,22 @@
 """Embedded PostgreSQL 16 with pgvector for development and tests.
 
 No Docker and no account are needed: the `pgserver` package ships the binaries. The server keeps its
-data in `<repo>/.devdb/pg16` and stays running between commands so they start fast.
+data in `<repo>/.devdb/pg16` (or in `RAHAT_DEVDB_DIR`, which the live demo on this PC uses) and stays
+running between commands so they start fast. It listens on 127.0.0.1 only and trusts local connections.
 
-    uv run python -m app.devdb url     # print the dev database URL
-    uv run python -m app.devdb stop    # stop the server
-    uv run python -m app.devdb reset   # drop and recreate the dev database
+    uv run python -m app.devdb url [name]   # print the URL of a database (default rahat_dev), creating it
+    uv run python -m app.devdb stop         # stop the server
+    uv run python -m app.devdb reset        # drop and recreate the dev database
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = REPO_ROOT / ".devdb" / "pg16"
+DATA_DIR = Path(os.environ.get("RAHAT_DEVDB_DIR") or REPO_ROOT / ".devdb" / "pg16")
 
 
 def _server():  # type: ignore[no-untyped-def]
@@ -81,7 +83,7 @@ def stop() -> None:
 def main(argv: list[str]) -> int:
     command = argv[1] if len(argv) > 1 else "url"
     if command == "url":
-        print(database_uri("rahat_dev"))
+        print(database_uri(argv[2] if len(argv) > 2 else "rahat_dev"))
     elif command == "stop":
         stop()
         print("stopped")

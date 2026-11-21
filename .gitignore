@@ -43,3 +43,5 @@ AI_Hackathon_*.pdf
 
 # local git worktrees used by parallel track agents
 .wt/
+# live demo on this PC: release worktree, database, logs, secrets (deploy/local/live.ps1)
+.live/

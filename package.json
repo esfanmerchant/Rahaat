@@ -19,7 +19,12 @@
     "verify:fast": "npm run lint && npm run typecheck && npm run test:fast && npm run lint:mock",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build:web && npm run lint:mock",
     "db:stop": "uv run --directory backend python -m app.devdb stop",
-    "install:all": "uv sync --directory backend && npm --prefix frontend install"
+    "install:all": "uv sync --directory backend && npm --prefix frontend install",
+    "live:start": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local/live.ps1 start",
+    "live:update": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local/live.ps1 update",
+    "live:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local/live.ps1 stop",
+    "live:status": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local/live.ps1 status",
+    "live:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local/live.ps1 reset"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

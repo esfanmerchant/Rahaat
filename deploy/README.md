@@ -141,65 +141,51 @@ git push
 6. Check: `curl -i https://YOUR-USER-rahat.hf.space/healthz`.
 7. Reset demo data: the Space has no shell. Run the reset from your PC against Neon (0.5), then restart the Space from its Settings page.
 
-## 3. This Windows PC + a tunnel (also Monday's Plan C)
+## 3. This Windows PC + a tunnel (the current live demo, and Monday's Plan C)
 
-Cost: $0. The PC must stay on, awake and online. This runs natively, no Docker.
+Cost: $0. No Docker and no database account: the database is an embedded PostgreSQL on this PC. The PC must stay on, awake and online for the URL to work.
 
-### 3.1 Prepare
+### 3.1 Commands (PowerShell or any terminal, from the repo root)
 
-```
-npm run install:all
-npm --prefix frontend run build
-```
+| Command | What it does |
+|---|---|
+| `npm run live:start` | Builds a release of `main` in `.live\app`, starts the database, the API on `127.0.0.1:8080` and a tunnel, and prints the public URL |
+| `npm run live:update` | Moves the release to the newest `main` commit, migrates and restarts the API. The tunnel keeps running, so the URL stays the same |
+| `npm run live:status` | What is running, the local and public health checks, and the URL |
+| `npm run live:reset` | Wipes and reseeds the live demo data |
+| `npm run live:stop` | Stops the API, the mock services and the tunnel. The data is kept |
 
-### 3.2 Run in demo mode (PowerShell, from the repo root)
+Everything is in `.live\` (git-ignored): the release worktree, the database files, logs, the tunnel program and `secrets.env`, whose secrets are generated on the first start. Never commit or share that folder. Logs are in `.live\logs`.
 
-```
-$env:APP_ENV = "demo"
-$env:DATABASE_URL_OWNER = "postgresql://...neon direct string..."
-$env:APP_DB_PASSWORD = "..."
-$env:SECRET_KEY = "..."
-$env:MASTER_KEY = "..."
-$env:FRONTEND_DIST = "$PWD\frontend\dist"
-npm run migrate
-npm run seed -- --if-empty
-Start-Process -NoNewWindow uv -ArgumentList "run","--directory","backend","uvicorn","app.mocks.main:app","--host","127.0.0.1","--port","9001"
-uv run --directory backend uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
-```
+The release is a separate git worktree pinned to one commit, so merging into `main` never changes the running site until you run `live:update`.
 
-Skip the `Start-Process` line until `backend/app/mocks/main.py` exists. Check locally with `curl.exe -i http://127.0.0.1:8000/healthz`. In Windows power settings, make the PC never sleep.
+### 3.2 Before it is public
 
-The API listens on `127.0.0.1` only, so nothing on your network can reach it except through the tunnel, and the tunnel program on the same PC is the one address uvicorn trusts for forwarded headers by default. Do not add `--forwarded-allow-ips "*"` on Windows: uvicorn's command line turns `*` into the file names in the folder and refuses to start.
+- Keep the PC awake while plugged in, from an administrator PowerShell: `powercfg /change standby-timeout-ac 0` and `powercfg /change hibernate-timeout-ac 0`.
+- After a reboot run `npm run live:start` again.
+- The API listens on `127.0.0.1` only. Nothing on your network reaches it except through the tunnel, and uvicorn trusts forwarded headers only from `127.0.0.1`, which is the tunnel program. Do not add `--forwarded-allow-ips "*"`: on Windows uvicorn turns `*` into the file names in the folder and refuses to start.
+- The embedded database also listens on `127.0.0.1` only and trusts local connections, so its password is not checked. Acceptable for a demo on one PC; a real deployment uses a managed database with passwords (sections 1 and 2).
 
-### 3.3 Tunnel A: Tailscale Funnel (stable URL, recommended)
+### 3.3 Tunnel A: Cloudflare quick tunnel (default, no account)
+
+`live:start` downloads the official `cloudflared` build (version and SHA-256 pinned in `deploy/local/live.ps1`, checked before it runs) and opens a quick tunnel. The URL looks like `https://some-random-words.trycloudflare.com`. It changes whenever the tunnel restarts: after `live:stop`, a reboot, or a crash. Quick tunnels do not carry server-sent events, so live screens fall back to polling.
+
+### 3.4 Tunnel B: Tailscale Funnel (stable URL, use it for the submission)
 
 1. Install Tailscale from https://tailscale.com/download and sign in.
-2. In the admin console (https://login.tailscale.com/admin), enable **HTTPS certificates** (DNS page) and allow Funnel for your device (Access controls).
-3. In a new PowerShell window:
+2. In the admin console (https://login.tailscale.com/admin), turn on **HTTPS certificates** (DNS page) and allow Funnel for this device (Access controls).
+3. `npm run live:stop`, then `powershell -NoProfile -ExecutionPolicy Bypass -File deploy/local/live.ps1 start -Tunnel tailscale`.
+
+The URL is `https://YOUR-PC.YOUR-TAILNET.ts.net` and stays the same across restarts and reboots.
+
+### 3.5 Check it from outside
 
 ```
-tailscale funnel --bg 8000
-tailscale funnel status
+curl.exe -i https://YOUR-URL/healthz
+curl.exe https://YOUR-URL/v1/demo/accounts
 ```
 
-   The URL is `https://YOUR-PC.YOUR-TAILNET.ts.net` and stays the same every time.
-4. Stop it with `tailscale funnel reset`.
-
-### 3.4 Tunnel B: Cloudflare quick tunnel (no account, fallback)
-
-```
-winget install --id Cloudflare.cloudflared
-cloudflared tunnel --url http://127.0.0.1:8000
-```
-
-It prints a random `https://something.trycloudflare.com` URL that changes on every run. Quick tunnels do **not** support server-sent events (SSE), so live-streaming screens will not update. Prefer Tailscale.
-
-### 3.5 Check and reset
-
-```
-curl.exe -i https://YOUR-TUNNEL-URL/healthz
-npm run seed -- --reset
-```
+Then open the URL on a phone on mobile data, not your Wi-Fi.
 
 ## 4. Render free web service (last resort, `AI_PROFILE=lite`)
 
