@@ -1,0 +1,262 @@
+{
+ "next.ask_again": {
+  "en": "If this is wrong, ask a person to check again.",
+  "ur": "اگر یہ غلط ہے تو کسی فرد سے دوبارہ جانچ کا کہیں۔"
+ },
+ "next.give_consent": {
+  "en": "Open the permission page and say yes.",
+  "ur": "اجازت کا صفحہ کھولیں اور ہاں کہیں۔"
+ },
+ "next.payment_soon": {
+  "en": "Wait for a message about your payment.",
+  "ur": "اپنی رقم کے پیغام کا انتظار کریں۔"
+ },
+ "next.retake_card_photo": {
+  "en": "Put the card on a flat place and take the photo.",
+  "ur": "کارڈ کو سیدھی جگہ پر رکھ کر تصویر لیں۔"
+ },
+ "next.send_card_photo": {
+  "en": "Put the card on a flat place and take the photo.",
+  "ur": "کارڈ کو سیدھی جگہ پر رکھ کر تصویر لیں۔"
+ },
+ "next.send_income_proof": {
+  "en": "Take a photo of the paper and send it.",
+  "ur": "کاغذ کی تصویر لیں اور بھیجیں۔"
+ },
+ "next.wait_for_person": {
+  "en": "We will send you a message when it is done.",
+  "ur": "کام مکمل ہونے پر ہم آپ کو پیغام بھیجیں گے۔"
+ },
+ "reason.approved": {
+  "en": "Good news. You can get the Rahat payment. The money will come to your account soon.",
+  "ur": "خوشخبری۔ آپ کو راحت کی رقم ملے گی۔ رقم جلد آپ کے اکاؤنٹ میں آ جائے گی۔"
+ },
+ "reason.ask_income_proof": {
+  "en": "We could not check your monthly income. Please show one paper with your income, like a pay slip.",
+  "ur": "ہم آپ کی ماہانہ آمدنی کی تصدیق نہیں کر سکے۔ براہ کرم آمدنی کا ایک کاغذ دکھائیں، جیسے تنخواہ کی پرچی۔"
+ },
+ "reason.ask_rahat_id": {
+  "en": "We need a photo of your Rahat card. Please take a photo of the card and send it.",
+  "ur": "ہمیں آپ کے راحت کارڈ کی تصویر چاہیے۔ براہ کرم کارڈ کی تصویر لے کر بھیجیں۔"
+ },
+ "reason.ask_rahat_id_retake": {
+  "en": "The photo of your card was not clear. Please take it again in good light.",
+  "ur": "آپ کے کارڈ کی تصویر صاف نہیں تھی۔ براہ کرم اچھی روشنی میں دوبارہ تصویر لیں۔"
+ },
+ "reason.human_check": {
+  "en": "A person will check your application. This is a normal step. You do not need to do anything now.",
+  "ur": "ایک فرد آپ کی درخواست دیکھے گا۔ یہ ایک عام مرحلہ ہے۔ آپ کو ابھی کچھ نہیں کرنا۔"
+ },
+ "reason.human_consent_needed": {
+  "en": "We need your permission to use your information. Without it we cannot check your application.",
+  "ur": "ہمیں آپ کی معلومات استعمال کرنے کی اجازت چاہیے۔ اجازت کے بغیر ہم آپ کی درخواست نہیں دیکھ سکتے۔"
+ },
+ "reason.human_identity_check": {
+  "en": "We could not match your name with the records. A person will check it for you.",
+  "ur": "ہم آپ کا نام ریکارڈ سے نہیں ملا سکے۔ ایک فرد آپ کے لیے اسے دیکھے گا۔"
+ },
+ "reason.human_income_unverified": {
+  "en": "We could not check your monthly income. A person will look at your application.",
+  "ur": "ہم آپ کی ماہانہ آمدنی کی تصدیق نہیں کر سکے۔ ایک فرد آپ کی درخواست دیکھے گا۔"
+ },
+ "reason.human_registry_down": {
+  "en": "Our records service is not working right now. A person will check your application.",
+  "ur": "ہمارا ریکارڈ کا نظام ابھی کام نہیں کر رہا۔ ایک فرد آپ کی درخواست دیکھے گا۔"
+ },
+ "reason.rejected_income_over_cap": {
+  "en": "The records show your monthly income is above the limit. So you cannot get this payment now.",
+  "ur": "ریکارڈ کے مطابق آپ کی ماہانہ آمدنی حد سے زیادہ ہے۔ اس لیے ابھی آپ کو یہ رقم نہیں مل سکتی۔"
+ },
+ "reason.rejected_other_aid": {
+  "en": "The records show you already get another relief payment. So you cannot get this one too.",
+  "ur": "ریکارڈ کے مطابق آپ کو پہلے سے ایک اور امداد مل رہی ہے۔ اس لیے آپ کو یہ رقم نہیں مل سکتی۔"
+ },
+ "reason.rejected_rule": {
+  "en": "You do not meet one rule of this program. So you cannot get this payment now.",
+  "ur": "آپ اس پروگرام کی ایک شرط پوری نہیں کرتے۔ اس لیے ابھی آپ کو یہ رقم نہیں مل سکتی۔"
+ },
+ "scam.certainty.confirmed_real": {
+  "en": "This is a real message from Rahat.",
+  "ur": "یہ راحت کا اصلی پیغام ہے۔"
+ },
+ "scam.certainty.likely_scam": {
+  "en": "This message is most likely a scam.",
+  "ur": "یہ پیغام غالباً دھوکا ہے۔"
+ },
+ "scam.certainty.looks_real": {
+  "en": "This message looks real.",
+  "ur": "یہ پیغام اصلی لگتا ہے۔"
+ },
+ "scam.certainty.might_be_scam": {
+  "en": "This message might be a scam.",
+  "ur": "یہ پیغام دھوکا ہو سکتا ہے۔"
+ },
+ "scam.certainty.not_sure": {
+  "en": "We are not sure about this message.",
+  "ur": "ہمیں اس پیغام کا یقین نہیں۔"
+ },
+ "scam.reason.asks_cnic": {
+  "en": "It asks for your ID card number by message.",
+  "ur": "اس میں پیغام کے ذریعے شناختی کارڈ نمبر مانگا گیا ہے۔"
+ },
+ "scam.reason.asks_fee": {
+  "en": "It asks you to pay a fee, and Rahat never asks for a fee.",
+  "ur": "اس میں فیس مانگی گئی ہے، اور راحت کبھی فیس نہیں مانگتا۔"
+ },
+ "scam.reason.asks_money": {
+  "en": "It asks you to send money.",
+  "ur": "اس میں پیسے بھیجنے کا کہا گیا ہے۔"
+ },
+ "scam.reason.asks_otp": {
+  "en": "It asks for a secret code sent to your phone.",
+  "ur": "اس میں فون پر آنے والا خفیہ کوڈ مانگا گیا ہے۔"
+ },
+ "scam.reason.asks_pin": {
+  "en": "It asks for your PIN or password.",
+  "ur": "اس میں آپ کا پن یا پاس ورڈ مانگا گیا ہے۔"
+ },
+ "scam.reason.code_real_text_changed": {
+  "en": "The code is from a real message, but the words were changed.",
+  "ur": "کوڈ اصلی پیغام کا ہے، مگر الفاظ بدل دیے گئے ہیں۔"
+ },
+ "scam.reason.code_real_text_differs": {
+  "en": "The code is real, but the words are not the same as our message.",
+  "ur": "کوڈ اصلی ہے، مگر الفاظ ہمارے پیغام جیسے نہیں۔"
+ },
+ "scam.reason.code_typo_possible": {
+  "en": "If you typed the code yourself, check it again.",
+  "ur": "اگر کوڈ آپ نے خود لکھا ہے تو دوبارہ دیکھ لیں۔"
+ },
+ "scam.reason.compare_with_app": {
+  "en": "Check that the words match the message in your Rahat app.",
+  "ur": "دیکھ لیں کہ الفاظ راحت ایپ والے پیغام جیسے ہی ہوں۔"
+ },
+ "scam.reason.contact_number": {
+  "en": "It asks you to call or message a phone number.",
+  "ur": "اس میں کسی نمبر پر کال یا پیغام کرنے کا کہا گیا ہے۔"
+ },
+ "scam.reason.has_link": {
+  "en": "It asks you to open a link.",
+  "ur": "اس میں لنک کھولنے کا کہا گیا ہے۔"
+ },
+ "scam.reason.link_app_file": {
+  "en": "The link downloads an app file.",
+  "ur": "یہ لنک ایپ کی فائل ڈاؤن لوڈ کرتا ہے۔"
+ },
+ "scam.reason.link_chat": {
+  "en": "The link opens a chat with a stranger.",
+  "ur": "یہ لنک کسی اجنبی سے چیٹ کھولتا ہے۔"
+ },
+ "scam.reason.link_hidden": {
+  "en": "The link hides where it really goes.",
+  "ur": "لنک اپنا اصل پتہ چھپاتا ہے۔"
+ },
+ "scam.reason.link_ip": {
+  "en": "The link uses numbers instead of a website name.",
+  "ur": "لنک میں ویب سائٹ کے نام کی جگہ نمبر ہیں۔"
+ },
+ "scam.reason.link_lookalike": {
+  "en": "The link looks like an official site, but it is not.",
+  "ur": "لنک سرکاری لگتا ہے مگر سرکاری نہیں۔"
+ },
+ "scam.reason.link_lookalike_letters": {
+  "en": "The link uses letters that only look normal.",
+  "ur": "لنک میں ملتے جلتے حروف استعمال ہوئے ہیں۔"
+ },
+ "scam.reason.link_not_secure": {
+  "en": "The link is not secure.",
+  "ur": "یہ لنک محفوظ نہیں۔"
+ },
+ "scam.reason.link_odd_ending": {
+  "en": "The link has an unusual ending for an official site.",
+  "ur": "لنک کا آخری حصہ سرکاری ویب سائٹ جیسا نہیں۔"
+ },
+ "scam.reason.link_phishy": {
+  "en": "The link asks you to log in or claim something.",
+  "ur": "لنک لاگ ان کرنے یا کچھ وصول کرنے کا کہتا ہے۔"
+ },
+ "scam.reason.matches_template": {
+  "en": "The words match a real Rahat message.",
+  "ur": "الفاظ راحت کے اصلی پیغام سے ملتے ہیں۔"
+ },
+ "scam.reason.mixed_signals": {
+  "en": "Some parts look real and some look like a scam.",
+  "ur": "اس کے کچھ حصے اصلی اور کچھ دھوکے جیسے لگتے ہیں۔"
+ },
+ "scam.reason.model_unsure": {
+  "en": "We could not tell if it is real.",
+  "ur": "ہم یہ نہیں جان سکے کہ یہ اصلی ہے یا نہیں۔"
+ },
+ "scam.reason.no_code_to_check": {
+  "en": "Real Rahat messages end with a code, and this one has none to check.",
+  "ur": "راحت کے اصلی پیغام کے آخر میں کوڈ ہوتا ہے، اس میں چیک کرنے کو کوڈ نہیں۔"
+ },
+ "scam.reason.no_scam_signs": {
+  "en": "We found no signs of a scam.",
+  "ur": "ہمیں اس میں دھوکے کی کوئی نشانی نہیں ملی۔"
+ },
+ "scam.reason.official_sender": {
+  "en": "It came from our official sender name.",
+  "ur": "یہ ہمارے سرکاری نام سے آیا ہے۔"
+ },
+ "scam.reason.pay_to_receive": {
+  "en": "It says you must pay first to get money.",
+  "ur": "اس میں کہا گیا ہے کہ رقم لینے سے پہلے پیسے دیں۔"
+ },
+ "scam.reason.prize": {
+  "en": "It says you won a prize you did not enter for.",
+  "ur": "اس میں ایسے انعام کی بات ہے جس کے لیے آپ نے حصہ نہیں لیا۔"
+ },
+ "scam.reason.rahat_without_code": {
+  "en": "It says it is from Rahat, but it has no code to check.",
+  "ur": "یہ راحت کے نام سے ہے مگر اس میں چیک کرنے کو کوڈ نہیں۔"
+ },
+ "scam.reason.reads_like_scam": {
+  "en": "It reads like scam messages we know.",
+  "ur": "یہ ان دھوکے والے پیغامات جیسا ہے جو ہم جانتے ہیں۔"
+ },
+ "scam.reason.sender_lookalike": {
+  "en": "The sender name looks official, but it is not ours.",
+  "ur": "بھیجنے والے کا نام سرکاری لگتا ہے مگر ہمارا نہیں۔"
+ },
+ "scam.reason.sender_mobile_official": {
+  "en": "It says it is official, but it came from a personal mobile number.",
+  "ur": "یہ سرکاری ہونے کا دعویٰ کرتا ہے مگر ذاتی موبائل نمبر سے آیا ہے۔"
+ },
+ "scam.reason.too_short": {
+  "en": "The message is too short to tell.",
+  "ur": "پیغام بہت چھوٹا ہے، اس سے پتہ نہیں چلتا۔"
+ },
+ "scam.reason.urgency": {
+  "en": "It rushes you to act fast.",
+  "ur": "یہ آپ کو جلدی کرنے پر مجبور کرتا ہے۔"
+ },
+ "scam.reason.verify_code_confirmed": {
+  "en": "This code matches a message we sent.",
+  "ur": "یہ کوڈ ہمارے بھیجے ہوئے پیغام سے ملتا ہے۔"
+ },
+ "scam.reason.verify_code_not_found": {
+  "en": "The code in it does not match any message we sent.",
+  "ur": "اس کا کوڈ ہمارے کسی پیغام سے نہیں ملتا۔"
+ },
+ "scam.todo.confirmed_real": {
+  "en": "You can follow it in the Rahat app.",
+  "ur": "آپ راحت ایپ میں اس پر عمل کر سکتے ہیں۔"
+ },
+ "scam.todo.likely_scam": {
+  "en": "Do not reply, call, pay or share your PIN, and delete the message.",
+  "ur": "جواب نہ دیں، کال نہ کریں، پیسے یا پن نہ دیں، اور پیغام مٹا دیں۔"
+ },
+ "scam.todo.looks_real": {
+  "en": "Still, never pay a fee or share your PIN.",
+  "ur": "پھر بھی کبھی فیس نہ دیں اور پن کسی کو نہ بتائیں۔"
+ },
+ "scam.todo.might_be_scam": {
+  "en": "Do not pay or share your PIN, and ask a person to check it.",
+  "ur": "پیسے یا پن نہ دیں، اور کسی افسر سے چیک کروائیں۔"
+ },
+ "scam.todo.not_sure": {
+  "en": "Do not act on it yet; tap Ask a person and an officer will check it.",
+  "ur": "ابھی اس پر عمل نہ کریں؛ افسر سے پوچھیں دبائیں، افسر اسے دیکھے گا۔"
+ }
+}
