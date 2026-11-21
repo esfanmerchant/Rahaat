@@ -44,10 +44,10 @@ export const NAV_ITEMS: readonly NavItem[] = [
 ];
 
 /**
- * Build with VITE_SHOW_UNBUILT=false before the demo to hide every page that
- * is still a placeholder (CLAUDE.md: never leave a half-built screen reachable).
+ * Placeholder pages show only on the dev server (CLAUDE.md: never leave a half-built screen reachable).
+ * Every production build hides them, wherever it is deployed; VITE_SHOW_UNBUILT=true shows them in a build on purpose.
  */
-export const SHOW_UNBUILT = import.meta.env.VITE_SHOW_UNBUILT !== 'false';
+export const SHOW_UNBUILT = import.meta.env.DEV ? import.meta.env.VITE_SHOW_UNBUILT !== 'false' : import.meta.env.VITE_SHOW_UNBUILT === 'true';
 
 export function isStaffNavRole(role: string): role is StaffRole {
   return role === 'officer' || role === 'admin' || role === 'auditor';
