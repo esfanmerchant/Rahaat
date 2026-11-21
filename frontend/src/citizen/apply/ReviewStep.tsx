@@ -138,7 +138,8 @@ export function ReviewStep() {
   const waiting = submitWaiting.value;
   const offline = !online.value;
   return (
-    <StepLayout step="review" speech={speech} icon="document" title={t('review_title')} busy={busy}>
+    // While Send waits for the network the person can still go back; it is sent when the network returns.
+    <StepLayout step="review" speech={speech} icon="document" title={t('review_title')} busy={busy && !waiting}>
       <p class="text-lg text-ink-muted">{t('review_prompt')}</p>
       <ul class="flex flex-col gap-2">
         {list.map((row) => (
