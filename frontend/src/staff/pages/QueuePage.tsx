@@ -136,7 +136,7 @@ export function QueuePage() {
       <p id="sort-help" class="text-xs text-ink-subtle">
         Sorted by {sortKey}: {SORT_HELP[sortKey]}.
       </p>
-      {list.status === 'loading' ? <ScreenState kind="loading" density="staff" body="Loading the queue…" /> : null}
+      {list.status === 'loading' ? <ScreenState kind="loading" density="staff" body="Loading the queueâ€¦" /> : null}
       {list.status === 'fail' && list.failure ? <FailureState failure={list.failure} density="staff" heading="h2" onRetry={reload} /> : null}
       {list.status === 'ok' && rows.length === 0 ? (
         filtered ? (
