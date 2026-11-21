@@ -385,6 +385,21 @@ export const en = {
   greeting_evening: 'Good evening, {name}',
   sound_on: 'Sound is on',
   sound_off: 'Sound is off',
+  paid_title: 'You have been paid',
+  paid_body: 'Your money was sent to you.',
+  paid_amount: 'Rs {amount}',
+  paid_code_label: 'Code at the end of our message',
+  pane_steps_title: 'Your questions',
+  pane_listen_hint: 'Tap the speaker to hear each question.',
+  step_consent: 'Your permission',
+  step_card: 'Your card',
+  step_name: 'Your name',
+  step_household: 'Your home',
+  step_income: 'Money coming in',
+  step_widow: 'Widow',
+  step_disability: 'Disability',
+  step_aid: 'Other help',
+  step_review: 'Check and send',
 } as const;
 
 export type MessageKey = keyof typeof en;
