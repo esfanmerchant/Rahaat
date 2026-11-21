@@ -99,7 +99,7 @@ def _background(shot: Shot, rng: np.random.Generator) -> np.ndarray:
     smooth = cv2.resize(coarse, (w, h), interpolation=cv2.INTER_CUBIC)[..., None]
     grain = rng.normal(0.0, 1.0, size=(h, w, 1)).astype(np.float32)
     base = np.array(shot.background, dtype=np.float32)[None, None, :]
-    return base + 14.0 * smooth + 4.0 * grain
+    return np.asarray(base + 14.0 * smooth + 4.0 * grain)
 
 
 def _warp(card: np.ndarray, shot: Shot, matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -152,7 +152,7 @@ def add_glare(pixels: np.ndarray, centre: tuple[float, float], sigma: float, str
     h, w = pixels.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     spot = np.exp(-((xx - centre[0]) ** 2 + (yy - centre[1]) ** 2) / (2.0 * sigma * sigma))
-    return np.clip(pixels + strength * spot[..., None], 0, 255)
+    return np.asarray(np.clip(pixels + strength * spot[..., None], 0, 255))
 
 
 def defocus(pixels: np.ndarray, sigma: float) -> np.ndarray:
@@ -176,7 +176,7 @@ def _patch(base: np.ndarray, card_edit: Image.Image, box: L.Box, shot: Shot, mat
 
     area = cv2.warpPerspective(region, matrix, shot.canvas, flags=cv2.INTER_LINEAR)[..., None] * mask
     patch = warped * shot.brightness + rng.normal(0.0, shot.noise, size=warped.shape)
-    return np.clip(base * (1.0 - area) + patch * area, 0, 255)
+    return np.asarray(np.clip(base * (1.0 - area) + patch * area, 0, 255))
 
 
 def _replace_value(card: Image.Image, field_name: str, new_value: str) -> Image.Image:

@@ -29,7 +29,7 @@ from typing import Any
 import numpy as np
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from app.contracts.common import DocumentKind, DocumentQuality
+from app.contracts.common import DocumentKind, DocumentQuality, Route
 from app.contracts.decision import TypedDecision
 from app.contracts.documents import Authenticity, DocumentCheck, DocumentCitizenView, DocumentSignal, OcrResult, QrResult
 from app.modules.docs_ai import layout as L
@@ -90,9 +90,9 @@ def _sigmoid(x: float) -> float:
     return 1.0 / (1.0 + math.exp(-x))
 
 
-def _abstain(route: str, reasons: list[str]) -> TypedDecision[Authenticity]:
+def _abstain(route: Route, reasons: list[str]) -> TypedDecision[Authenticity]:
     return TypedDecision[Authenticity](
-        choice=None, probabilities={}, confidence=0.0, route=route,  # type: ignore[arg-type]
+        choice=None, probabilities={}, confidence=0.0, route=route,
         reasons=reasons, model_version=MODEL_VERSION, abstained=True,
     )  # fmt: skip
 
@@ -351,8 +351,8 @@ def _check(
     if signed and geom.header_found:
         printed = print_check(card, signed)
         if printed.mismatched:
-            parts = [f"{FIELD_LABELS[f]} (glyph score {printed.scores.get(f, 0):.2f})" for f in printed.mismatched]
-            evidence.add("print_qr_mismatch", "Printed " + ", ".join(parts) + " does not match what the signed QR says.")
+            parts = [f"{FIELD_LABELS[f]}: {printed.why.get(f, 'differs')}" for f in printed.mismatched]
+            evidence.add("print_qr_mismatch", "Printed text does not match the signed QR. " + "; ".join(parts) + ".")
         elif printed.all_match:
             evidence.add("print_matches_qr", "Every printed value matches the signed QR, glyph by glyph.")
 

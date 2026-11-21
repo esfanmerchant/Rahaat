@@ -45,6 +45,7 @@ class PrintCheck:
     fields: dict[str, FieldResult] = field(default_factory=dict)
     scores: dict[str, float] = field(default_factory=dict)  # lowest readable glyph score per field
     digit_gaps: dict[str, float] = field(default_factory=dict)  # largest (best other digit - signed digit) per field
+    why: dict[str, str] = field(default_factory=dict)  # for each mismatch, in words for staff
     blur_sigma: float = 0.0
 
     @property
@@ -170,6 +171,7 @@ def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
     photo still matches while a changed glyph does not. Too soft a photo is "unclear", never "mismatch".
     """
     red = card_rgb[..., 0].astype(np.float32)  # the SPECIMEN watermark nearly vanishes in the red channel
+    glare = card_rgb.min(axis=2) >= SATURATED  # white in every channel: the card itself is never that bright
     sigma = estimate_blur(red)
     out = PrintCheck(blur_sigma=sigma)
     margin, glyph_slack = 12, 4
@@ -185,6 +187,7 @@ def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
         x, y = tpl.origin
         wy0, wx0 = max(0, y - margin), max(0, x - margin)
         window = red[wy0 : y + t.shape[0] + margin, wx0 : x + t.shape[1] + margin]
+        window_glare = glare[wy0 : y + t.shape[0] + margin, wx0 : x + t.shape[1] + margin]
         best, (bx, by) = _ncc_max(window, t)
         glyph_scores: list[float] = []
         unreadable = 0
@@ -193,7 +196,8 @@ def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
         for g in tpl.glyphs:
             gx0, gy0 = max(0, bx + g.x0 - glyph_slack), max(0, by - 2)
             win = window[gy0 : by + t.shape[0] + 2, gx0 : bx + g.x1 + glyph_slack]
-            if win.size == 0 or float((win >= SATURATED).mean()) > GLYPH_SATURATED_MAX:
+            win_glare = window_glare[gy0 : by + t.shape[0] + 2, gx0 : bx + g.x1 + glyph_slack]
+            if win.size == 0 or float(win_glare.mean()) > GLYPH_SATURATED_MAX:
                 unreadable += 1
                 continue
             score, _ = _ncc_max(win, t[:, g.x0 : g.x1])
@@ -214,8 +218,12 @@ def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
         out.scores[name] = round(low, 3)
         if gap > -1.0:
             out.digit_gaps[name] = round(gap, 3)
-        if low < GLYPH_MIN or other_digit or (unreadable == 0 and best < GLOBAL_MIN):
+        if other_digit:
             out.fields[name] = "mismatch"
+            out.why[name] = f"{other_digit} printed digit(s) read as a different digit than the signed value"
+        elif low < GLYPH_MIN or (unreadable == 0 and best < GLOBAL_MIN):
+            out.fields[name] = "mismatch"
+            out.why[name] = f"printed glyphs differ from the signed value (lowest glyph match {low:.2f})"
         else:
             out.fields[name] = "match"
     return out

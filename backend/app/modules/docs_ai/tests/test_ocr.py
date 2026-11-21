@@ -5,6 +5,7 @@ Tests marked `requires_tesseract` run only where the binary is installed (CI, Do
 
 from __future__ import annotations
 
+import shutil
 from typing import Any
 
 import numpy as np
@@ -107,7 +108,7 @@ def test_tesseract_failure_reads_nothing(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_missing_binary_means_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TESSERACT_CMD", raising=False)
-    monkeypatch.setattr(ocr_mod.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
     engine = TesseractOcr()
     assert not engine.available()
     assert engine.read_lines([np.zeros((10, 10), np.uint8)]) == [None]

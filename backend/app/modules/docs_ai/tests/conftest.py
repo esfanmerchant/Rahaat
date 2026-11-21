@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from collections.abc import Sequence
 
 import numpy as np
 import pytest
@@ -22,8 +23,8 @@ class CannedOcr:
 
     name = "canned"
 
-    def __init__(self, lines: list[str | None], confidence: float = 0.9) -> None:
-        self.lines = lines
+    def __init__(self, lines: Sequence[str | None], confidence: float = 0.9) -> None:
+        self.lines = list(lines)
         self.confidence = confidence
         self.calls = 0
 
