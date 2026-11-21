@@ -53,7 +53,7 @@ export function StaffLogin() {
     'h-9 w-full rounded-sm border border-line-strong bg-paper px-2 text-sm text-ink disabled:bg-sunken';
 
   return (
-    <div class="flex min-h-dvh flex-col bg-sunken text-sm text-ink">
+    <div class="flex min-h-dvh flex-col">
       <main class="flex flex-1 items-start justify-center p-4 pt-16">
         <form
           onSubmit={(event) => void onSubmit(event)}
