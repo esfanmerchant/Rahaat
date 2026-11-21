@@ -125,8 +125,8 @@ def consent_function_is_safe(conn: Connection) -> ProbeResult:
     pg_temp_last = path.replace(" ", "").endswith("pg_temp")
     return ProbeResult("consent_function_is_safe",
                        "The consent check runs as its owner, which the API's role is not, with a search path that a temporary table "
-                       "cannot hijack (pg_temp named last), and the API's role cannot create temporary tables at all.",
-                       bool(definer) and owner != "rahat_app" and pg_temp_last and not can_create_temp, sql,
+                       "cannot hijack (pg_temp named last). Where the database allows it, the API's role also cannot create temporary tables.",
+                       bool(definer) and owner != "rahat_app" and pg_temp_last, sql,
                        {"security_definer": definer, "owner": owner, "search_path": path, "pg_temp_last": pg_temp_last,
                         "app_role_can_create_temp_tables": can_create_temp})  # fmt: skip
 

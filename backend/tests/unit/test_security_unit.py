@@ -149,3 +149,16 @@ def test_prod_refuses_default_secrets(monkeypatch: pytest.MonkeyPatch) -> None:
         Settings(app_env="demo").check_secrets()
     Settings(app_env="dev").check_secrets()
     assert Settings(app_env="prod").demo_mode is False and Settings(app_env="demo").stubs_effective is False
+
+
+def test_the_app_role_keeps_a_pooler_project_suffix() -> None:
+    from app.core import config
+    from app.core.config import Settings
+
+    config._url_cache.clear()  # owner URLs are cached per process; each Settings below must compute its own
+    pooled = Settings(app_env="dev", database_url_owner="postgresql://postgres.abcxyz:pw@pooler.example:5432/postgres", app_db_password="apw")
+    assert pooled.app_url().username == "rahat_app.abcxyz" and pooled.app_url().password == "apw"
+    config._url_cache.clear()
+    plain = Settings(app_env="dev", database_url_owner="postgresql://owner:pw@db.example:5432/rahat", app_db_password="apw")
+    assert plain.app_url().username == "rahat_app"
+    config._url_cache.clear()

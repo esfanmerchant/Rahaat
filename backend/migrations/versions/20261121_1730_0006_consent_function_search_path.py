@@ -24,6 +24,8 @@ ALTER FUNCTION app_can_read_person(uuid) SET search_path = public, pg_temp;
 DO $$ BEGIN
   EXECUTE format('REVOKE TEMPORARY ON DATABASE %I FROM PUBLIC', current_database());
   EXECUTE format('REVOKE TEMPORARY ON DATABASE %I FROM rahat_app', current_database());
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'not the database owner: TEMPORARY stays granted; the search_path fix above still applies';
 END $$;
 """
 

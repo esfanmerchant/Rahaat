@@ -169,6 +169,10 @@ function Update-Release {
 }
 
 function Start-Database {
+    if ($env:DATABASE_URL_OWNER) {
+        Say 'using the database named by DATABASE_URL_OWNER in .live\secrets.env'
+        return
+    }
     Invoke-Step 'database' $Backend 'uv' @('run', '--frozen', 'python', '-m', 'app.devdb', 'url', 'rahat_live')
     $url = Get-Content (Join-Path $Logs 'database.log') | Where-Object { $_ -match '^postgresql' } | Select-Object -Last 1
     if (-not $url) { throw 'could not start the live database; see .live\logs\database.log' }

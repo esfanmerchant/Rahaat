@@ -186,7 +186,11 @@ class Settings(BaseSettings):
         """Runtime connection: the low-privilege role that Row Level Security applies to."""
         if self.database_url:
             return _normalise(self.database_url)
-        return self.owner_url().set(username=APP_DB_ROLE, password=self.app_db_password)
+        owner = self.owner_url()
+        # Poolers such as Supabase's name a user "<role>.<project-ref>"; the app role keeps the project part.
+        user = owner.username or ""
+        suffix = user[user.index("."):] if "." in user else ""
+        return owner.set(username=APP_DB_ROLE + suffix, password=self.app_db_password)
 
 
 @lru_cache
