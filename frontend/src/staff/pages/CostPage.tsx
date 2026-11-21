@@ -110,7 +110,7 @@ export function CostPage() {
                 <CurveChart a={shown} />
               </Section>
               <Section id="rel" title="Can the confidence be trusted">
-                <ReliabilityChart id="rel-chart" bins={shown.reliability.bins} ece={shown.reliability.ece} brier={shown.reliability.brier} n={shown.reliability.n} />
+                <ReliabilityChart id="rel-chart" bins={shown.reliability.bins} ece={shown.reliability.ece} brier={shown.reliability.brier} n={shown.reliability.n} marks={thresholdMarks(shown)} />
               </Section>
               <Section id="roc" title="ROC">
                 <RocChart a={shown} />
@@ -255,12 +255,22 @@ function Headline({ a, saved, dirty }: { a: Analysis; saved: Analysis; dirty: bo
   );
 }
 
+/** The two cost thresholds the engine derives, on the p_ok scale. The reject test reads P(ineligible), so its mark is drawn at 1 minus it. */
+function thresholdMarks(a: Analysis): { x: number; label: string; stroke: string; row: number }[] {
+  const t = a.thresholds;
+  const out: { x: number; label: string; stroke: string; row: number }[] = [];
+  out.push({ x: 1 - t.reject, label: `reject at or below ${(1 - t.reject).toFixed(2)}`, stroke: 'stroke-danger', row: 0 });
+  out.push({ x: t.approve, label: `approve at ${t.approve.toFixed(3)}`, stroke: 'stroke-primary', row: 1 });
+  return out;
+}
+
 function CurveChart({ a }: { a: Analysis }) {
   const pts = a.cost_curve.map((p) => [p.threshold, p.cost_per_case] as const);
   const ys = pts.map((p) => p[1]);
   const lo = Math.min(...pts.map((p) => p[0]));
   const hi = Math.max(...pts.map((p) => p[0]));
-  const top = Math.max(0.1, ...ys) * 1.05;
+  const baseline = a.operating_point.cost_per_case + a.operating_point.saving_per_case;
+  const top = Math.max(0.1, ...ys, baseline) * 1.08;
   const derived = a.thresholds.approve;
   const best = a.best_threshold;
   return (
@@ -276,6 +286,7 @@ function CurveChart({ a }: { a: Analysis }) {
         { x: derived, label: `derived ${derived.toFixed(3)}`, stroke: 'stroke-primary', row: 0 },
         { x: best.threshold, label: `measured best ${best.threshold.toFixed(2)}`, stroke: 'stroke-warning-ink', row: 1 },
       ]}
+      hlines={[{ y: baseline, label: `all-human baseline ${baseline.toFixed(2)}`, stroke: 'stroke-danger' }]}
       dots={[{ x: best.threshold, y: best.cost_per_case, label: `best on this data: ${best.cost_per_case.toFixed(3)}`, fill: 'fill-warning stroke-warning-ink' }]}
       summary={`Cost per case against the approve threshold. The threshold derived from the costs is ${derived.toFixed(3)}. The cheapest threshold measured on the held-out cases is ${best.threshold.toFixed(2)}, at ${best.cost_per_case.toFixed(3)} units per case.`}
     />

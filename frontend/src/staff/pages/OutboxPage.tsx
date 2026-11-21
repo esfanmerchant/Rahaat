@@ -1,3 +1,4 @@
+import { formatPhone } from '../phone';
 import { useState } from 'preact/hooks';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
@@ -79,7 +80,7 @@ export function OutboxPage() {
                   <td class={TD}>{humanize(m.template)}</td>
                   <td class={TD}>{m.lang}</td>
                   <td class={TD}>
-                    <Mono>{m.destination ?? 'n/a'}</Mono>
+                    <Mono>{m.destination ? <span class="rh-ltr">{formatPhone(m.destination)}</span> : 'n/a'}</Mono>
                   </td>
                   <td class={TD}>
                     <Badge tone={m.status === 'failed' ? 'bad' : m.status === 'queued' ? 'warn' : 'good'}>{m.status}</Badge>

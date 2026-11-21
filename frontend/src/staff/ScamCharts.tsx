@@ -1,3 +1,5 @@
+import { useId, useState } from 'preact/hooks';
+import { toneOf } from './charts';
 import { shortDay, labelText, type TrendsOut } from './scam';
 
 /** Hand-written SVG. No chart or map library (CLAUDE.md). Fills use classes and attributes only, so the strict CSP holds. */
@@ -176,9 +178,38 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
   const y = (v: number) => T + (H - T - B) * (1 - v / max);
   const ticks = [0, Math.round(max / 2), max];
   const every = Math.max(1, Math.ceil(n / 7));
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const [hi, setHi] = useState<number | null>(null);
+  const move = (clientX: number, el: SVGElement) => {
+    const svg = el.ownerSVGElement ?? (el as SVGSVGElement);
+    const rect = svg.getBoundingClientRect();
+    const mx = ((clientX - rect.left) / rect.width) * W;
+    setHi(n === 0 ? null : Math.max(0, Math.min(n - 1, Math.round(((mx - L) / (W - L - R)) * (n - 1)))));
+  };
+  const hiRows = hi === null ? [] : series.map((s) => ({ label: s.label, count: s.points[hi]?.count ?? null }));
   return (
-    <figure class="st-chart m-0 flex flex-col gap-1">
+    <figure class="st-chart relative m-0 flex flex-col gap-1">
+      {hi !== null ? (
+        <div class="st-tip" style={{ left: `${Math.min(80, Math.max(20, (x(hi) / W) * 100))}%`, top: '0', transform: 'translateX(-50%)' }} role="tooltip">
+          <div class="font-mono text-[11px] text-ink-muted">{days[hi]}</div>
+          {hiRows.map((r) => (
+            <div key={r.label} class="flex items-center gap-1.5">
+              <span class={`st-swatch st-tone-${toneOf(styleFor(r.label).cls)}`} aria-hidden="true" />
+              <span>{labelText(r.label)}</span>
+              <span class="ms-auto ps-3 font-mono font-bold tabular-nums">{r.count === null ? 'hidden (<5)' : r.count}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <svg viewBox={`0 0 ${W} ${H}`} class="block w-full" role="img" aria-label={`Reports per day by type over the last ${trends.days} days`}>
+        <defs>
+          {series.map((s, i) => (
+            <linearGradient key={s.label} id={`${uid}-g${i}`} x1="0" y1="0" x2="0" y2="1" class={`st-tone-${toneOf(styleFor(s.label).cls)}`}>
+              <stop offset="0" class="st-stop" stop-opacity="0.34" />
+              <stop offset="1" class="st-stop" stop-opacity="0" />
+            </linearGradient>
+          ))}
+        </defs>
         {ticks.map((t) => (
           <g key={t}>
             <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class="stroke-line" stroke-width="1" />
@@ -194,7 +225,7 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
             </text>
           ) : null,
         )}
-        {series.map((s) => {
+        {series.map((s, si) => {
           const st = styleFor(s.label);
           const runs: string[] = [];
           let cur: string[] = [];
@@ -208,8 +239,13 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
           return (
             <g key={s.label}>
               {runs.map((pts, k) =>
+                pts.includes(' ') && !st.dash ? (
+                  <polygon key={`a${k}`} points={`${pts} ${pts.split(' ').slice(-1)[0]!.split(',')[0]},${y(0)} ${pts.split(' ')[0]!.split(',')[0]},${y(0)}`} fill={`url(#${uid}-g${si})`} class="st-area" />
+                ) : null,
+              )}
+              {runs.map((pts, k) =>
                 pts.includes(' ') ? (
-                  <polyline key={k} points={pts} fill="none" class={`${st.cls} ${st.dash ? 'st-fade' : 'st-line'}`} pathLength={st.dash ? undefined : 100} stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray={st.dash} />
+                  <polyline key={k} points={pts} fill="none" class={`${st.cls} ${st.dash ? 'st-fade' : 'st-line st-glow'}`} pathLength={st.dash ? undefined : 100} stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray={st.dash} />
                 ) : (
                   <circle key={k} cx={pts.split(',')[0]} cy={pts.split(',')[1]} r="2.5" class={`${st.cls} fill-paper`} stroke-width="2" />
                 ),
@@ -224,6 +260,42 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
             </g>
           );
         })}
+        {hi !== null ? (
+          <g pointer-events="none">
+            <line x1={x(hi)} x2={x(hi)} y1={T} y2={H - B} class="stroke-ink-muted" stroke-width="1" stroke-dasharray="2 3" />
+            {hiRows.map((r) =>
+              r.count === null ? null : (
+                <g key={r.label} class={`st-tone-${toneOf(styleFor(r.label).cls)}`}>
+                  <circle cx={x(hi)} cy={y(r.count)} r="8" class="st-halo" />
+                  <circle cx={x(hi)} cy={y(r.count)} r="4" class="st-dotfill" stroke-width="2" />
+                </g>
+              ),
+            )}
+          </g>
+        ) : null}
+        <rect
+          x={L}
+          y={T}
+          width={W - L - R}
+          height={H - T - B}
+          fill="transparent"
+          class="cursor-crosshair outline-none [&:focus-visible]:stroke-focus"
+          stroke-width="2"
+          tabIndex={0}
+          role="application"
+          aria-label="Reports per day. Use the left and right arrow keys to read each day."
+          onMouseMove={(e) => move(e.clientX, e.currentTarget)}
+          onMouseLeave={() => setHi(null)}
+          onTouchMove={(e) => e.touches[0] && move(e.touches[0].clientX, e.currentTarget)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight') setHi((v) => Math.min(n - 1, (v ?? -1) + 1));
+            else if (e.key === 'ArrowLeft') setHi((v) => Math.max(0, (v ?? 1) - 1));
+            else if (e.key === 'Escape') setHi(null);
+            else return;
+            e.preventDefault();
+          }}
+          onBlur={() => setHi(null)}
+        />
       </svg>
       <figcaption class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
         {series.map((s) => {

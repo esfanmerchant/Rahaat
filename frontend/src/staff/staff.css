@@ -537,3 +537,40 @@ kbd.st-kbd {
   color: #a7aed6;
   border-color: #2a3570;
 }
+
+/* ---------- Chart tones: gradients, glows, pills, legend chips (Noor v2) ---------- */
+.st-tone-ok { --tc: var(--st-ok); --tg: var(--st-glow-ok); }
+.st-tone-bad { --tc: var(--st-bad); --tg: var(--st-glow-bad); }
+.st-tone-warn { --tc: var(--st-warn); --tg: var(--st-glow-warn); }
+.st-tone-info { --tc: var(--st-info); --tg: var(--st-glow-info); }
+.st-tone-muted { --tc: var(--color-ink-muted); --tg: transparent; }
+html[data-theme="night"], [data-theme="night"] {
+  --st-glow-info: rgb(142 162 255 / 0.55);
+  --st-glow-warn: rgb(245 177 58 / 0.55);
+}
+[data-theme="day"] {
+  --st-glow-info: rgb(26 47 120 / 0.3);
+  --st-glow-warn: rgb(106 65 0 / 0.3);
+}
+.st-stop { stop-color: var(--tc); }
+.st-glow { filter: drop-shadow(0 0 4px var(--tg)); }
+.st-glow-line { filter: drop-shadow(0 0 3px var(--tg)); }
+.st-halo { fill: var(--tg); opacity: 0.55; }
+.st-dotfill { fill: var(--color-paper); stroke: var(--tc); }
+.st-pill { fill: var(--st-panel-2); stroke: var(--tc); stroke-width: 1; }
+.st-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--tc); box-shadow: 0 0 6px var(--tg); }
+.st-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--st-edge);
+  border-radius: 999px;
+  background: var(--st-panel-2);
+  padding: 0.05rem 0.55rem;
+  color: var(--color-ink-muted);
+}
+.st-chart .st-area { animation: rh-fade 900ms var(--ease-out) 350ms both; }
+.st-tip { box-shadow: var(--st-shadow), 0 0 0 1px var(--st-glow-noor); font-size: 0.8rem; min-width: 9rem; }
+@media (prefers-reduced-motion: reduce) {
+  .st-chart .st-area { animation: rh-fade 180ms linear both !important; animation-delay: 0ms !important; }
+}
