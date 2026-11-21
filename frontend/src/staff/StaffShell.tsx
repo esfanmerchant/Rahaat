@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { logout, switchTenant } from '../shared/api/auth';
 import type { ActiveMembership, AuthUser, Membership, Role } from '../shared/api/types';
@@ -7,6 +7,7 @@ import { Button } from '../shared/components/Button';
 import { Emblem } from '../shared/components/Emblem';
 import { PrototypeFooter } from '../shared/components/PrototypeFooter';
 import { navFor, type NavItem } from './nav';
+import { NavIcon } from './NavIcons';
 import { Palette } from './Palette';
 import { PulseStrip } from './Pulse';
 import { theme, toggleTheme } from './theme';
@@ -24,8 +25,8 @@ const membershipKey = (m: { tenant_id: string; role: string }): string => `${m.t
 const GROUPS: Array<{ title: string; slugs: readonly string[] }> = [
   { title: 'Command', slugs: ['overview'] },
   { title: 'Decide', slugs: ['queue', 'approvals', 'payments', 'appeals', 'complaints', 'duplicates', 'decisions'] },
-  { title: 'Protect', slugs: ['scam-map', 'scam-reports', 'mistakes'] },
-  { title: 'Prove', slugs: ['audit', 'costs', 'evals', 'twin', 'rules', 'lab'] },
+  { title: 'Protect', slugs: ['scam-map', 'scam-reports', 'mistakes', 'anomalies'] },
+  { title: 'Prove', slugs: ['audit', 'costs', 'evals', 'twin', 'rules', 'impact', 'lab'] },
   { title: 'Operate', slugs: ['keys', 'users', 'webhooks', 'usage', 'jobs', 'mocks', 'outbox', 'health', 'settings'] },
 ];
 
@@ -47,6 +48,8 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  const railRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -90,7 +93,7 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
   const BTN_BAR = 'h-7 rounded-md border border-night-line px-2 text-night-ink hover:bg-night-3 disabled:opacity-70';
 
   return (
-    <div class="flex min-h-dvh flex-col">
+    <div class="st-frame flex min-h-dvh flex-col">
       <a
         href="#staff-main"
         class="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-50 focus:rounded-sm focus:bg-paper focus:px-3 focus:py-2"
@@ -99,7 +102,6 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
       </a>
       <header class="st-bar flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-1.5">
         <a href="/staff" class="flex items-center gap-2 no-underline" aria-label="Rahat staff home">
-          <Emblem size={30} tone="night" animate />
           <span class="text-base font-black tracking-tight">Rahat</span>
           <span class="font-urdu-hint text-base" lang="ur" dir="rtl">راحت</span>
         </a>
@@ -136,7 +138,7 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
             Jump to
             <kbd class="st-kbd">{isMac ? 'Cmd' : 'Ctrl'} K</kbd>
           </button>
-          <button type="button" class={BTN_BAR} onClick={toggleTheme} aria-pressed={night} title="Switch between night and day">
+          <button type="button" class={BTN_BAR} onClick={(e) => toggleTheme(e)} aria-pressed={night} title="Switch between night and day" data-testid="theme-toggle">
             {night ? 'Night' : 'Day'}
           </button>
           <span class="st-bar-muted" title={user.display_name}>
@@ -154,38 +156,55 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
         </p>
       ) : null}
 
-      <div class="flex flex-1 flex-col md:flex-row">
-        <nav aria-label="Staff" class="st-nav md:w-52 md:shrink-0">
-          <div class="flex flex-wrap gap-x-1 gap-y-2 p-2 md:sticky md:top-0 md:flex-col md:gap-y-3">
+      <nav
+        ref={railRef}
+        aria-label="Staff"
+        class={`nv-rail${railOpen ? ' is-open' : ''}`}
+        onPointerEnter={(e) => e.pointerType !== 'touch' && setRailOpen(true)}
+        onPointerLeave={() => setRailOpen(false)}
+        onFocusIn={(e) => (e.target as HTMLElement).matches(':focus-visible') && setRailOpen(true)}
+        onFocusOut={(e) => !railRef.current?.contains(e.relatedTarget as Node | null) && setRailOpen(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setRailOpen(false);
+        }}
+      >
+        <div class="nv-rail-panel">
+          <a href="/staff" class="nv-rail-logo" aria-label="Rahat staff home">
+            <Emblem size={26} tone="night" animate />
+            <span class="nv-rail-label">Rahat</span>
+          </a>
+          <ul class="nv-rail-list">
             {grouped(items).map((g) => (
-              <div key={g.title} class="flex flex-col gap-0.5">
-                <p class="px-2 pb-0.5 text-xs font-semibold uppercase tracking-wider text-ink-subtle">{g.title}</p>
-                <ul class="flex flex-wrap gap-0.5 md:flex-col">
+              <li key={g.title} class="nv-rail-group" role="presentation">
+                <p class="nv-rail-sep" aria-hidden="true">
+                  <span>{g.title}</span>
+                </p>
+                <ul>
                   {g.items.map((item) => {
                     const href = `/staff/${item.slug}`;
                     const current = path === href || path.startsWith(`${href}/`);
                     return (
                       <li key={item.slug}>
-                        <a
-                          href={href}
-                          aria-current={current ? 'page' : undefined}
-                          class="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-ink no-underline"
-                        >
-                          <span>{item.label}</span>
-                          {item.built ? null : <span class="font-mono text-xs text-ink-subtle">dev</span>}
+                        <a href={href} aria-label={item.label} title={item.label} aria-current={current ? 'page' : undefined} class="nv-rail-link">
+                          <span class="nv-rail-icon">
+                            <NavIcon slug={item.slug} />
+                          </span>
+                          <span class="nv-rail-label">{item.label}</span>
                         </a>
                       </li>
                     );
                   })}
                 </ul>
-              </div>
+              </li>
             ))}
-          </div>
-        </nav>
-        <main id="staff-main" tabIndex={-1} class="min-w-0 flex-1 p-4">
+          </ul>
+        </div>
+      </nav>
+      <main id="staff-main" tabIndex={-1} class="min-w-0 flex-1 p-4">
+        <div key={path} class="st-page-in">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
       <PrototypeFooter density="staff" />
       <Palette role={active.role} open={paletteOpen} onClose={() => setPaletteOpen(false)} onSignOut={() => void signOut()} />
     </div>
