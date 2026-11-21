@@ -460,6 +460,12 @@ export default function DemoPage() {
               <span class="st-live" aria-hidden="true" />
               Watch the engine
             </a>
+            <a
+              href="/demo/kit"
+              class="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-night-line bg-night/60 px-6 text-lg font-bold text-night-ink no-underline hover:bg-night-3"
+            >
+              Test cards
+            </a>
           </div>
           {zainab && rowError?.key === rowKey(zainab.a) ? (
             <p role="alert" class="rounded-md bg-danger-soft px-3 py-1 text-danger">

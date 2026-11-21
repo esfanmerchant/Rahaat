@@ -7,6 +7,7 @@ import { lazyRoute, routeLoading } from './shared/routing';
 // Separate lazy chunks (vite.config.ts manualChunks): never in the citizen budget.
 const StaffApp = lazyRoute(() => import('./staff/StaffApp'));
 const DemoPage = lazyRoute(() => import('./staff/demo/DemoPage'));
+const DemoKitPage = lazyRoute(() => import('./staff/demo/DemoKitPage'));
 // /live: the Loom of Light. Its own chunks (live, live-three); three.js loads only when the scene will run.
 const LivePage = lazyRoute(() => import('./live/LivePage'));
 // /ussd: the feature-phone simulator (USSD menu and SMS commands). Its own chunk `ussd`.
@@ -37,6 +38,7 @@ export function App() {
           <Route path="/staff" component={StaffApp} />
           <Route path="/staff/*" component={StaffApp} />
           <Route path="/demo" component={DemoPage} />
+          <Route path="/demo/kit" component={DemoKitPage} />
           <Route path="/live" component={LivePage} />
           <Route path="/ussd" component={UssdPage} />
           <Route default component={CitizenNotFound} />

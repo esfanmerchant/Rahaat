@@ -21,6 +21,7 @@ const NAVIGATE_FALLBACK_DENYLIST = [
   /^\/readyz$/,
   /^\/metrics$/,
   /^\/mock(?:\/|$)/,
+  /^\/demo-cards\//, // opening a test card in a new tab must show the image, not the app
 ];
 
 // `npm run preview` sends the same strict policy the server sends in production
@@ -89,7 +90,7 @@ export default defineConfig({
         // chunks load from the network so a citizen on a weak connection never
         // downloads them. The voice prompts are cached at runtime (below).
         globPatterns: ['**/*.{js,css,html,svg,png}', 'audio/silence.mp3'], // the plugin adds manifest.webmanifest itself
-        globIgnores: ['**/assets/staff-*.js', '**/assets/demo-*.js', '**/assets/live-*.js', '**/assets/ussd-*.{js,css}', 'audio/**/*.json'],
+        globIgnores: ['**/assets/staff-*.js', '**/assets/demo-*.js', '**/assets/live-*.js', '**/assets/ussd-*.{js,css}', 'audio/**/*.json', 'demo-cards/**'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: NAVIGATE_FALLBACK_DENYLIST,
         // A stale service worker during the live demo would be a disaster.

@@ -54,6 +54,19 @@ const REASON_TEXT: Record<string, string> = {
   rules_and_trace_support_approval: 'Every hard rule passed on verified input.',
   proposal_blocked: 'The guard refused a step.',
   low_retrieval: 'The policy search found nothing close enough.',
+  document_needs_review: 'The document check could not decide. Please look at the paper yourself.',
+  unknown_guard: 'A check raised a signal the assistant does not handle.',
+  verified_sources_disagree: 'Two verified incomes disagree.',
+  consent_missing: 'Consent is missing, so this data cannot be used.',
+  registry_unavailable: 'The registry is down. Try again later.',
+  identity_not_confirmed: 'The identity is not confirmed.',
+  identity_service_unavailable: 'The identity service is down.',
+  rule_and_model_disagree: 'A verified rule failed but the model leans approve.',
+  proof_already_requested: 'Proof was already asked for. Wait for it.',
+  hypotheses_tied: 'The likely outcomes are too close to call.',
+  no_cheapest_question: 'No single proof would settle this case.',
+  already_escalated: 'The case is already with a senior officer.',
+  low_confidence: 'Confidence is below the floor.',
 };
 export const reasonText = (code: string): string => REASON_TEXT[code] ?? humanize(code);
 
