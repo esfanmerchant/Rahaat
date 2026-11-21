@@ -19,6 +19,8 @@ INTEGRITY_GUARDS: Final = frozenset({"document_suspect", "card_id_mismatch", "id
                                      "anomaly_flag"})  # fmt: skip
 CONFLICT_GUARDS: Final = frozenset({"verified_sources_disagree"})
 WAIT_GUARDS: Final = frozenset({"registry_unavailable", "consent_missing"})
+# A check that could not decide (nothing is known to be wrong): no approval, but asking for proof is still a fair next step.
+REVIEW_GUARDS: Final = frozenset({"document_needs_review"})
 DUPLICATE_BANDS: Final = frozenset({"same", "possible"})
 # Engine reason codes that mean "the rule result is not settled yet": the engine itself would not approve on them.
 UNSETTLED_REASONS: Final = ("rule_pass_below_floor", "rule_fail_below_floor", "rule_unknown", "rule_pass_unverified", "ask_proof")

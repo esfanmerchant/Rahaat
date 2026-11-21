@@ -35,6 +35,7 @@ from app.modules.agent.facts import (
     ACTIVE_CASE,
     CONFLICT_GUARDS,
     INTEGRITY_GUARDS,
+    REVIEW_GUARDS,
     REVIEWABLE_APPLICATION,
     WAIT_GUARDS,
     CaseFacts,
@@ -60,6 +61,24 @@ SEARCH_QUERIES: Final = {
     "reject_with_reason": "when can an application be rejected",
     "request_proof": "which papers prove my income and identity",
     "escalate": "when is a case sent to a senior officer",
+}
+
+
+# One plain line per abstain code, so the officer sees why the assistant stopped (fixed text, never model output).
+ABSTAIN_HINTS: Final[dict[str, str]] = {
+    "document_needs_review": "The document check could not decide. Please look at the paper yourself.",
+    "unknown_guard": "A check raised a signal I do not handle.",
+    "verified_sources_disagree": "Two verified incomes disagree.",
+    "consent_missing": "Consent is missing, so this data cannot be used.",
+    "registry_unavailable": "The registry is down. Try again later.",
+    "identity_not_confirmed": "The identity is not confirmed.",
+    "identity_service_unavailable": "The identity service is down.",
+    "rule_and_model_disagree": "A verified rule failed but the model leans approve.",
+    "proof_already_requested": "Proof was already asked for. Wait for it.",
+    "hypotheses_tied": "The likely outcomes are too close to call.",
+    "no_cheapest_question": "No single proof would settle this case.",
+    "already_escalated": "The case is already with a senior officer.",
+    "low_confidence": "My confidence is below the floor.",
 }
 
 
@@ -102,7 +121,8 @@ def _decision(choice: str | None, confidence: float, reasons: list[str], model_v
 def rationale_for(facts: CaseFacts, tool: str | None, args: dict[str, Any], reasons: list[str]) -> str:
     """Plain language for the officer, built from handoff and rule fields only (never from case free text or a model)."""
     if tool is None:
-        return f"I am not sure; please review. Reason: {reasons[0] if reasons else 'unclear'}."
+        code = reasons[0] if reasons else "unclear"
+        return f"I am not sure; please review. Reason: {code}. {ABSTAIN_HINTS.get(code, '')}".strip()
     failed = ", ".join(r.rule_id for r in facts.hard_failed) or "none"
     unknown = ", ".join(r.rule_id for r in facts.rules if r.hard and r.result == "unknown") or "none"
     parts = {
@@ -158,7 +178,7 @@ def plan_local(facts: CaseFacts) -> PlanProposal:
         return _propose(facts, "escalate", {"reason_code": "integrity_flag"}, 0.7, ["integrity_flag", *risk_flags(facts)[:2]])
     if "registry_unavailable" in guards:
         return _abstain(facts, "registry_unavailable")
-    if guards - INTEGRITY_GUARDS - CONFLICT_GUARDS - WAIT_GUARDS:
+    if guards - INTEGRITY_GUARDS - CONFLICT_GUARDS - WAIT_GUARDS - REVIEW_GUARDS:
         return _abstain(facts, "unknown_guard")
     unconfirmed = [why for name, why in facts.uncertain_fields if name == "identity_verified"]
     if unconfirmed and facts.resolving_proof != "rahat_id":
@@ -175,6 +195,8 @@ def plan_local(facts: CaseFacts) -> PlanProposal:
     if "request_proof" in facts.allowed_actions and facts.case_status != "waiting_proof":
         if facts.resolving_proof in ("rahat_id", "income_proof"):
             return _propose(facts, "request_proof", {"proof_kind": facts.resolving_proof}, 0.8, [f"cheapest_question.{facts.resolving_proof}"])
+    if guards & REVIEW_GUARDS:
+        return _abstain(facts, "document_needs_review")
     if facts.case_status == "waiting_proof":
         return _abstain(facts, "proof_already_requested")
     if hypotheses_tied(facts):
