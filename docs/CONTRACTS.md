@@ -202,3 +202,45 @@ All default to today's behaviour. See `deploy/vercel/README.md` and DECISIONS 19
 - Rules (`appeals/rules.py`): only a `rejected` application, within 30 days of the decision, one open appeal at a time, one decided appeal per decision. A different officer decides: nobody who reviewed or second-approved the application's earlier cases (`appeal_same_officer`, 403, audited in its own transaction). Overturned: application `approved`, `appeal_overturned` message, `payments.request_payment` (idempotent, four-eyes above the limit; the appeal officer cannot release it). Upheld: `appeal_upheld` message.
 - A complaint is a case: `complaint`, or `scam_review` for category `scam_attempt` (priority 20), with `opened_reason` `complaint_<category>`. Officers read an appeal's application and a complaint's person through consent, so withdrawn consent gives 403 `consent_required` on the next request.
 - New message templates `appeal_received`, `appeal_upheld`, `appeal_overturned`, `complaint_received`, `complaint_resolved`, `complaint_closed` are in `notifications.templates.EXTRA_TEMPLATES` (not `TEMPLATES`, so the frozen scam corpus is unchanged).
+
+
+## Feature-phone channel (A17, `modules/ussd`)
+
+Most relief beneficiaries have no smartphone. The same platform answers on a feature phone: a USSD menu and SMS commands. Both are **simulated** (there is no real aggregator); the shapes are the ones a real aggregator uses.
+
+**Endpoints**
+
+| Route | Who | What |
+|---|---|---|
+| `POST /v1/channels/ussd` | API key with scope `channels:ussd` | `{session_id, msisdn, text, service_code}` as JSON; `text` is the `*`-joined input history, empty on the first dial. Answers `text/plain` that starts with `CON ` (the session goes on) or `END `. |
+| `POST /v1/channels/sms/inbound` | API key with scope `channels:sms` | `{msisdn, text, message_id?}`. Answers `{accepted, command, reply_sent}`; the reply goes out as an SMS. The same `message_id` is answered once. |
+| `POST /v1/demo/ussd`, `POST /v1/demo/sms`, `GET /v1/demo/sms`, `GET /v1/demo/ussd/personas` | public, `DEMO_MODE` only (404 otherwise) | The simulator relay (below). |
+
+**Auth design.** A channel key can carry the line but proves nothing about the person. Both scopes are `personal_data`, so a new key waits for a second admin like any key that can read personal data. A signed-in user, even an officer, cannot call the channel routes (the role list is empty). The simulator in the browser never holds a key: it calls the demo relay, which runs the same service code (`ussd.service.handle_ussd` and `handle_sms`) with a server-side demo channel, in the demo department, for mock numbers only, rate limited per network, and answering 404 unless `DEMO_MODE` is on (like `/v1/demo/accounts`). A key in the bundle would be usable by anyone who opened the page; this way there is nothing to steal. The relay lists the demo numbers and their latest tracking code for the presenter; that is demo-only data.
+
+**What the person must prove** (the msisdn is the claim; the code or PIN is the proof)
+
+- Only mock numbers are accepted (`0999-NNNNNNN` or `+92 999NNNNNNN`). A real-looking number gets `END This prototype accepts only mock numbers.`, one denied audit row and nothing stored. Sessions keep a blind index of the number, never the number.
+- **Status**: the tracking code (`R-12345`, typed as 12345) together with the phone. The lookup runs as that citizen (RLS context `citizen` with their person id), so another person's code, a wrong code and an unregistered phone all give the same "Not found". At most 6 lookups a minute per phone; three wrong tries end the session. The answer is the status line and the three symbol names, nothing else (no name, amount or reason).
+- **Check a message**: the 6-character verify code (`notifications.lookup_verify_code`). Verify codes have letters; a plain keypad types digits in USSD unless the handset allows letters (the simulator has multi-tap after `#`). SMS `VERIFY` has no such limit.
+- **Stop sharing my data**: the PIN. It is checked like a sign-in (always one hash verification, the same failure counters and account lockout as `/v1/auth/login`, a per-phone bucket of 5 tries a minute that also covers unregistered numbers), then `consent.service.withdraw` runs for every active consent, so the database stops officer, helper and API-key reads on the next query. A PIN is never logged, audited or stored.
+- **Talk to a person**: a `complaint` case with `opened_reason=callback_requested` and a handoff note (`guards: ["channel:ussd", "callback"]`), one open case per person. An unregistered number gets the same words ("If this number is registered, a person will call you") and no case.
+- **Free text by SMS** that is not a command is checked with `scam.service.classify_message`; a scam label gets a warning, anything else gets HELP. The text is not stored.
+
+**Menu** (a pure state machine, `ussd/menu.py`; 0 goes back one screen, 00 goes to the main menu; a session ends after 3 minutes)
+
+```
+lang          1 English   2 Roman Urdu     (Roman Urdu is Urdu in Latin letters: feature phones rarely draw Urdu script)
+  menu        1 Check my application  -> status_ask  -> status_result   (typing digits on a result checks another)
+              2 Check a message       -> verify_ask  -> verify_result
+              3 Stop sharing my data  -> stop_ask (PIN) -> END
+              4 Talk to a person      -> callback_confirm (1 yes) -> END
+```
+
+Every screen is 182 characters or less and every SMS reply fits one 160-character message with its verify code; both limits are tests (`ussd/tests/test_menu_unit.py`). Citizen text is keyed in `ussd/texts.py`, in English and Roman Urdu, at most three short sentences. Replies are sent with `notifications.service.send_reply`, which adds a verify code, so a reply can itself be checked with option 2 or `VERIFY`. `notifications.templates` now knows the language `ru` (it falls back to English text; the channel supplies its own).
+
+**Audit.** Every action writes a row whose `details.channel` is `ussd` or `sms` and `details.phone_ref` is the first 12 characters of the blind index: `channel.status_checked`, `channel.message_checked`, `channel.consent_withdrawn` (plus the consent service's own `consent.withdrawn`), `channel.consent_stop_refused` (denied, in its own committed transaction), `channel.callback_requested`, `channel.message_unrecognised`, `channel.refused`. Rate-limit refusals are not audited, so a flood cannot grow the chain.
+
+**Sessions.** `ussd_sessions` rows (`session_key` is a blind index of the aggregator's session id, `msisdn_hash`, `state`, `data`) carry the menu state, the step count and the last reply, so a repeated request (aggregators retry) gets the same answer and no second step. A session id is bound to the phone that opened it. Rows older than 10 minutes are deleted when a new session starts.
+
+**Simulator** `/ussd` (`frontend/src/ussd/`, lazy chunk `ussd`, excluded from the citizen budget and from the PWA precache): an SVG and CSS handset with a lit LCD, working keypad (multi-tap letters after `#`), keyboard input, a 3-minute session bar, the SMS thread of the chosen number and a persona selector (Zainab, Aslam). Option 3 in the simulator really withdraws consent for the demo person.

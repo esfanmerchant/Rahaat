@@ -160,6 +160,38 @@ def _send_one_time(
     return row
 
 
+def send_reply(db: Session, *, tenant_id: uuid.UUID, person_id: uuid.UUID | None, phone: str, template: str, lang: str, text: str,
+               channel_label: str = "sms") -> models.Notification:  # fmt: skip
+    """An answer to a message the person sent us (the feature-phone channel), sent to that same number at once.
+
+    The person just wrote to us, so this is not an unsolicited message and needs no queued worker (a worker would be
+    refused for someone who has just withdrawn consent, and the answer to "stop" must still arrive). The text is
+    already keyed and short; it gets a verify code like every official message, so it can be checked in the scam
+    checker or with `VERIFY`. A gateway failure is recorded on the row, never raised: the answer is also on the screen.
+    """
+    from app.modules.integrations.service import send_sms
+
+    chosen = templates.choose_lang(lang, None)
+    notification_id = uuid.uuid4()
+    text_hash = templates.body_hash(text)
+    code = make_verify_code(notification_id, text_hash)
+    body = templates.with_code(text, code, chosen)
+    result = send_sms(phone, body)
+    now = datetime.now(UTC)
+    row = models.Notification(
+        id=notification_id, tenant_id=tenant_id, person_id=person_id, user_id=None, channel="sms", template=template, lang=chosen,
+        payload={"_to": mask_identifier(phone), "_via": channel_label}, body=body, body_hash=text_hash, verify_code=code, attempts=1,
+        destination_hash=blind_index(phone, scope=str(tenant_id)), status="sent" if result.status == "sent" else "failed",
+        last_error=None if result.status == "sent" else result.status, sent_at=now if result.status == "sent" else None, created_at=now,
+    )  # fmt: skip
+    db.add(row)
+    db.flush()
+    audit.write(db, tenant_id=tenant_id, action="notification.sent_reply", actor_type="system", object_type="notification",
+                object_id=row.id, acting_for_person_id=person_id, result="ok" if result.status == "sent" else "failed",
+                details={"template": template, "lang": chosen, "channel": channel_label})  # fmt: skip
+    return row
+
+
 # --- SMS delivery job -----------------------------------------------------------------------------------
 
 

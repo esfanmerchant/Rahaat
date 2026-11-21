@@ -9,6 +9,8 @@ const StaffApp = lazyRoute(() => import('./staff/StaffApp'));
 const DemoPage = lazyRoute(() => import('./staff/demo/DemoPage'));
 // /live: the Loom of Light. Its own chunks (live, live-three); three.js loads only when the scene will run.
 const LivePage = lazyRoute(() => import('./live/LivePage'));
+// /ussd: the feature-phone simulator (USSD menu and SMS commands). Its own chunk `ussd`.
+const UssdPage = lazyRoute(() => import('./ussd/UssdPage'));
 
 function RouteProgress() {
   return routeLoading.value ? (
@@ -36,6 +38,7 @@ export function App() {
           <Route path="/staff/*" component={StaffApp} />
           <Route path="/demo" component={DemoPage} />
           <Route path="/live" component={LivePage} />
+          <Route path="/ussd" component={UssdPage} />
           <Route default component={CitizenNotFound} />
         </Router>
       </ErrorBoundary>

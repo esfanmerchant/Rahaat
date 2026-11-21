@@ -118,3 +118,9 @@ From: Track D1   To: Track A (cases, payments)   Status: open
 What: `ApplicationOut` (and `ApplicationSummary`) would carry, once paid, `payment: { amount_pkr, paid_at, verify_code }` (null before). Today the citizen app reads `GET /v1/notifications`, takes the `payment_sent` message, finds its `verify_code` and reads the amount as the first number in the message text.
 Why: parsing a sentence is fragile (a changed template breaks the "Paid" card on home) and the citizen cannot call `/v1/payments`.
 Until then: the Paid card shows the amount only when that number is found, never a guessed one.
+
+## A `callback` case kind, regenerated OpenAPI, and an ADR for the feature-phone channel
+From: Track A (A17)   To: Lead   Status: open
+What: (1) add `"callback"` to `CaseKind` in `contracts/common.py` (SLA about 24 hours, like `correction`) so a call-back request from USSD or SMS is not filed as a `complaint`; the code uses `kind="complaint"` with `opened_reason="callback_requested"` today and switches in one line. (2) Regenerate `backend/openapi.json` and the typed client (`npm run gen:api`): the new routes `/v1/channels/*`, `/v1/demo/ussd*` and `/v1/demo/sms` are not in it yet (the simulator uses plain `fetch` for the demo relay, so nothing is blocked). (3) An ADR in `docs/DECISIONS.md`: the simulator calls a demo-mode relay instead of holding a channel key (a key in the bundle would be usable by anyone); Roman Urdu is the regional language on feature phones, which rarely draw Urdu script.
+Why: the case-kind list, the OpenAPI file and DECISIONS are the lead's.
+Until then: callbacks show in the officer queue as `complaint` with reason `callback_requested`.
