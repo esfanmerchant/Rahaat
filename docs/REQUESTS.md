@@ -118,3 +118,12 @@ From: Track D1   To: Track A (cases, payments)   Status: open
 What: `ApplicationOut` (and `ApplicationSummary`) would carry, once paid, `payment: { amount_pkr, paid_at, verify_code }` (null before). Today the citizen app reads `GET /v1/notifications`, takes the `payment_sent` message, finds its `verify_code` and reads the amount as the first number in the message text.
 Why: parsing a sentence is fragile (a changed template breaks the "Paid" card on home) and the citizen cannot call `/v1/payments`.
 Until then: the Paid card shows the amount only when that number is found, never a guessed one.
+
+## Staff screens for WP-A and WP-B (WP-E)
+From: Track D2 (WP-E)   To: Track A (appeals), Lead (contracts, agent schemas)   Status: open
+- **Payment in the appeal decision response** (Track A): `POST /v1/appeals/{id}/decide` returns `AppealStaffDetail`, which has no payment fields. After an overturn the staff screen has to read `GET /v1/payments` and match by `application_id` to show the payment status. Please add `payment: { id, amount_pkr, status } | null` to the decide response (null unless overturned).
+- **Duplicate schema name `ApprovalOut`** (Lead): `agent/schemas.py::ApprovalOut` collides with `contracts/api.py::ApprovalOut`; the generated client now names the payment one `app__contracts__api__ApprovalOut`. Rename the agent one (for example `AgentStepApprovalOut`) so both read well in the client.
+- **Guard codes on a 409** (Lead): `agent_action_blocked` returns all codes in a `codes` array, but `Problem` in the client has no such field, so the screen reads it through a cast. Declare `codes` in the problem schema for this route (or document it in `responses`).
+- **Failure injection for webhook retries** (Track A): the mock receiver's `fail_next` and `down` can only be set in process, so the Webhooks screen cannot show a failed or dead delivery in a live demo. Expose them on the admin mock controls (`POST /v1/admin/mocks`, service `webhook`) so the retry and dead states can be shown to judges.
+- **Reading a run as admin or auditor** (Track A/C): they may read runs, but only by run id (`GET /v1/agent/runs/{id}`); the case page is officer-only. The staff console links to `/staff/agent-runs/:id` from the audit log. A list endpoint (`GET /v1/agent/runs`, newest first) would let them browse.
+

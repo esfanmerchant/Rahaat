@@ -25,6 +25,11 @@ import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
 import { OutboxPage } from './pages/OutboxPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
+import { AppealsPage } from './pages/AppealsPage';
+import { ComplaintsPage } from './pages/ComplaintsPage';
+import { UsagePage } from './pages/UsagePage';
+import { WebhooksPage } from './pages/WebhooksPage';
+import { AgentRunPage } from './pages/AgentRunPage';
 import { MistakesPage } from './pages/MistakesPage';
 import { ScamMapPage } from './pages/ScamMapPage';
 import { ScamReportsPage } from './pages/ScamReportsPage';
@@ -48,6 +53,7 @@ export default function StaffApp() {
         <Route path="/" component={StaffIndex} />
         <Route path="/cases/:id" component={CaseRoute} />
         <Route path="/decisions/:id" component={DecisionRoute} />
+        <Route path="/agent-runs/:id" component={AgentRunRoute} />
         <Route path="/:section" component={StaffSection} />
         <Route default component={StaffNotFound} />
       </Router>
@@ -188,6 +194,14 @@ function SectionPage({ item }: { item: NavItem }) {
       return <DuplicatesPage />;
     case 'keys':
       return <KeysPage />;
+    case 'webhooks':
+      return <WebhooksPage />;
+    case 'usage':
+      return <UsagePage />;
+    case 'appeals':
+      return <AppealsPage />;
+    case 'complaints':
+      return <ComplaintsPage />;
     case 'lab':
       return <LabPage />;
     case 'settings':
@@ -220,6 +234,14 @@ function CaseRoute({ id }: { id?: string }) {
   return (
     <RoleRoute roles={['officer']} label="Case review">
       {() => <CasePage id={id ?? ''} />}
+    </RoleRoute>
+  );
+}
+
+function AgentRunRoute({ id }: { id?: string }) {
+  return (
+    <RoleRoute roles={['officer', 'admin', 'auditor']} label="The assistant run">
+      {() => <AgentRunPage id={id ?? ''} />}
     </RoleRoute>
   );
 }
