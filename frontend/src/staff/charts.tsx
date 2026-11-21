@@ -199,8 +199,8 @@ export function XYChart({ id, title, xLabel, yLabel, series, xDomain, yDomain, v
           return (
             <g key={h.label} class={`st-tone-${toneOf(h.stroke)}`}>
               <line x1={M.l} x2={W - M.r} y1={y} y2={y} class={h.stroke} stroke-width="1.5" stroke-dasharray="5 3" />
-              <rect x={W - M.r - wpx - 3} y={y - 16} width={wpx} height="13" rx="6.5" class="st-pill" />
-              <text x={W - M.r - 7} y={y - 6.5} text-anchor="end" class="fill-ink text-[10.5px] font-semibold">
+              <rect x={M.l + 4} y={y + 3} width={wpx} height="13" rx="6.5" class="st-pill" />
+              <text x={M.l + 8} y={y + 12.5} text-anchor="start" class="fill-ink text-[10.5px] font-semibold">
                 {h.label}
               </text>
             </g>
