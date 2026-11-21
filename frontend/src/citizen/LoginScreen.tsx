@@ -10,16 +10,8 @@ import { useFocusOnMount } from '../shared/useFocusOnMount';
 import { vaultState } from '../shared/vault';
 import { CitizenShell } from './CitizenShell';
 import { Keypad } from './Keypad';
-import {
-  isCompleteLocal,
-  isValidPin,
-  MOCK_PHONE_LOCAL_DIGITS,
-  mockPhone,
-  PIN_MAX,
-  PIN_MIN,
-  SHOWN_PHONE_PREFIX,
-  showPhone,
-} from './phone';
+import { PhoneSlots, usePhonePaste } from './PhoneField';
+import { checkPhone, formatPhone, isValidPin, mockPhone, PHONE_LENGTH, PIN_MAX, PIN_MIN } from './phone';
 
 type Step = 'phone' | 'pin';
 
@@ -69,7 +61,7 @@ export function LoginScreen() {
       setNotice(null);
       tap();
       if (step === 'phone') {
-        setLocal((value) => (value.length < MOCK_PHONE_LOCAL_DIGITS ? value + digit : value));
+        setLocal((value) => (value.length < PHONE_LENGTH ? value + digit : value));
         const key = DIGIT_KEYS[Number(digit)];
         if (key) playPrompt(key, code, t(key, undefined, code));
       } else {
@@ -77,6 +69,14 @@ export function LoginScreen() {
       }
     },
     [busy, step, code],
+  );
+
+  usePhonePaste(
+    useCallback((digits: string) => {
+      setNotice(null);
+      setLocal(digits);
+    }, []),
+    step === 'phone' && !busy,
   );
 
   const onDelete = useCallback(() => {
@@ -125,8 +125,9 @@ export function LoginScreen() {
 
   const onDone = useCallback(() => {
     if (step === 'phone') {
-      if (!isCompleteLocal(local)) {
-        show('login_phone_invalid');
+      const check = checkPhone(local);
+      if (check !== 'ok') {
+        show(check === 'not_mock' ? 'phone_not_mock' : 'login_phone_invalid');
         return;
       }
       setNotice(null);
@@ -191,7 +192,7 @@ export function LoginScreen() {
         onDigit={onDigit}
         onDelete={onDelete}
         onDone={onDone}
-        doneEnabled={isPhone ? isCompleteLocal(local) : pin.length >= PIN_MIN}
+        doneEnabled={isPhone ? local.length === PHONE_LENGTH : pin.length >= PIN_MIN}
         disabled={busy}
         busy={busy}
       />
@@ -208,29 +209,19 @@ export function LoginScreen() {
 }
 
 function PhoneDisplay({ local }: { local: string }) {
-  const slots = Array.from({ length: MOCK_PHONE_LOCAL_DIGITS }, (_, index) => local[index] ?? '');
+  const refused = checkPhone(local) === 'not_mock';
   return (
     <div class="flex flex-col gap-2">
       <p class="text-lg font-semibold" id="phone-label">
         {t('login_phone_label')}
       </p>
-      <div
-        role="status"
-        aria-labelledby="phone-label"
-        class="rh-ltr flex min-h-tap-lg items-center justify-center gap-0.5 rounded-lg border-2 border-line-strong bg-paper px-2 font-mono text-2xl font-bold"
-      >
-        <span class="me-2 whitespace-nowrap rounded-md bg-surface px-2 text-ink-muted">{SHOWN_PHONE_PREFIX}</span>
-        {slots.map((digit, index) => (
-          <span
-            key={index}
-            aria-hidden="true"
-            class={`inline-block w-[0.9em] text-center ${digit ? 'text-ink' : 'border-b-4 border-line text-transparent'}`}
-          >
-            {digit || '0'}
-          </span>
-        ))}
-        <span class="sr-only">{showPhone(local)}</span>
-      </div>
+      <PhoneSlots digits={local} labelledBy="phone-label" invalid={refused} />
+      {refused ? (
+        <p class="flex items-center gap-2 text-base font-semibold text-danger">
+          <Pictogram name="warning" size={24} />
+          {t('phone_not_mock')}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -238,7 +229,7 @@ function PhoneDisplay({ local }: { local: string }) {
 function PinDisplay({ length, local }: { length: number; local: string }) {
   return (
     <div class="flex flex-col gap-2">
-      <p class="rh-ltr text-center font-mono text-lg text-ink-muted">{showPhone(local)}</p>
+      <p class="rh-ltr text-center font-mono text-lg text-ink-muted">{formatPhone(local)}</p>
       <div
         role="status"
         aria-label={`${t('login_pin_label')}: ${t('login_pin_progress', { count: length })}`}

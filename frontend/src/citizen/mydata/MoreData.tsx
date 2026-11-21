@@ -15,7 +15,8 @@ import { AnswerButton, AnswerGroup, InlineFailure, Notice, sayKey } from '../app
 import { CitizenShell } from '../CitizenShell';
 import { Keypad } from '../Keypad';
 import { CitizenNotFoundPage } from '../NotFound';
-import { MOCK_PHONE_LOCAL_DIGITS, mockPhone, PIN_MAX, PIN_MIN, showPhone } from '../phone';
+import { PhoneSlots, usePhonePaste } from '../PhoneField';
+import { checkPhone, mockPhone, PHONE_LENGTH, PIN_MAX, PIN_MIN } from '../phone';
 import { formatDate } from '../result/data';
 
 /** The common frame: back to "My information", a speaker for the prompt, a picture and a title. */
@@ -625,10 +626,17 @@ function NewHelperPage() {
 
   const digit = useCallback(
     (d: string) => {
-      if (step === 'phone') setLocal((v) => (v.length < MOCK_PHONE_LOCAL_DIGITS ? v + d : v));
+      if (step === 'phone') setLocal((v) => (v.length < PHONE_LENGTH ? v + d : v));
       else setPin((v) => (v.length < PIN_MAX ? v + d : v));
     },
     [step],
+  );
+  usePhonePaste(
+    useCallback((digits: string) => {
+      setNote(null);
+      setLocal(digits);
+    }, []),
+    step === 'phone' && !busy,
   );
   const del = useCallback(() => (step === 'phone' ? setLocal((v) => v.slice(0, -1)) : setPin((v) => v.slice(0, -1))), [step]);
 
@@ -655,7 +663,15 @@ function NewHelperPage() {
 
   const onDone = (): void => {
     if (step === 'phone') {
-      if (local.length === MOCK_PHONE_LOCAL_DIGITS) setStep('scopes');
+      const check = checkPhone(local);
+      if (check === 'ok') {
+        setNote(null);
+        setStep('scopes');
+      } else {
+        const key = check === 'not_mock' ? 'phone_not_mock' : 'login_phone_invalid';
+        setNote(key);
+        sayKey(key);
+      }
     } else if (step === 'pin') {
       if (pin.length >= PIN_MIN) {
         setFirst(pin);
@@ -718,9 +734,12 @@ function NewHelperPage() {
   return (
     <Page icon="person-help" title="mh_new_title" prompt={phone ? 'mh_phone' : step === 'pin' ? 'mh_pin' : 'mh_pin_again'}>
       {phone ? (
-        <p dir="ltr" class="rh-ltr flex min-h-tap-lg items-center justify-center rounded-lg border-2 border-line-strong bg-paper text-3xl font-bold">
-          {showPhone(local)}
-        </p>
+        <>
+          <p id="helper-phone-label" class="text-lg font-semibold">
+            {t('login_phone_label')}
+          </p>
+          <PhoneSlots digits={local} labelledBy="helper-phone-label" invalid={checkPhone(local) === 'not_mock'} />
+        </>
       ) : (
         <>
           <PinDots count={pin.length} />
@@ -733,7 +752,7 @@ function NewHelperPage() {
         onDigit={digit}
         onDelete={del}
         onDone={onDone}
-        doneEnabled={phone ? local.length === MOCK_PHONE_LOCAL_DIGITS : pin.length >= PIN_MIN}
+        doneEnabled={phone ? local.length === PHONE_LENGTH : pin.length >= PIN_MIN}
         disabled={busy}
         busy={busy}
       />
