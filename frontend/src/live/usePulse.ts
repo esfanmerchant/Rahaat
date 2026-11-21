@@ -5,6 +5,12 @@ import type { Pulse } from './types';
 
 export const REFRESH_MS = 15000;
 
+/** 15 s by default; `?refresh=5` (3 to 60) speeds it up for the demo. */
+function refreshMs(): number {
+  const n = Number(new URLSearchParams(window.location.search).get('refresh'));
+  return Number.isFinite(n) && n >= 3 && n <= 60 ? Math.round(n * 1000) : REFRESH_MS;
+}
+
 export type PulseState =
   | { kind: 'loading' }
   | { kind: 'ready'; pulse: Pulse; stale: boolean }
@@ -31,7 +37,7 @@ export function usePulse(): { state: PulseState; reload: () => void } {
     void load();
     const id = window.setInterval(() => {
       if (!document.hidden) void load();
-    }, REFRESH_MS);
+    }, refreshMs());
     const onVisible = () => {
       if (!document.hidden) void load();
     };
@@ -41,6 +47,23 @@ export function usePulse(): { state: PulseState; reload: () => void } {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [load]);
+
+  // Test hook, only under ?perf: raises a few live counters by one so the counter flash can be checked without a real approval.
+  useEffect(() => {
+    if (!window.location.search.includes('perf')) return;
+    const w = window as unknown as { __loomBump?: () => void };
+    w.__loomBump = () =>
+      setState((s) => {
+        if (s.kind !== 'ready') return s;
+        const l = s.pulse.live;
+        const route = { ...l.decisions_by_route, auto: (l.decisions_by_route.auto ?? 0) + 1 };
+        const payments = { ...l.payments, sent: l.payments.sent + 1, settled: l.payments.settled + 1, settled_amount_pkr: l.payments.settled_amount_pkr + 15000 };
+        return { ...s, pulse: { ...s.pulse, live: { ...l, decisions_by_route: route, payments } } };
+      });
+    return () => {
+      delete w.__loomBump;
+    };
+  }, []);
 
   return { state, reload: () => void load() };
 }

@@ -4,8 +4,8 @@ const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefe
 
 /** A number that counts up (or down) to its target, so a live refresh is visible. Shows the value at once for reduced motion. */
 export function useCountUp(target: number, ms = 1100): number {
-  const [shown, setShown] = useState(target);
-  const from = useRef(target);
+  const [shown, setShown] = useState(0);
+  const from = useRef(0);
   useEffect(() => {
     if (reduced() || from.current === target) {
       from.current = target;

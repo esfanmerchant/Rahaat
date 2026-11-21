@@ -13,10 +13,13 @@ import {
   AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
+  DoubleSide,
   DynamicDrawUsage,
   Group,
   LineSegments,
+  Mesh,
   PerspectiveCamera,
+  PlaneGeometry,
   Points,
   PointsMaterial,
   Scene,
@@ -44,11 +47,14 @@ export interface SceneHooks {
   onHover: (info: HoverInfo | null) => void;
   onLabels: (labels: LabelPoint[]) => void;
   onFail: (why: string) => void;
+  /** The picked particle's current position on screen (client px), a few times a second, while one is picked. */
+  onPickMove: (x: number, y: number) => void;
 }
 
 export interface SceneHandle {
   setCases: (cases: readonly ReplayCase[]) => void;
   setScamCount: (n: number) => void;
+  replayIntro: () => void;
   dispose: () => void;
 }
 
@@ -60,7 +66,8 @@ const FOV = 46;
 const GATE = new Vector3(0, 8.5, 0);
 const GATE_R = 12;
 const DESK = new Vector3(30, 0, -27);
-const SHIELD = new Vector3(-36, 8, 30);
+const SHIELD = new Vector3(-46, 6, 52); // low and to the left of the intake, so no stream passes through it
+const INTRO = 3.8; // seconds of camera dolly at the start (and on replay)
 const HOME_X0 = 44;
 const HOME_Z0 = -19.5;
 const CELL = 6.5;
@@ -213,6 +220,22 @@ function starPoints(radius: number, step: number, plane: 'yz' | 'xy'): number[][
   return out;
 }
 
+/** One square of the eight-point star, as points in the local yz plane. */
+function starSquare(radius: number, step: number, rot: number): number[][] {
+  const out: number[][] = [];
+  for (let k = 0; k < 4; k++) {
+    const a0 = rot + (k * Math.PI) / 2;
+    const a1 = a0 + Math.PI / 2;
+    const x0 = Math.cos(a0) * radius;
+    const y0 = Math.sin(a0) * radius;
+    const x1 = Math.cos(a1) * radius;
+    const y1 = Math.sin(a1) * radius;
+    const m = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / step));
+    for (let j = 0; j < m; j++) out.push([0, y0 + (y1 - y0) * (j / m), x0 + (x1 - x0) * (j / m)]);
+  }
+  return out;
+}
+
 function hexPoints(radius: number, step: number): number[][] {
   const out: number[][] = [];
   for (let k = 0; k < 6; k++) {
@@ -234,7 +257,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
     renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
   } catch (error) {
     hooks.onFail(String(error));
-    return { setCases: () => undefined, setScamCount: () => undefined, dispose: () => undefined };
+    return { setCases: () => undefined, setScamCount: () => undefined, replayIntro: () => undefined, dispose: () => undefined };
   }
   renderer.setClearColor(0x070b1d, 1);
   const scene = new Scene();
@@ -299,29 +322,60 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
     return pts;
   })();
 
-  // ---- the dark horizon: where the light comes from ------------------------------------------------------------------
-  const horizon = pointSet(9, scale, false); // few and large: big sprites cost fill rate, so the glow is kept sparse
-  for (let i = 0; i < horizon.n; i++) {
-    const z = -52 + (i / (horizon.n - 1)) * 104;
-    setPoint(horizon, i, -104, 1.5, z, RGB.noor, 0.06, 80 + (i % 3) * 20);
+  // ---- the dawn line: a thin line of noor along the horizon with a soft vertical glow; the cases emerge from it -----------------
+  const dawn = pointSet(170, scale, true);
+  for (let i = 0; i < dawn.n; i++) {
+    const z = -62 + (i / (dawn.n - 1)) * 124;
+    setPoint(dawn, i, -104, 0.45, z, RGB.noor, 0.7, 1.15);
   }
-  scene.add(horizon.points);
-  disposables.push(horizon.geom, horizon.mat);
+  scene.add(dawn.points);
+  disposables.push(dawn.geom, dawn.mat);
+  const glowGeom = new PlaneGeometry(150, 36);
+  const glowMat = new ShaderMaterial({
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader:
+      'varying vec2 vUv; void main(){ float glow = exp(-vUv.y * 6.5) * 0.55 + exp(-vUv.y * 40.0) * 0.5; float edge = smoothstep(0.0, 0.22, vUv.x) * smoothstep(1.0, 0.78, vUv.x); gl_FragColor = vec4(1.0, 0.83, 0.43, glow * edge * 0.5); }',
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    side: DoubleSide,
+    blending: AdditiveBlending,
+  });
+  const glowPlane = new Mesh(glowGeom, glowMat);
+  glowPlane.position.set(-104, 18, 0);
+  glowPlane.rotation.y = Math.PI / 2;
+  scene.add(glowPlane);
+  disposables.push(glowGeom, glowMat);
 
   // ---- the gate: the cost-matrix decision, an eight-point star ---------------------------------------------------------
   const gateGroup = new Group();
   gateGroup.position.copy(GATE);
-  const gateOutline = starPoints(GATE_R, 0.32, 'yz');
-  const gate = pointSet(gateOutline.length + 1, scale, false);
-  gateOutline.forEach((p, i) => setPoint(gate, i, at(p, 0), at(p, 1), at(p, 2), RGB.noor, 0.85, 0.55));
-  setPoint(gate, gateOutline.length, 0, 0, 0, RGB.noor, 0.14, 44);
-  gateGroup.add(gate.points);
-  const gateInner = starPoints(GATE_R * 0.5, 0.4, 'yz');
+  const squares = [starSquare(GATE_R, 0.3, Math.PI / 4), starSquare(GATE_R, 0.3, 0)];
+  const [gateA, gateB] = squares.map((sq) => {
+    const set = pointSet(sq.length, scale, false);
+    sq.forEach((p, i) => setPoint(set, i, at(p, 0), at(p, 1), at(p, 2), RGB.noor, 0.85, 0.5));
+    gateGroup.add(set.points);
+    disposables.push(set.geom, set.mat);
+    return set;
+  }) as [PointSet, PointSet];
+  const gateInner = starPoints(GATE_R * 0.52, 0.4, 'yz');
   const gate2 = pointSet(gateInner.length, scale, false);
-  gateInner.forEach((p, i) => setPoint(gate2, i, at(p, 0), at(p, 1), at(p, 2), RGB.white, 0.5, 0.3));
+  gateInner.forEach((p, i) => setPoint(gate2, i, at(p, 0), at(p, 1), at(p, 2), RGB.noor, 0.4, 0.28));
   gateGroup.add(gate2.points);
+  // the core: a noor lamp with a soft halo and a thin ring
+  const gateCore = pointSet(2 + 48, scale, true);
+  setPoint(gateCore, 0, 0, 0, 0, RGB.noor, 0.95, 5.5);
+  setPoint(gateCore, 1, 0, 0, 0, RGB.noor, 0.16, 34);
+  for (let i = 0; i < 48; i++) {
+    const an = (i / 48) * Math.PI * 2;
+    setPoint(gateCore, 2 + i, 0, Math.sin(an) * 3.6, Math.cos(an) * 3.6, RGB.noor, 0.55, 0.3);
+  }
+  gateGroup.add(gateCore.points);
+  // a ring of light that opens outward each time a batch crosses
+  const gateRing = pointSet(72, scale, true);
+  gateGroup.add(gateRing.points);
   scene.add(gateGroup);
-  disposables.push(gate.geom, gate.mat, gate2.geom, gate2.mat);
+  disposables.push(gate2.geom, gate2.mat, gateCore.geom, gateCore.mat, gateRing.geom, gateRing.mat);
 
   // ---- the homes: a lattice of small stars --------------------------------------------------------------------------------
   const homePos: number[] = [];
@@ -438,6 +492,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   const prevS = new Float32Array(MAX_PARTICLES);
   const seedOf = new Float32Array(MAX_PARTICLES);
   const baseSize = new Float32Array(MAX_PARTICLES);
+  const lift = new Float32Array(MAX_PARTICLES);
   const path = new Float32Array(MAX_PARTICLES * 15); // start xyz, gate point xyz, bezier controls 1..3
   const LANES: Lane[] = ['approve', 'ask', 'human', 'reject'];
   const LANE_ALPHA = [0.95, 0.85, 0.5, 0.7] as const;
@@ -463,8 +518,9 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
       const ry = 3 + ((rb * 5) % 9) * 1.5;
       const gauss = () => (rand() + rand() + rand() - 1.5) * 2;
       const b = i * 15;
-      path[b] = -98 - rand() * 8;
-      path[b + 1] = Math.max(0.6, ry + gauss() * 1.4);
+      path[b] = -100 - rand() * 4;
+      path[b + 1] = 0.5 + rand() * 1.2; // every case starts on the dawn line
+      lift[i] = ry * (0.6 + rand() * 0.6);
       path[b + 2] = rz + gauss() * 1.6;
       path[b + 3] = 0;
       path[b + 4] = GATE.y + gauss() * 3.2;
@@ -501,15 +557,19 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   let pol = 1.2;
   let dist = 126;
   let lastInteract = -1e9;
+  let introT = 0;
+  let gateLit = false;
   let drift = 0;
   const camPos = new Vector3();
   let aspect = 16 / 9;
 
   function placeCamera(now: number): void {
     const fit = Math.max(1, 0.78 / aspect);
-    const azE = az + drift * 0.2 * Math.sin(now * 0.05);
-    const distE = dist * fit * (1 + drift * 0.035 * Math.sin(now * 0.037));
-    const polE = pol + drift * 0.03 * Math.sin(now * 0.041);
+    // intro: from far and high, easing to the resting view
+    const f = introT >= INTRO ? 0 : Math.pow(1 - introT / INTRO, 3);
+    const azE = az + drift * 0.2 * Math.sin(now * 0.05) - f * 0.6;
+    const distE = dist * fit * (1 + drift * 0.035 * Math.sin(now * 0.037)) * (1 + f * 0.95);
+    const polE = pol + drift * 0.03 * Math.sin(now * 0.041) - f * 0.55;
     camPos.set(
       target.x + distE * Math.sin(polE) * Math.sin(azE),
       target.y + distE * Math.cos(polE),
@@ -546,6 +606,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   let hoverPending: { x: number; y: number } | null = null;
   const touch = () => {
     lastInteract = performance.now() / 1000;
+    introT = INTRO; // a hand on the scene ends the intro
   };
 
   function pick(px: number, py: number): number {
@@ -615,7 +676,8 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
     pinchStart = 0;
     if (wasTap) showHover(e.clientX, e.clientY);
   };
-  const onLeave = () => {
+  const onLeave = (e: PointerEvent) => {
+    if (e.pointerType === 'touch') return; // a tap keeps its card until the next tap
     hoverPending = null;
     hovered = -1;
     hooks.onHover(null);
@@ -661,6 +723,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   let pulse = 0;
   let deskGlow = 0;
   let labelTick = 0;
+  let ringT = 1;
 
   const perf = window.location.search.includes('perf') ? { frames: 0, jsMs: 0, renderMs: 0 } : null;
   if (perf) (window as unknown as { __loomPerf: typeof perf }).__loomPerf = perf;
@@ -673,6 +736,8 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
     const dt = Math.min(0.05, Math.max(0.001, nowS - last));
     last = nowS;
     clock += dt;
+    introT += dt;
+    const introAlpha = smooth(0.15, 1.6, introT);
 
     // idle drift eases in after 5 s of no interaction
     drift += ((nowS - lastInteract > 5 ? 1 : 0) - drift) * Math.min(1, dt * 0.8);
@@ -703,7 +768,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
         const e = Math.pow(u, 1.7);
         const wob = Math.sin(u * 9 + at(seedOf, i)) * 1.5 * (1 - u);
         x = at(path, b) + (at(path, b + 3) - at(path, b)) * e;
-        y = at(path, b + 1) + (at(path, b + 4) - at(path, b + 1)) * e + wob * 0.6;
+        y = at(path, b + 1) + (at(path, b + 4) - at(path, b + 1)) * e + wob * 0.6 + at(lift, i) * Math.sin(Math.PI * Math.pow(u, 0.85));
         z = at(path, b + 2) + (at(path, b + 5) - at(path, b + 2)) * e + wob;
       } else {
         const u = (s - GATE_S) / (1 - GATE_S);
@@ -720,15 +785,14 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
       const mix = smooth(0.4, 0.5, s);
       const lc = LANE_RGB[LANES[lane] as Lane] as readonly number[];
       const bright = 0.5 + 0.5 * c.p_ok;
-      const flash = Math.exp(-Math.pow((s - GATE_S) / 0.02, 2));
-      let r = (RGB.noor[0] * bright) * (1 - mix) + at(lc, 0) * mix;
-      let g = (RGB.noor[1] * bright) * (1 - mix) + at(lc, 1) * mix;
-      let bl = (RGB.noor[2] * bright) * (1 - mix) + at(lc, 2) * mix;
-      r += flash * 0.22;
-      g += flash * 0.22;
-      bl += flash * 0.22;
-      let a = smooth(0, 0.07, s) * (1 - smooth(0.93, 1, s)) * (LANE_ALPHA[lane] ?? 0.8) * (s < GATE_S ? 0.7 : 1);
-      let sz = at(baseSize, i) * (lane === 3 ? 0.62 : 1) * (1 + flash * 0.7);
+      // near the gate centre the light is thinned, so the gate stays a shape of light and never a white blob
+      const near = Math.exp(-Math.pow((s - GATE_S) / 0.045, 2));
+      const tone = 1 - 0.4 * near;
+      const r = (RGB.noor[0] * bright * (1 - mix) + at(lc, 0) * mix) * tone;
+      const g = (RGB.noor[1] * bright * (1 - mix) + at(lc, 1) * mix) * tone;
+      const bl = (RGB.noor[2] * bright * (1 - mix) + at(lc, 2) * mix) * tone;
+      let a = smooth(0, 0.07, s) * (1 - smooth(0.93, 1, s)) * (LANE_ALPHA[lane] ?? 0.8) * (s < GATE_S ? 0.7 : 1) * (1 - 0.74 * near) * introAlpha;
+      let sz = at(baseSize, i) * (lane === 3 ? 0.62 : 1) * (1 - 0.5 * near);
       if (i === hoverI) {
         a = 1;
         sz *= 3.2;
@@ -748,10 +812,29 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
 
     // gate energy follows how many cases crossed it in the last moments
     pulse += (Math.min(1, (gateHits / Math.max(dt, 0.001)) / 260) - pulse) * Math.min(1, dt * 3);
-    gate.mat.uniforms.uBoost!.value = 1 + pulse * 0.9;
-    gate2.mat.uniforms.uBoost!.value = 1 + pulse * 0.7;
-    gateGroup.rotation.x = clock * 0.07;
-    gate2.points.rotation.x = -clock * 0.18;
+    for (const set of [gateA, gateB]) set.mat.uniforms.uBoost!.value = 1 + pulse * 0.8;
+    gate2.mat.uniforms.uBoost!.value = 1 + pulse * 0.6;
+    gateCore.mat.uniforms.uBoost!.value = 1 + pulse * 0.5;
+    gateA.points.rotation.x = clock * 0.09; // the two squares of the star turn against each other
+    gateB.points.rotation.x = -clock * 0.12;
+    gate2.points.rotation.x = clock * 0.2;
+    if (!gateLit && introT > 2.3) {
+      gateLit = true; // the gate first lights, and the HUD numbers count up after it
+      ringT = 0;
+    }
+    if (gateHits > 5 && ringT >= 1 && gateLit) ringT = 0;
+    ringT = Math.min(1, ringT + dt / 1.4);
+    const ringR = GATE_R * (0.3 + 0.95 * ringT);
+    const ringA = Math.pow(1 - ringT, 1.6) * 0.75 * (gateLit ? 1 : 0);
+    for (let i = 0; i < gateRing.n; i++) {
+      const an = (i / gateRing.n) * Math.PI * 2;
+      setPoint(gateRing, i, 0, Math.sin(an) * ringR, Math.cos(an) * ringR, RGB.noor, ringA, 0.4);
+    }
+    gateRing.geom.attributes.position!.needsUpdate = true;
+    gateRing.geom.attributes.aColor!.needsUpdate = true;
+    gateCore.col[3] = (0.75 + 0.2 * Math.sin(clock * 2.1) + pulse * 0.25) * smooth(1.6, 2.4, introT);
+    gateCore.col[7] = 0.1 + 0.07 * Math.sin(clock * 1.3) + pulse * 0.14;
+    gateCore.geom.attributes.aColor!.needsUpdate = true;
     (ground.uniforms.uTime as { value: number }).value = clock;
     (ground.uniforms.uPulse as { value: number }).value = pulse;
 
@@ -837,9 +920,18 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
 
     // labels: updated a few times a second, never per frame
     labelTick += dt;
-    if (labelTick > 0.08) {
+    if (labelTick > 0.033) {
       labelTick = 0;
       const rect = canvas.getBoundingClientRect();
+      if (hovered >= 0) {
+        if (at(particles.col, hovered * 4 + 3) < 0.1) {
+          hovered = -1;
+          hooks.onHover(null);
+        } else {
+          tmp.set(at(particles.pos, hovered * 3), at(particles.pos, hovered * 3 + 1), at(particles.pos, hovered * 3 + 2)).project(camera);
+          hooks.onPickMove((tmp.x * 0.5 + 0.5) * rect.width + rect.left, (-tmp.y * 0.5 + 0.5) * rect.height + rect.top);
+        }
+      }
       hooks.onLabels(
         labelDefs.map((d) => {
           tmp.copy(d.p).project(camera);
@@ -875,6 +967,11 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
       build(next);
       hovered = -1;
       hooks.onHover(null);
+    },
+    replayIntro() {
+      introT = 0;
+      gateLit = false;
+      ringT = 1;
     },
     setScamCount(count) {
       sparkCount = Math.min(MAX_SPARKS, Math.max(30, count));
