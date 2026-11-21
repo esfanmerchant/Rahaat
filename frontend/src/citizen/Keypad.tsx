@@ -2,6 +2,25 @@ import { useEffect } from 'preact/hooks';
 import { Pictogram } from '../shared/components/Pictogram';
 import { Spinner } from '../shared/components/Spinner';
 import { t } from '../shared/i18n';
+import { PIN_MIN } from './phone';
+
+/**
+ * How much of a PIN is typed: four dots, because most PINs have four numbers. A fifth and a sixth dot
+ * appear only when the person types them (a PIN has 4 to 6 numbers). The digits are never shown.
+ */
+export function PinDots({ count, label = t('login_pin_label') }: { count: number; label?: string }) {
+  return (
+    <div
+      role="status"
+      aria-label={`${label}: ${t('login_pin_progress', { count })}`}
+      class="rh-ltr flex min-h-tap-lg items-center justify-center gap-4 rounded-lg border-2 border-line-strong bg-paper px-3"
+    >
+      {Array.from({ length: Math.max(PIN_MIN, count) }, (_, index) => (
+        <span key={index} aria-hidden="true" class={`inline-block size-5 rounded-full border-2 ${index < count ? 'border-ink bg-ink' : 'border-ink-muted'}`} />
+      ))}
+    </div>
+  );
+}
 
 interface KeypadProps {
   onDigit: (digit: string) => void;

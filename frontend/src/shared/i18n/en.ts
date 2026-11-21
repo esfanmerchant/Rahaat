@@ -45,7 +45,7 @@ export const en = {
   login_pin_title: 'Your secret PIN',
   login_pin_hint: 'Type your PIN. It has 4 to 6 numbers. Do not show it to anyone.',
   login_pin_label: 'PIN',
-  login_pin_progress: '{count} of 6 numbers typed',
+  login_pin_progress: '{count} numbers typed',
   login_pin_too_short: 'The PIN needs at least 4 numbers.',
   login_checking: 'Checking. Please wait.',
   login_wrong: 'The phone number or PIN is not right. Please try again.',

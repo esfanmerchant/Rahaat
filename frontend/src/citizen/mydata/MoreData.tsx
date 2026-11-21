@@ -13,7 +13,7 @@ import '../../shared/i18n/more';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { AnswerButton, AnswerGroup, InlineFailure, Notice, sayKey } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
-import { Keypad } from '../Keypad';
+import { Keypad, PinDots } from '../Keypad';
 import { CitizenNotFoundPage } from '../NotFound';
 import { PhoneSlots, usePhonePaste } from '../PhoneField';
 import { checkPhone, mockPhone, PHONE_LENGTH, PIN_MAX, PIN_MIN } from '../phone';
@@ -601,16 +601,6 @@ function HelpersPage() {
 
 const SCOPES = ['track', 'apply', 'upload'] as const;
 type Scope = (typeof SCOPES)[number];
-
-function PinDots({ count }: { count: number }) {
-  return (
-    <div role="status" aria-label={t('login_pin_progress', { count })} class="rh-ltr flex min-h-tap-lg items-center justify-center gap-4 rounded-lg border-2 border-line-strong bg-paper px-3">
-      {Array.from({ length: PIN_MAX }, (_, index) => (
-        <span key={index} aria-hidden="true" class={`inline-block size-5 rounded-full border-2 ${index < count ? 'border-ink bg-ink' : index < PIN_MIN ? 'border-ink-muted' : 'border-line-strong border-dashed'}`} />
-      ))}
-    </div>
-  );
-}
 
 /** Choose a helper: phone, what they may do, a PIN (twice, so a slip is caught), then save. */
 function NewHelperPage() {

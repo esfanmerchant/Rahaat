@@ -43,7 +43,7 @@ export const ur: Dict = {
   login_pin_title: 'آپ کا خفیہ پن کوڈ',
   login_pin_hint: 'اپنا پن کوڈ لکھیں۔ اس میں چار سے چھ ہندسے ہیں۔ یہ کسی کو نہ دکھائیں۔',
   login_pin_label: 'پن کوڈ',
-  login_pin_progress: '6 میں سے {count} ہندسے لکھے گئے',
+  login_pin_progress: '{count} ہندسے لکھے گئے',
   login_pin_too_short: 'پن کوڈ میں کم سے کم چار ہندسے ہونے چاہییں۔',
   login_checking: 'جانچ ہو رہی ہے۔ تھوڑا انتظار کریں۔',
   login_wrong: 'فون نمبر یا پن کوڈ درست نہیں ہے۔ دوبارہ کوشش کریں۔',

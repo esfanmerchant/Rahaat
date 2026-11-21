@@ -7,7 +7,7 @@ import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { startActing, type Family } from '../actingControl';
 import { sayKey } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
-import { Keypad } from '../Keypad';
+import { Keypad, PinDots } from '../Keypad';
 import { PIN_MAX, PIN_MIN } from '../phone';
 
 interface Refusal {
@@ -104,19 +104,7 @@ export function FamilyPin({ family, shownName, onBack }: { family: Family; shown
         </div>
       </div>
       <p class="text-lg text-ink-muted">{t('helper_pin_hint')}</p>
-      <div
-        role="status"
-        aria-label={`${t('helper_pin_title')}: ${t('login_pin_progress', { count: pin.length })}`}
-        class="rh-ltr flex min-h-tap-lg items-center justify-center gap-4 rounded-lg border-2 border-line-strong bg-paper px-3"
-      >
-        {Array.from({ length: PIN_MAX }, (_, index) => (
-          <span
-            key={index}
-            aria-hidden="true"
-            class={`inline-block size-5 rounded-full border-2 ${index < pin.length ? 'border-ink bg-ink' : index < PIN_MIN ? 'border-ink-muted' : 'border-line-strong border-dashed'}`}
-          />
-        ))}
-      </div>
+      <PinDots count={pin.length} label={t('helper_pin_title')} />
       {refusal ? (
         <div role="alert" class="flex items-start gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
           <Pictogram name="warning" size={36} />

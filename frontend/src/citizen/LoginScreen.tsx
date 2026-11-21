@@ -9,7 +9,7 @@ import { lang, t, type MessageKey } from '../shared/i18n';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
 import { vaultState } from '../shared/vault';
 import { CitizenShell } from './CitizenShell';
-import { Keypad } from './Keypad';
+import { Keypad, PinDots } from './Keypad';
 import { PhoneSlots, usePhonePaste } from './PhoneField';
 import { checkPhone, formatPhone, isValidPin, mockPhone, PHONE_LENGTH, PIN_MAX, PIN_MIN } from './phone';
 
@@ -230,19 +230,7 @@ function PinDisplay({ length, local }: { length: number; local: string }) {
   return (
     <div class="flex flex-col gap-2">
       <p class="rh-ltr text-center font-mono text-lg text-ink-muted">{formatPhone(local)}</p>
-      <div
-        role="status"
-        aria-label={`${t('login_pin_label')}: ${t('login_pin_progress', { count: length })}`}
-        class="rh-ltr flex min-h-tap-lg items-center justify-center gap-4 rounded-lg border-2 border-line-strong bg-paper px-3"
-      >
-        {Array.from({ length: PIN_MAX }, (_, index) => (
-          <span
-            key={index}
-            aria-hidden="true"
-            class={`inline-block size-5 rounded-full border-2 ${index < length ? 'border-ink bg-ink' : index < PIN_MIN ? 'border-ink-muted' : 'border-line-strong border-dashed'}`}
-          />
-        ))}
-      </div>
+      <PinDots count={length} />
     </div>
   );
 }
