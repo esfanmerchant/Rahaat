@@ -1,0 +1,127 @@
+/*
+ * Phase 3 staff screens (agent panel, webhooks, usage, appeals, complaints).
+ * Uses the Noor variables from staff.css only. Reduced motion keeps fades and nothing else.
+ */
+
+/* ---------- Agent timeline ---------- */
+.st-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-inline-start: 2.1rem;
+}
+.st-rail::before {
+  content: "";
+  position: absolute;
+  inset-block: 0.9rem 0.9rem;
+  inset-inline-start: 0.82rem;
+  width: 2px;
+  background: var(--st-edge);
+  border-radius: 1px;
+}
+.st-step {
+  position: relative;
+  border: 1px solid var(--st-edge);
+  border-radius: 8px;
+  background-color: var(--st-panel);
+  animation: st-step-in 380ms var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 12) * 90ms);
+}
+.st-step.act {
+  border-color: var(--st-noor);
+  box-shadow: 0 0 0 1px var(--st-glow-noor), 0 0 26px -12px var(--st-glow-noor);
+}
+.st-step.bad { border-color: var(--st-bad); }
+.st-step.ok { border-color: var(--st-ok); }
+.st-node {
+  position: absolute;
+  inset-inline-start: -2.1rem;
+  top: 0.45rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--st-panel-2);
+  border: 2px solid var(--color-line-strong);
+  color: var(--color-ink-muted);
+}
+.st-node.ok { border-color: var(--st-ok); color: var(--st-ok); }
+.st-node.bad { border-color: var(--st-bad); color: var(--st-bad); }
+.st-node.warn { border-color: var(--st-warn); color: var(--st-warn); }
+.st-node.act { border-color: var(--st-noor); color: var(--st-noor-text); box-shadow: 0 0 14px var(--st-glow-noor); animation: st-breathe 2s ease-in-out infinite; }
+.st-node.spin svg { animation: st-spin 1.1s linear infinite; }
+@keyframes st-step-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes st-breathe {
+  50% { box-shadow: 0 0 22px var(--st-glow-noor); }
+}
+@keyframes st-spin {
+  to { transform: rotate(360deg); }
+}
+.st-kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.15rem 0.9rem;
+}
+.st-kv dt { color: var(--color-ink-muted); font-size: 0.75rem; }
+.st-kv dd { margin: 0; word-break: break-word; }
+.st-code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  background: var(--st-panel-2);
+  border: 1px solid var(--st-edge);
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  max-height: 16rem;
+  overflow: auto;
+}
+.st-warnbar {
+  border: 1px solid var(--st-warn);
+  background: var(--color-warning-soft);
+  color: var(--st-warn);
+  border-radius: 6px;
+}
+
+/* ---------- Dialog ---------- */
+.st-dialog { max-height: 88vh; overflow: auto; }
+
+/* ---------- Meters (usage, percent of a limit) ---------- */
+.st-meter {
+  position: relative;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--st-grid);
+  overflow: hidden;
+}
+.st-meter > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transform-origin: left;
+  animation: st-grow 700ms var(--ease-out) both;
+}
+.st-meter.l0 > i { background: var(--st-ok); }
+.st-meter.l1 > i { background: var(--st-info); }
+.st-meter.l2 > i { background: var(--st-warn); box-shadow: 0 0 10px var(--st-glow-warn); }
+.st-meter.l3 > i { background: var(--st-bad); box-shadow: 0 0 12px var(--st-glow-bad); }
+.st-meter.unl > i { background: repeating-linear-gradient(90deg, var(--st-info) 0 6px, transparent 6px 12px); opacity: 0.55; }
+
+/* ---------- Webhooks ---------- */
+.st-secret {
+  border: 1px solid var(--st-warn);
+  background: var(--color-warning-soft);
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-step { animation: rh-fade 200ms linear both !important; animation-delay: 0ms !important; transform: none !important; }
+  .st-node.act, .st-node.spin svg { animation: none !important; }
+  .st-meter > i { animation: rh-fade 200ms linear both !important; }
+}

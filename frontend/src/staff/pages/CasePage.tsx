@@ -7,6 +7,7 @@ import { Button } from '../../shared/components/Button';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { Badge, ConfBar, fmtAge, fmtTime, humanize, INPUT, Mono, Section, TD, Th, useLoad, type CaseAction, type CaseDetail } from '../ui';
+import { AgentPanel } from './AgentPanel';
 import { DecisionAnatomy } from './Anatomy';
 import { DocumentsView, HandoffView, TraceView } from './parts';
 
@@ -97,6 +98,7 @@ export function CasePage({ id }: { id: string }) {
       ) : null}
 
       <HandoffView handoff={c.handoff} />
+      <AgentPanel caseId={c.id} />
       {c.decision ? <DecisionAnatomy trace={c.decision} form={c.form} /> : null}
       <FormTable detail={c} />
       <DocumentsView checks={c.document_checks ?? []} />
