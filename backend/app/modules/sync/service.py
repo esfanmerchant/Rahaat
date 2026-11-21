@@ -71,9 +71,13 @@ def _lock(db: Session, tenant_id: UUID, device_id: str, op_id: str) -> None:
 
 
 def _duplicate(op: SyncOpIn, stored: models.SyncOp, principal: Principal, person_id: UUID) -> SyncOpResult:
-    if stored.created_by != principal.user_id or stored.person_id != person_id:
+    if stored.created_by != principal.user_id:
         # Someone else's op id on the same device id: never show another person's result.
         return SyncOpResult(op_id=op.op_id, status="rejected", reason="op_id_taken", detail="Use a new op_id for this change.")
+    if stored.person_id != person_id:
+        # The helper's own op, sent while switched to another family: switch back to that family and send it again.
+        return SyncOpResult(op_id=op.op_id, status="rejected", reason="wrong_person", retryable=True,
+                            detail="This change belongs to another family. Switch to that family, then sync again.")  # fmt: skip
     result = dict(stored.result or {})
     result.pop("op_id", None)
     result.pop("status", None)
@@ -217,6 +221,10 @@ def apply_op(db: Session, principal: Principal, device_id: str, op: SyncOpIn, *,
         return _store_rejection(db, principal, device_id, op, request_person, _rejected(op, exc))
     if op.person_id is not None and op.person_id != ctx.person_id:
         db.rollback()
+        if not ctx.via_helper:  # a citizen can only ever act for themself: final
+            result = SyncOpResult(op_id=op.op_id, status="rejected", reason="wrong_person", entity_id=op.entity_id,
+                                  detail="You can only send your own changes.")  # fmt: skip
+            return _store_rejection(db, principal, device_id, op, ctx.person_id, result)
         return SyncOpResult(op_id=op.op_id, status="rejected", reason="wrong_person", retryable=True, entity_id=op.entity_id,
                             detail="This change belongs to another family. Switch to that family, then sync again.")  # fmt: skip
 

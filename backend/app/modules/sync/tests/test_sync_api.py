@@ -204,3 +204,23 @@ def test_the_same_batch_arriving_four_times_at_once_applies_once(client: TestCli
     assert _count(models.Application, models.Application.person_id == world.citizen.person_id) == 1
     with system_session() as db:
         assert db.get(models.Application, app_id).version == 2, "the edit was applied exactly once"
+
+
+def test_a_helper_resending_one_familys_ops_from_another_family_is_told_to_switch(client: TestClient, factory: Any, world: World) -> None:
+    second = factory.account(world.tenant, "citizen")
+    with system_session() as db:
+        db.add(models.HelperDelegation(tenant_id=world.tenant.id, helper_user_id=world.helper.user_id, person_id=second.person_id,
+                                       scopes=["track", "apply", "upload"], pin_hash=hash_secret(FAMILY_PIN),
+                                       expires_at=datetime.now(UTC) + timedelta(days=30)))  # fmt: skip
+    world.delegated.add(second.person_id)
+    device = "shared-" + uuid.uuid4().hex[:10]
+    op = _create(world, uuid.uuid4())
+    assert _sync(client, world.h("helper", world.citizen.person_id), device, [op]).json()["results"][0]["status"] == "applied"
+    elsewhere = _sync(client, world.h("helper", second.person_id), device, [op]).json()["results"][0]
+    assert elsewhere["status"] == "rejected" and elsewhere["reason"] == "wrong_person" and elsewhere["retryable"] is True
+    back = _sync(client, world.h("helper", world.citizen.person_id), device, [op]).json()["results"][0]
+    assert back["status"] == "duplicate" and back["original_status"] == "applied"
+    # A citizen naming someone else in an op is refused for good.
+    other = {**_create(world, uuid.uuid4()), "person_id": str(world.other_citizen.person_id)}
+    refused = _sync(client, world.h("citizen"), device, [other]).json()["results"][0]
+    assert refused["reason"] == "wrong_person" and refused["retryable"] is False

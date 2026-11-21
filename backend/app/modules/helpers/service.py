@@ -56,6 +56,8 @@ ENDED_VISIBLE_FOR: Final = timedelta(days=30)  # a revoked or expired family sta
 FAMILY_LIST_VIEW_EVERY: Final = timedelta(hours=1)  # one "seen in the family list" row per family per hour
 MAX_DELEGATIONS_SCANNED: Final = 500
 _DELEGATION_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('delegation:' || :person_id || ':' || :helper_id, 0))")
+# One switch attempt at a time per helper, so wrong PINs sent in parallel are all counted before the next is checked.
+_SWITCH_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('helper-switch:' || :helper_id, 0))")
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -382,6 +384,7 @@ def switch(db: Session, principal: Principal, body: SwitchIn) -> SwitchOut:
     """
     if principal.session_id is None:
         raise Forbidden("Switching families needs a signed-in helper.", code="session_required")
+    db.execute(_SWITCH_LOCK, {"helper_id": str(principal.user_id)})  # held until this request's transaction ends
     now = datetime.now(UTC)
     person_id = body.person_id
     window_start = now - tickets.PIN_WINDOW

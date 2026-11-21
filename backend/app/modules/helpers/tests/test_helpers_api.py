@@ -227,3 +227,13 @@ def test_an_expired_ticket_is_refused(client: TestClient, world: World, monkeypa
     ticket = _switch(client, world, pid).json()["ticket"]
     expired = client.get("/v1/me/person", headers=_as_helper(world, pid, ticket))
     assert expired.status_code == 403 and expired.json()["code"] == "ticket_expired"
+
+
+def test_wrong_pins_sent_in_parallel_are_all_counted(client: TestClient, world: World) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    pid = world.citizen.person_id
+    headers = world.h("helper")
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        codes = list(pool.map(lambda _: _switch(client, world, pid, pin="1357", headers=headers).json()["code"], range(8)))
+    assert codes.count("pin_incorrect") == tickets.PIN_MAX_PER_FAMILY and codes.count("pin_locked") == 3, codes
