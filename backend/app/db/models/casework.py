@@ -32,6 +32,9 @@ class Application(Base, IdMixin, TenantMixin, CreatedMixin, UpdatedMixin):
         Index("ix_applications_tenant_status", "tenant_id", "status"),
         Index("uq_applications_tracking_code", "tenant_id", "tracking_code", unique=True,
               postgresql_where=text("tracking_code IS NOT NULL")),
+        # One open application per person and program, so nobody is paid twice for one program.
+        Index("uq_applications_one_open", "tenant_id", "person_id", "program_id", unique=True,
+              postgresql_where=text("status NOT IN ('rejected', 'withdrawn')")),
     )
     program_id: Mapped[uuid.UUID] = fk("programs.id")
     person_id: Mapped[uuid.UUID] = fk("persons.id", ondelete="CASCADE")

@@ -296,6 +296,28 @@ def _by_client_op(db: Session, ctx: PersonContext, client_op_id: str) -> models.
     ).first()
 
 
+CLOSED_STATUSES = ("rejected", "withdrawn")
+
+
+def _refuse_second_open_application(db: Session, ctx: PersonContext, program_id: UUID) -> None:
+    """One open application per person and program: a second one could be paid twice.
+
+    A person may apply again after a rejection or a withdrawal. The database enforces the same rule with a
+    partial unique index (migration 0004), so two requests racing each other cannot both succeed.
+    """
+    open_one = db.scalar(
+        select(models.Application).where(
+            models.Application.tenant_id == ctx.tenant_id, models.Application.person_id == ctx.person_id,
+            models.Application.program_id == program_id, models.Application.status.notin_(CLOSED_STATUSES),
+        ).limit(1)
+    )  # fmt: skip
+    if open_one is not None:
+        raise Conflict(
+            "You already have an application for this program.", code="application_exists",
+            extra={"application_id": str(open_one.id), "status": open_one.status},
+        )  # fmt: skip
+
+
 def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate) -> tuple[ApplicationOut, bool]:
     """Returns (application, created). The same client_op_id always returns the application it first created."""
     form = body.form or ApplicationFormV1()
@@ -308,6 +330,7 @@ def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate)
     if program is None or program.tenant_id != ctx.tenant_id or not program.active:
         raise NotFound("That program is not open in this department.", code="program_not_found")
     raise_if_errors(check_client_form(form))
+    _refuse_second_open_application(db, ctx, program.id)
     form.form_version = "v1"  # the server owns the schema version
     if form.phone.value:
         form.phone.value = normalise_mock_phone(form.phone.value)
@@ -326,6 +349,7 @@ def create_application(db: Session, ctx: PersonContext, body: ApplicationCreate)
         existing = _by_client_op(db, ctx, body.client_op_id)
         if existing is not None:  # a concurrent retry of the same create won the race
             return application_out(db, existing), False
+        _refuse_second_open_application(db, ctx, program.id)  # another create for this person and program won
         raise Conflict("That client_op_id is already used. Generate a new one.", code="client_op_id_conflict") from None
     audit.write(
         db, tenant_id=ctx.tenant_id, action="application.created", object_type="application", object_id=application.id,
