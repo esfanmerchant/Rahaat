@@ -11,7 +11,7 @@ import { Spinner } from '../../shared/components/Spinner';
 import { lang, t, type MessageKey } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { CitizenShell } from '../CitizenShell';
-import { draft, flush, previousStep, STEPS, stepPath, type SavedField, type StepId } from './flow';
+import { draft, fieldState, flush, previousStep, STEPS, stepPath, type SavedField, type SaveState, type StepId } from './flow';
 
 /** Spoken numbers: digit_0..9 and count_10..20. */
 export function numberKey(n: number): MessageKey | null {
@@ -149,22 +149,29 @@ export function NextButton({ enabled, onNext, busy = false }: { enabled: boolean
   );
 }
 
-/** Per-answer save status: saving, saved, waiting for the network, or failed with a retry. */
+/**
+ * How each per-answer state looks: saved on this phone (sealed), not sent yet
+ * (memory only, no PIN key), sending, sent, or failed.
+ */
+export const SAVE_SPEC: Record<SaveState, { icon: PictogramName | null; key: MessageKey; tone: string }> = {
+  stored: { icon: 'phone-saved', key: 'outbox_stored', tone: 'text-warning-ink' },
+  waiting: { icon: 'clock', key: 'apply_waiting', tone: 'text-warning-ink' },
+  sending: { icon: null, key: 'outbox_sending', tone: 'text-ink-muted' },
+  sent: { icon: 'yes', key: 'outbox_sent', tone: 'text-primary-strong' },
+  failed: { icon: 'warning', key: 'apply_save_failed', tone: 'text-danger' },
+};
+
+/** Per-answer status: saved on this phone, sending, sent, or failed with a retry. */
 export function SaveStatus({ field }: { field: SavedField }) {
-  const state = draft.value?.saves[field];
-  if (!state) return <p class="min-h-tap" aria-hidden="true" />;
-  const spec: Record<typeof state, { icon: PictogramName | null; key: MessageKey; tone: string }> = {
-    saving: { icon: null, key: 'apply_saving', tone: 'text-ink-muted' },
-    saved: { icon: 'yes', key: 'apply_saved', tone: 'text-primary-strong' },
-    waiting: { icon: 'clock', key: 'apply_waiting', tone: 'text-warning-ink' },
-    failed: { icon: 'warning', key: 'apply_save_failed', tone: 'text-danger' },
-  };
-  const { icon, key, tone } = spec[state];
+  const status = fieldState(field);
+  if (!status) return <p class="min-h-tap" aria-hidden="true" />;
+  const { icon, tone } = SAVE_SPEC[status.state];
+  const key = status.why ?? SAVE_SPEC[status.state].key;
   return (
     <div role="status" class={`flex min-h-tap items-center gap-2 text-base ${tone}`}>
       {icon ? <Pictogram name={icon} size={28} /> : <Spinner size={24} />}
       <span class="flex-1">{t(key)}</span>
-      {state === 'failed' ? (
+      {status.state === 'failed' && key === 'apply_save_failed' ? (
         <Button size="md" variant="neutral" icon="retry" onClick={() => void flush()}>
           {t('retry')}
         </Button>

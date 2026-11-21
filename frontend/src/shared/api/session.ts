@@ -26,6 +26,16 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+/** Signed in on this phone only (an offline sign-in opened the local data): no token until the network is back. */
+export function isLocalSession(): boolean {
+  return session.peek().status === 'signed-in' && accessToken === null;
+}
+
+/** Forget the access token but keep the session (idle lock); the next request refreshes it from the cookie. */
+export function dropAccessToken(): void {
+  accessToken = null;
+}
+
 const endHandlers = new Set<() => void>();
 
 /**
@@ -47,6 +57,24 @@ export function applyAuth(out: AuthOut): void {
     active: out.active,
     memberships: out.memberships,
   };
+}
+
+/**
+ * An offline sign-in: the PIN opened this person's data on the phone, but the
+ * server cannot be reached. The app runs from local data with no token; the
+ * first request after the network returns refreshes the session from the
+ * cookie (or, without one, asks the person to sign in).
+ */
+export function applyLocal(user: AuthUser, active: ActiveMembership, memberships: Membership[]): void {
+  const previous = session.peek();
+  if (previous.status === 'signed-in' && previous.user.id !== user.id) runEndHandlers();
+  accessToken = null;
+  session.value = { status: 'signed-in', user, active, memberships };
+}
+
+/** Wipe in-memory state (drafts, answers, lists) without ending the session: the idle lock. */
+export function wipeMemory(): void {
+  runEndHandlers();
 }
 
 export function clearAuth(reason: 'none' | 'expired' | 'logout' | 'offline' | 'error'): void {

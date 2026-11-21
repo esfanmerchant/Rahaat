@@ -2,78 +2,74 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ApiFailure } from '../../shared/api/problem';
 import type { DocumentKind, DocumentView } from '../../shared/api/types';
 import { online } from '../../shared/network';
-import { newId, uploadPhoto } from './flow';
+import { queuePhoto } from './flow';
+import { ops, opResults, sendingId } from './outbox';
 import { preparePhoto, type PreparedPhoto } from './photo';
 
 export type PhotoPhase =
   | { name: 'idle' }
   | { name: 'preparing' }
   | { name: 'sending' }
-  | { name: 'waiting' } // offline: the photo is kept in memory and sent when the network is back
+  /** No network: the photo waits in the outbox (sealed on the phone) and goes when the network is back. */
+  | { name: 'stored' }
   | { name: 'failed'; failure: ApiFailure }
   | { name: 'unreadable' }
   | { name: 'result'; doc: DocumentView };
 
 /**
- * Pick or take a photo, resize it on the device, upload it. The photo stays in
- * memory only. A retry sends the same photo with the same Idempotency-Key.
+ * Pick or take a photo, resize it on the device, and put it in the outbox.
+ * The phase follows the outbox: sending, saved on this phone, or the server's
+ * answer. A retry after a failure queues the same photo again.
  */
 export function usePhotoUpload(kind: DocumentKind, onResult: (doc: DocumentView) => void, applicationId?: string) {
-  const [phase, setPhase] = useState<PhotoPhase>({ name: 'idle' });
+  const [local, setLocal] = useState<'idle' | 'preparing' | 'unreadable'>('idle');
+  const [opId, setOpId] = useState<string | null>(null);
   const photo = useRef<PreparedPhoto | null>(null);
-  const key = useRef(newId());
-  const alive = useRef(true);
-  useEffect(
-    () => () => {
-      alive.current = false;
-    },
-    [],
-  );
+  const answered = useRef<string | null>(null);
 
-  const send = async (): Promise<void> => {
+  const result = opId ? opResults.value.get(opId) : undefined;
+  const queued = opId ? ops.value.find((op) => op.id === opId) : undefined;
+  const isOnline = online.value;
+  const sendingNow = queued !== undefined && sendingId.value === queued.id;
+
+  useEffect(() => {
+    if (!opId || result?.state !== 'done' || answered.current === opId) return;
+    answered.current = opId;
+    onResult(result.result as DocumentView);
+  }, [opId, result]);
+
+  let phase: PhotoPhase;
+  if (local === 'preparing') phase = { name: 'preparing' };
+  else if (local === 'unreadable') phase = { name: 'unreadable' };
+  else if (result?.state === 'done') phase = { name: 'result', doc: result.result as DocumentView };
+  else if (result?.state === 'failed') phase = { name: 'failed', failure: result.failure };
+  else if (queued) phase = sendingNow || (isOnline && queued.tries === 0) ? { name: 'sending' } : { name: 'stored' };
+  else phase = { name: 'idle' };
+
+  const send = (): void => {
     const prepared = photo.current;
     if (!prepared) return;
-    if (!online.peek()) {
-      setPhase({ name: 'waiting' });
-      return;
-    }
-    setPhase({ name: 'sending' });
-    const result = await uploadPhoto(prepared.blob, kind, key.current, applicationId);
-    if (!alive.current) return;
-    if (result.ok) {
-      setPhase({ name: 'result', doc: result.data });
-      onResult(result.data);
-    } else if (result.failure.kind === 'offline') {
-      setPhase({ name: 'waiting' });
-    } else {
-      setPhase({ name: 'failed', failure: result.failure });
-    }
+    setOpId(queuePhoto(prepared.blob, kind, applicationId).id);
   };
-
-  // Offline when the photo was taken: send it as soon as the network is back.
-  useEffect(() => {
-    if (phase.name !== 'waiting') return undefined;
-    return online.subscribe((isOnline) => {
-      if (isOnline) void send();
-    });
-  }, [phase.name]);
 
   const choose = async (file: File | undefined): Promise<void> => {
     if (!file) return;
-    setPhase({ name: 'preparing' });
+    setLocal('preparing');
+    setOpId(null);
     try {
       photo.current = await preparePhoto(file);
     } catch {
-      if (alive.current) setPhase({ name: 'unreadable' });
+      setLocal('unreadable');
       return;
     }
-    key.current = newId(); // a new photo is a new upload
-    await send();
+    setLocal('idle');
+    send();
   };
 
   const reset = (): void => {
     photo.current = null;
-    setPhase({ name: 'idle' });
+    setOpId(null);
+    setLocal('idle');
   };
 
   return { phase, choose, retry: send, reset, preview: photo.current?.canvas ?? null };

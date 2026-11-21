@@ -9,16 +9,17 @@ import { online } from '../../shared/network';
 import {
   consentNeeded,
   draft,
+  fieldState,
+  queuedSubmit,
   setReturnToReview,
   stepPath,
   submitApplication,
-  submitWaiting,
   type Draft,
   type SavedField,
   type StepId,
 } from './flow';
 import { INCOME_BANDS, TRI_ANSWERS, TRI_STEPS } from './QuestionSteps';
-import { InlineFailure, Notice, numberKey, StepLayout } from './parts';
+import { InlineFailure, Notice, numberKey, SAVE_SPEC, sayKey, StepLayout } from './parts';
 
 interface Row {
   step: StepId;
@@ -33,14 +34,14 @@ interface Row {
 
 function rows(d: Draft, code: Lang): Row[] {
   const list: Row[] = [];
-  const cardKey: MessageKey = d.card === 'accepted' ? 'review_card_ok' : 'review_card_check';
+  const cardKey: MessageKey = d.card === 'accepted' ? 'review_card_ok' : d.card === 'queued' ? 'outbox_stored' : 'review_card_check';
   list.push({
     step: 'card',
     icon: 'card',
     label: 'review_card',
     value: t(cardKey, undefined, code),
     valueKey: cardKey,
-    valueIcon: d.card === 'accepted' ? 'yes' : 'person-help',
+    valueIcon: d.card === 'accepted' ? 'yes' : d.card === 'queued' ? 'phone-saved' : 'person-help',
   });
   if (d.cardName) {
     list.push({
@@ -124,8 +125,12 @@ export function ReviewStep() {
     setFailure(null);
     const result = await submitApplication();
     setBusy(false);
-    if (result.ok) {
+    if (result.ok && result.data) {
       route('/result', true);
+      return;
+    }
+    if (result.ok) {
+      sayKey('outbox_submit_saved'); // kept on the phone; sent when the network is back
       return;
     }
     if (consentNeeded.peek()) {
@@ -135,7 +140,7 @@ export function ReviewStep() {
     setFailure(result.failure);
   };
 
-  const waiting = submitWaiting.value;
+  const waiting = queuedSubmit() !== null;
   const offline = !online.value;
   return (
     // While Send waits for the network the person can still go back; it is sent when the network returns.
@@ -147,7 +152,7 @@ export function ReviewStep() {
         ))}
       </ul>
       {failure ? <InlineFailure failure={failure} /> : null}
-      {waiting || (busy && offline) ? <Notice tone="warn" icon="offline" text={t('submit_offline')} /> : null}
+      {waiting || (busy && offline) ? <Notice tone="warn" icon="phone-saved" text={t('outbox_submit_saved')} /> : null}
       {busy && !waiting && !offline ? (
         <p role="status" class="text-center text-lg text-ink-muted">
           {t('submit_sending')}
@@ -161,13 +166,12 @@ export function ReviewStep() {
 }
 
 function ReviewRow({ row, onChange, disabled }: { row: Row; onChange: () => void; disabled: boolean }) {
-  const state = row.field ? draft.value?.saves[row.field] : undefined;
-  const status: { icon: PictogramName; tone: string; key: MessageKey } | null =
-    state === 'waiting'
-      ? { icon: 'clock', tone: 'text-warning-ink', key: 'apply_waiting' }
-      : state === 'failed'
-        ? { icon: 'warning', tone: 'text-danger', key: 'apply_save_failed' }
-        : null;
+  const saved = row.field ? fieldState(row.field) : undefined;
+  const state = saved?.state;
+  const spec = state && state !== 'sent' && state !== 'sending' ? SAVE_SPEC[state] : null;
+  const status: { icon: PictogramName; tone: string; key: MessageKey } | null = spec
+    ? { icon: spec.icon ?? 'clock', tone: spec.tone, key: saved?.why ?? spec.key }
+    : null;
   return (
     <li class="flex items-start gap-3 rounded-lg border-2 border-line bg-surface p-2">
       <Pictogram name={row.icon} size={44} class="mt-1 text-primary" />
@@ -175,7 +179,7 @@ function ReviewRow({ row, onChange, disabled }: { row: Row; onChange: () => void
         <div class="flex items-center justify-between gap-2">
           <span class="flex items-center gap-1 text-base font-semibold text-ink-muted">
             {t(row.label)}
-            {state === 'saved' ? <Pictogram name="yes" size={20} label={t('apply_saved')} class="text-primary" /> : null}
+            {state === 'sent' ? <Pictogram name="yes" size={20} label={t('outbox_sent')} class="text-primary" /> : null}
           </span>
           <button
             type="button"

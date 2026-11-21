@@ -37,3 +37,32 @@ From: Track D2   To: lead   Status: open
 What: make output schemas list fields that have defaults as required (Pydantic `json_schema_serialization_defaults_required=True` on response models), then regenerate the client.
 Why: the client marks always-present fields as optional, so the screens are full of `?? []`.
 Until then: guards in the staff code.
+
+## Idempotency-Key on document upload
+From: Track D1   To: Track A   Status: open
+What: `POST /v1/applications/{id}/documents` should honour the `Idempotency-Key` header the citizen app already sends: keep the key with the document, and a repeat with the same key returns the first document and its check.
+Why: a photo whose response was lost must never be stored twice (offline outbox, "sync later without duplicating data").
+Until then: the outbox counts the documents of that kind before the first try and, after a lost response, looks for the photo on the server before sending it again (`sendUpload` in `frontend/src/citizen/apply/flow.ts`).
+
+## Batched sync for the outbox
+From: Track D1   To: Track A (A13)   Status: open
+What: when `POST /v1/sync` lands, per-op results `applied | duplicate | conflict{fields, server_value} | rejected{reason}`, with the application's new version on an applied patch, for the kinds consent, create, patch and submit (photos stay multipart on the documents endpoint).
+Why: the outbox sends through a small `Transport` (`setTransport` in `frontend/src/citizen/apply/flow.ts`); switching to the batch is one file.
+Until then: REST calls, one at a time, with the same idempotency guarantees.
+
+## "Who looked at my data" for the consent centre
+From: Track D1   To: Track A (whoever builds the access log)   Status: open
+What: the path and response shape of the citizen's access log (per read: who, which department or role, when, for what).
+Why: D1.7 "access log". The place is reserved: `AccessLogSection` and `ACCESS_LOG_READY = false` in `frontend/src/citizen/mydata/parts.tsx`.
+Until then: hidden; nothing is drawn or fetched.
+
+## Invalid UTF-8 byte in the staff queue
+From: Track D1   To: Track D2   Status: open
+What: `frontend/src/staff/pages/QueuePage.tsx` has byte 0x85 (a Windows-1252 ellipsis) in `"Loading the queue…"`. It is not valid UTF-8 and shows as a replacement character. Use `...` or a real UTF-8 ellipsis.
+Why: noticed while scanning the frontend sources; not D1's file.
+
+## Status, decisions and demo notes for Phase 2 of D1
+From: Track D1   To: lead   Status: open
+What: tick D1.5 (outbox, encrypted local queue, statuses, banner), D1.7 (consent centre, access log reserved), D1.8 (scam checker by paste and speech; screenshot is C8); D1.6 voice answers are done for the scam checker only. ADR text is in the D1 report: the vault key from the PIN, the idle lock keeps sealed unsent work instead of wiping it, a reload asks for the PIN.
+Why: STATUS.md and DECISIONS.md are the lead's files.
+Until then: the rules are in `docs/DESIGN.md` (sections "Scam checker", "Consent centre", "Offline").

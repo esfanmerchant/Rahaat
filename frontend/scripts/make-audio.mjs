@@ -14,6 +14,10 @@
 // unless the text changes.
 //
 // Node 22.6+ (type stripping) reads the TypeScript dictionaries directly.
+//
+// The server's own fixed sentences (scam answers, decision explanations) are
+// recorded too, from scripts/server-prompts.json (node scripts/server-prompts.mjs),
+// under the server's audio keys: public/audio/{lang}/scam.reason.asks_fee.mp3.
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -73,6 +77,18 @@ function speakable(dict, code) {
   return out;
 }
 
+/** The server's sentences for this language, keyed by the audio key the API names. */
+function serverTexts(code) {
+  const file = join(root, 'scripts', 'server-prompts.json');
+  if (!existsSync(file)) return {};
+  const out = {};
+  for (const [key, texts] of Object.entries(JSON.parse(readFileSync(file, 'utf8')))) {
+    const text = texts?.[code];
+    if (typeof text === 'string' && text.trim() && /^[\w.-]+$/.test(key)) out[key] = text.replace(/[⁦-⁩]/g, '').trim();
+  }
+  return out;
+}
+
 function hash(voice, text) {
   return createHash('sha1').update(`${voice}\n${text}`).digest('hex').slice(0, 16);
 }
@@ -98,7 +114,7 @@ async function run(code) {
   mkdirSync(dir, { recursive: true });
   const indexPath = join(dir, 'index.json');
   const previous = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')).files ?? {} : {};
-  const texts = speakable(await dictionary(code), code);
+  const texts = { ...speakable(await dictionary(code), code), ...serverTexts(code) };
 
   const todo = [];
   const files = {};

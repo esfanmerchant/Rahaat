@@ -1,5 +1,9 @@
 import type { JSX } from 'preact';
 
+/** Shared outlines: the message bubble (tail at the start side) and the shield. */
+const BUBBLE = 'M8 8h32a3 3 0 0 1 3 3v20a3 3 0 0 1-3 3H21l-9 7v-7H8a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3z';
+const SHIELD = 'M24 5l15 6v11c0 10-6.5 17-15 21C15.5 39 9 32 9 22V11z';
+
 /**
  * Rahat pictograms: one hand-drawn set, 48x48 grid, 3px round strokes in
  * currentColor, no fills except small dots. Colour comes from the parent
@@ -156,6 +160,78 @@ const ICONS = {
       <path d="M26 13l9 9" />
     </>
   ),
+  /** A text message: a speech bubble. The variants say what we think of it. */
+  message: () => <path d={BUBBLE} />,
+  'msg-scam': () => (
+    <>
+      <path d={BUBBLE} />
+      <path d="M18.5 15.5l11 11M29.5 15.5l-11 11" />
+    </>
+  ),
+  'msg-warn': () => (
+    <>
+      <path d={BUBBLE} />
+      <path d="M24 14v8.5M24 28h.01" />
+    </>
+  ),
+  'msg-unsure': () => (
+    <>
+      <path d={BUBBLE} />
+      <path d="M19.5 17a4.5 4.5 0 1 1 6.7 3.9c-1.4.8-2.2 1.9-2.2 3.4M24 28.5h.01" />
+    </>
+  ),
+  'msg-ok': () => (
+    <>
+      <path d={BUBBLE} />
+      <path d="M17 21.5l5 5 9-10" />
+    </>
+  ),
+  /** Checked by us: a shield with a tick (a real message, really sent by Rahat). */
+  'shield-ok': () => (
+    <>
+      <path d={SHIELD} />
+      <path d="M17 23.5l5 5 9-10" />
+    </>
+  ),
+  /** The scam checker: a shield with a question ("is this safe?"). */
+  shield: () => (
+    <>
+      <path d={SHIELD} />
+      <path d="M20 19a4.2 4.2 0 1 1 6.3 3.6c-1.3.8-2.3 1.8-2.3 3.4M24 31.5h.01" />
+    </>
+  ),
+  link: () => <path d="M20 28l8-8M17 21l-4 4a6 6 0 0 0 8.5 8.5l4-4M31 27l4-4a6 6 0 0 0-8.5-8.5l-4 4" />,
+  /** Paste: a clipboard. */
+  paste: () => (
+    <>
+      <path d="M16 9h-3a3 3 0 0 0-3 3v28a3 3 0 0 0 3 3h22a3 3 0 0 0 3-3V12a3 3 0 0 0-3-3h-3" />
+      <path d="M18 5h12v7H18zM17 22h14M17 28h14M17 34h9" />
+    </>
+  ),
+  /** Share less: a minus in a circle. */
+  less: () => (
+    <>
+      <circle cx="24" cy="24" r="19" />
+      <path d="M15 24h18" />
+    </>
+  ),
+  /** Waiting, stopped for now: two bars in a circle. */
+  pause: () => (
+    <>
+      <circle cx="24" cy="24" r="19" />
+      <path d="M20 17v14M28 17v14" />
+    </>
+  ),
+  /** Saved on this phone: a phone with a tick on its screen. */
+  'phone-saved': () => (
+    <>
+      <rect x="14" y="4" width="20" height="40" rx="3" />
+      <path d="M21 38h6M18.5 20l4 4 7-8" />
+    </>
+  ),
+  /** Sending: an arrow leaving a tray. */
+  sending: () => <path d="M24 30V8M15 17l9-9 9 9M8 30v8a3 3 0 0 0 3 3h26a3 3 0 0 0 3-3v-8" />,
+
   /** Income bands: one to four banknotes stacked (more notes, more money). */
   'income-1': () => notes(1),
   'income-2': () => notes(2),
@@ -326,5 +402,30 @@ export function Pictogram({ name, size = 48, label, mirror = true, class: classN
     >
       {ICONS[name]()}
     </svg>
+  );
+}
+
+/**
+ * "Do not": the picture with a red slash across it, on a white edge so it
+ * stands out from the picture's own lines. Used for "do not pay" and the like.
+ */
+export function CrossedPictogram({ name, size = 48, class: className = '' }: { name: PictogramName; size?: number; class?: string }) {
+  return (
+    <span class={`relative inline-flex shrink-0 ${className}`} aria-hidden="true">
+      <Pictogram name={name} size={size} />
+      <svg
+        viewBox="0 0 48 48"
+        width={size}
+        height={size}
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        focusable="false"
+        class="absolute inset-0"
+      >
+        <path d="M7 41L41 7" stroke-width="8" class="text-paper" />
+        <path d="M7 41L41 7" stroke-width="4" class="text-danger" />
+      </svg>
+    </span>
   );
 }

@@ -6,7 +6,7 @@ import { Redirect } from '../../shared/routing';
 import { CitizenShell } from '../CitizenShell';
 import { CardStep } from './CardStep';
 import { ConsentDeclined, ConsentStep } from './ConsentStep';
-import { consentNeeded, draft, firstOpenStep, isStep, startOrResume, stepPath, type StepId } from './flow';
+import { consentNeeded, draft, firstOpenStep, hasApplication, isStep, lastSubmit, startOrResume, stepPath, type StepId } from './flow';
 import { HouseholdStep, IncomeStep, NameStep, TRI_STEPS, TriStep } from './QuestionSteps';
 import { ReviewStep } from './ReviewStep';
 
@@ -41,8 +41,11 @@ export function ApplyFlow({ step }: { step: string | undefined }) {
   const [failure, setFailure] = useState<ApiFailure | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  // Sent from the review screen while waiting in the outbox: show the result, not a new draft.
+  const sentFromReview = !d && step === 'review' && lastSubmit.value !== null;
+
   useEffect(() => {
-    if (draft.peek()) return;
+    if (draft.peek() || sentFromReview) return;
     let live = true;
     setFailure(null);
     void startOrResume().then((result) => {
@@ -54,6 +57,7 @@ export function ApplyFlow({ step }: { step: string | undefined }) {
   }, [attempt, d === null]);
 
   if (step === 'declined') return <ConsentDeclined />;
+  if (sentFromReview) return <Redirect to="/result" />;
 
   if (!d) {
     return (
@@ -72,8 +76,8 @@ export function ApplyFlow({ step }: { step: string | undefined }) {
 
   if (!isStep(step)) return <Redirect to={stepPath(firstOpenStep(d))} />;
 
-  // Nothing after consent works without an application on the server.
-  if (step !== 'consent' && !d.applicationId) return <Redirect to={stepPath('consent')} />;
+  // Nothing after consent works without an application (on the server, or waiting in the outbox).
+  if (step !== 'consent' && !hasApplication(d)) return <Redirect to={stepPath('consent')} />;
   // The name question needs a name read from the card.
   if (step === 'name' && !d.cardName) return <Redirect to={stepPath(firstOpenStep(d))} />;
 

@@ -183,8 +183,14 @@ export function playPrompt(key: string, code: Lang, spokenText?: string): void {
 
 // ---- warming the cache ----------------------------------------------------------------------
 
-/** Prompts of the application flow are fetched first. */
-const FIRST = /^(start|home|consent|card|doc|name|household|income|widow|disability|aid|answer|review|submit|result|digit|count)_/;
+/** Prompts of the application flow (and of working offline) are fetched first. */
+const FIRST = /^(start|home|consent|card|doc|name|household|income|widow|disability|aid|answer|review|submit|result|digit|count|outbox|unlock)_/;
+/**
+ * Not warmed: screens that need the network anyway (the scam checker, the
+ * consent centre, warnings, the server's explanations). They are cached the
+ * first time they play, which keeps the background download small.
+ */
+const SKIP = /^(scam[._]|warn_|mydata_|reason\.|next\.)/;
 
 const warming = new Set<Lang>();
 let wanted: Lang | null = null;
@@ -211,9 +217,11 @@ export function warmAudio(code: Lang): void {
         });
       }
       if (!sw.controller) return; // dev server, or the worker is not active yet
+      // The list of recordings, through the worker this time, so it is cached for offline use.
+      await fetch(`/audio/${code}/index.json`, { credentials: 'same-origin' }).then((r) => r.arrayBuffer());
       const files = await audioKeys(code);
       if (!files) return;
-      const keys = [...files].sort((a, b) => Number(!FIRST.test(a)) - Number(!FIRST.test(b)));
+      const keys = [...files].filter((key) => !SKIP.test(key)).sort((a, b) => Number(!FIRST.test(a)) - Number(!FIRST.test(b)));
       for (const key of keys) {
         if (!online.peek()) return;
         const response = await fetch(`/audio/${code}/${key}.mp3`, {
