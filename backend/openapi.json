@@ -180,6 +180,54 @@
         "title": "ActiveOut",
         "type": "object"
       },
+      "AgentDecisionOut": {
+        "properties": {
+          "abstained": {
+            "title": "Abstained",
+            "type": "boolean"
+          },
+          "choice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Choice"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          }
+        },
+        "required": [
+          "choice",
+          "confidence",
+          "abstained",
+          "route",
+          "reasons",
+          "model_version"
+        ],
+        "title": "AgentDecisionOut",
+        "type": "object"
+      },
       "AnomalyEvidence": {
         "description": "Result of anomaly detection (Phase 3). A flagged case is a guard.",
         "properties": {
@@ -611,6 +659,456 @@
         "title": "ApiKeyRotate",
         "type": "object"
       },
+      "AppealCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the person disagrees, in their own words (a few sentences)",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_id",
+          "reason"
+        ],
+        "title": "AppealCreate",
+        "type": "object"
+      },
+      "AppealDecide": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "description": "`upheld`: the first answer stays. `overturned`: the application is approved and paid.",
+            "enum": [
+              "upheld",
+              "overturned"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Required; stored in the audit log and the case",
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "reason"
+        ],
+        "title": "AppealDecide",
+        "type": "object"
+      },
+      "AppealList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AppealOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AppealList",
+        "type": "object"
+      },
+      "AppealOut": {
+        "description": "What the citizen (or their helper) sees.",
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "$ref": "#/components/schemas/KeyedText",
+            "description": "Keyed text in English and Urdu; the app also plays the matching audio"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "upheld",
+              "overturned",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "status_key": {
+            "enum": [
+              "being_checked",
+              "first_answer_stays",
+              "approved_after_appeal",
+              "withdrawn"
+            ],
+            "title": "Status Key",
+            "type": "string"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Code"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "status",
+          "status_key",
+          "message",
+          "created_at"
+        ],
+        "title": "AppealOut",
+        "type": "object"
+      },
+      "AppealStaffDetail": {
+        "properties": {
+          "age_days": {
+            "title": "Age Days",
+            "type": "integer"
+          },
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "can_decide": {
+            "description": "False when the caller took part in the first decision: a different officer must decide",
+            "title": "Can Decide",
+            "type": "boolean"
+          },
+          "cannot_decide_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cannot Decide Reason"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Id"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "original_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Outcome"
+          },
+          "original_reasons": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Original Reasons",
+            "type": "array"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The deciding officer's reason, once decided",
+            "title": "Outcome"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The citizen's reason",
+            "title": "Reason"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "upheld",
+              "overturned",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hidden (null) while the person's consent does not allow reading the application",
+            "title": "Tracking Code"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "case_id",
+          "status",
+          "created_at",
+          "age_days",
+          "reason",
+          "can_decide"
+        ],
+        "title": "AppealStaffDetail",
+        "type": "object"
+      },
+      "AppealStaffList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AppealStaffOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AppealStaffList",
+        "type": "object"
+      },
+      "AppealStaffOut": {
+        "properties": {
+          "age_days": {
+            "title": "Age Days",
+            "type": "integer"
+          },
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "upheld",
+              "overturned",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hidden (null) while the person's consent does not allow reading the application",
+            "title": "Tracking Code"
+          }
+        },
+        "required": [
+          "id",
+          "application_id",
+          "case_id",
+          "status",
+          "created_at",
+          "age_days"
+        ],
+        "title": "AppealStaffOut",
+        "type": "object"
+      },
       "ApplicationCreate": {
         "additionalProperties": false,
         "properties": {
@@ -968,7 +1466,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ApprovalOut"
+              "$ref": "#/components/schemas/app__contracts__api__ApprovalOut"
             },
             "title": "Items",
             "type": "array"
@@ -989,81 +1487,6 @@
           "items"
         ],
         "title": "ApprovalList",
-        "type": "object"
-      },
-      "ApprovalOut": {
-        "properties": {
-          "approver_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Approver Id"
-          },
-          "created_at": {
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "kind": {
-            "title": "Kind",
-            "type": "string"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reason"
-          },
-          "requested_by": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requested By"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "subject_id": {
-            "format": "uuid",
-            "title": "Subject Id",
-            "type": "string"
-          },
-          "subject_type": {
-            "title": "Subject Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "subject_type",
-          "subject_id",
-          "status",
-          "created_at"
-        ],
-        "title": "ApprovalOut",
         "type": "object"
       },
       "AskIn": {
@@ -2425,6 +2848,276 @@
           "blocked_together"
         ],
         "title": "CompareOut",
+        "type": "object"
+      },
+      "ComplaintCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "service",
+              "staff",
+              "scam_attempt",
+              "payment",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional: what happened, in a few sentences",
+            "title": "Details"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "title": "ComplaintCreate",
+        "type": "object"
+      },
+      "ComplaintList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ComplaintList",
+        "type": "object"
+      },
+      "ComplaintOut": {
+        "properties": {
+          "category": {
+            "enum": [
+              "service",
+              "staff",
+              "scam_attempt",
+              "payment",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "$ref": "#/components/schemas/KeyedText"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "enum": [
+                  "resolved",
+                  "closed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "enum": [
+              "received",
+              "being_checked",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "status",
+          "message",
+          "created_at"
+        ],
+        "title": "ComplaintOut",
+        "type": "object"
+      },
+      "ComplaintResolve": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "description": "`resolved`: action was taken. `dismissed`: nothing could be changed.",
+            "enum": [
+              "resolved",
+              "dismissed"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "reason"
+        ],
+        "title": "ComplaintResolve",
+        "type": "object"
+      },
+      "ComplaintStaffList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComplaintStaffOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ComplaintStaffList",
+        "type": "object"
+      },
+      "ComplaintStaffOut": {
+        "properties": {
+          "case_kind": {
+            "enum": [
+              "complaint",
+              "scam_review"
+            ],
+            "title": "Case Kind",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "service",
+              "staff",
+              "scam_attempt",
+              "payment",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null while the person's consent does not allow reading it",
+            "title": "Details"
+          },
+          "id": {
+            "description": "The case id: also usable on GET /v1/cases/{id}",
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "case_kind",
+          "status",
+          "priority",
+          "created_at"
+        ],
+        "title": "ComplaintStaffOut",
         "type": "object"
       },
       "ConfusionOut": {
@@ -4177,6 +4870,134 @@
         "title": "DelegationOut",
         "type": "object"
       },
+      "DeliveryList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DeliveryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "DeliveryList",
+        "type": "object"
+      },
+      "DeliveryOut": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "event": {
+            "title": "Event",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "max_attempts": {
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "next_attempt_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Attempt At"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "response_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Code"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "delivered",
+              "failed",
+              "dead"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "webhook_id": {
+            "format": "uuid",
+            "title": "Webhook Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "webhook_id",
+          "event",
+          "status",
+          "attempts",
+          "max_attempts",
+          "created_at",
+          "payload"
+        ],
+        "title": "DeliveryOut",
+        "type": "object"
+      },
       "DemoAccountOut": {
         "properties": {
           "identifier": {
@@ -4931,6 +5752,24 @@
           "notes"
         ],
         "title": "EvalSummaryOut",
+        "type": "object"
+      },
+      "EventOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "EventOut",
         "type": "object"
       },
       "Explanation": {
@@ -6067,6 +6906,29 @@
         "title": "KeyBucketOut",
         "type": "object"
       },
+      "KeyedText": {
+        "properties": {
+          "en": {
+            "title": "En",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "ur": {
+            "title": "Ur",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "en",
+          "ur"
+        ],
+        "title": "KeyedText",
+        "type": "object"
+      },
       "LabelIn": {
         "additionalProperties": false,
         "properties": {
@@ -6716,6 +7578,60 @@
         "title": "MembershipOut",
         "type": "object"
       },
+      "MetricUsage": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the plan does not limit this metric",
+            "title": "Limit"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "percent_used": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Used"
+          },
+          "reached": {
+            "description": "True when the next unit would be refused",
+            "title": "Reached",
+            "type": "boolean"
+          },
+          "used": {
+            "title": "Used",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "metric",
+          "label",
+          "used",
+          "limit",
+          "percent_used",
+          "reached"
+        ],
+        "title": "MetricUsage",
+        "type": "object"
+      },
       "MistakeCounts": {
         "properties": {
           "false_approvals": {
@@ -6817,6 +7733,28 @@
         "title": "MockControlIn",
         "type": "object"
       },
+      "MockReceived": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "reachable": {
+            "default": true,
+            "title": "Reachable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MockReceived",
+        "type": "object"
+      },
       "MocksOut": {
         "properties": {
           "label": {
@@ -6842,6 +7780,28 @@
           "label"
         ],
         "title": "MocksOut",
+        "type": "object"
+      },
+      "MonthUsage": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "period": {
+            "description": "YYYY-MM, UTC",
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "counts"
+        ],
+        "title": "MonthUsage",
         "type": "object"
       },
       "MyReportList": {
@@ -7600,6 +8560,85 @@
           "full_name"
         ],
         "title": "PersonOut",
+        "type": "object"
+      },
+      "PlanOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "limits": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Limits",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_pkr": {
+            "description": "Per month; prototype figures only",
+            "title": "Price Pkr",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "price_pkr",
+          "limits"
+        ],
+        "title": "PlanOut",
+        "type": "object"
+      },
+      "PlanRef": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "PlanRef",
+        "type": "object"
+      },
+      "PlannerOut": {
+        "properties": {
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "model_version"
+        ],
+        "title": "PlannerOut",
         "type": "object"
       },
       "PrPoint": {
@@ -9015,6 +10054,116 @@
         "title": "RunIn",
         "type": "object"
       },
+      "RunList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RunOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "RunList",
+        "type": "object"
+      },
+      "RunOut": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/AgentDecisionOut"
+          },
+          "flags": {
+            "description": "Instruction-like text found in case text and treated as data; staff only",
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "outcome": {
+            "description": "proposed | abstained | proposal_blocked | approved | rejected | failed",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "planner": {
+            "$ref": "#/components/schemas/PlannerOut"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "reused": {
+            "default": false,
+            "title": "Reused",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "running | waiting_approval | done | failed | cancelled",
+            "title": "Status",
+            "type": "string"
+          },
+          "step_budget": {
+            "title": "Step Budget",
+            "type": "integer"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "steps_used": {
+            "title": "Steps Used",
+            "type": "integer"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "case_id",
+          "status",
+          "outcome",
+          "planner",
+          "decision",
+          "rationale",
+          "flags",
+          "step_budget",
+          "steps_used",
+          "steps",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RunOut",
+        "type": "object"
+      },
       "ScamCheckIn": {
         "additionalProperties": false,
         "properties": {
@@ -9906,6 +11055,112 @@
           "decision_reasons"
         ],
         "title": "StaffDetailOut",
+        "type": "object"
+      },
+      "StepDecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Why the officer approves or rejects this proposal; stored in the audit log",
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "StepDecisionIn",
+        "type": "object"
+      },
+      "StepOut": {
+        "properties": {
+          "approval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__agent__schemas__ApprovalOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "args": {
+            "additionalProperties": true,
+            "title": "Args",
+            "type": "object"
+          },
+          "block_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Block Codes",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "read",
+              "action"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "output": {
+            "additionalProperties": true,
+            "title": "Output",
+            "type": "object"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "requires_approval": {
+            "title": "Requires Approval",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "done | waiting_approval | rejected | failed | blocked",
+            "title": "Status",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ordinal",
+          "tool",
+          "kind",
+          "status",
+          "requires_approval",
+          "args",
+          "output",
+          "created_at"
+        ],
+        "title": "StepOut",
         "type": "object"
       },
       "SttOut": {
@@ -10912,6 +12167,53 @@
         "title": "UrlOut",
         "type": "object"
       },
+      "UsageOut": {
+        "properties": {
+          "history": {
+            "description": "The five months before this one, newest first",
+            "items": {
+              "$ref": "#/components/schemas/MonthUsage"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricUsage"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the department has no plan: nothing is limited"
+          },
+          "resets_at": {
+            "title": "Resets At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "resets_at",
+          "plan",
+          "metrics",
+          "history"
+        ],
+        "title": "UsageOut",
+        "type": "object"
+      },
       "UserOut": {
         "properties": {
           "display_name": {
@@ -11548,6 +12850,336 @@
           "published_at"
         ],
         "title": "WarningOut",
+        "type": "object"
+      },
+      "WebhookCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "description": "Event names (GET /v1/admin/webhooks/events) or `*`",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Events",
+            "type": "array"
+          },
+          "url": {
+            "description": "https address of your server, or `mock://receiver` for the built-in demo receiver",
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "events"
+        ],
+        "title": "WebhookCreate",
+        "type": "object"
+      },
+      "WebhookCreated": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "deliveries_dead": {
+            "default": 0,
+            "title": "Deliveries Dead",
+            "type": "integer"
+          },
+          "deliveries_pending": {
+            "default": 0,
+            "title": "Deliveries Pending",
+            "type": "integer"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_mock_receiver": {
+            "default": false,
+            "title": "Is Mock Receiver",
+            "type": "boolean"
+          },
+          "secret": {
+            "description": "The signing secret. Shown once: only an encrypted copy is kept. Rotate it to get a new one.",
+            "title": "Secret",
+            "type": "string"
+          },
+          "secret_hint": {
+            "description": "The last 4 characters of the signing secret, to tell secrets apart",
+            "title": "Secret Hint",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "events",
+          "active",
+          "secret_hint",
+          "created_at",
+          "secret"
+        ],
+        "title": "WebhookCreated",
+        "type": "object"
+      },
+      "WebhookOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "deliveries_dead": {
+            "default": 0,
+            "title": "Deliveries Dead",
+            "type": "integer"
+          },
+          "deliveries_pending": {
+            "default": 0,
+            "title": "Deliveries Pending",
+            "type": "integer"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_mock_receiver": {
+            "default": false,
+            "title": "Is Mock Receiver",
+            "type": "boolean"
+          },
+          "secret_hint": {
+            "description": "The last 4 characters of the signing secret, to tell secrets apart",
+            "title": "Secret Hint",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "events",
+          "active",
+          "secret_hint",
+          "created_at"
+        ],
+        "title": "WebhookOut",
+        "type": "object"
+      },
+      "WebhookUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "false disables the webhook: nothing new is queued for it",
+            "title": "Active"
+          },
+          "events": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 10,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Events"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 8,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "title": "WebhookUpdate",
+        "type": "object"
+      },
+      "app__contracts__api__ApprovalOut": {
+        "properties": {
+          "approver_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approver Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "requested_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subject_id": {
+            "format": "uuid",
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_type": {
+            "title": "Subject Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "subject_type",
+          "subject_id",
+          "status",
+          "created_at"
+        ],
+        "title": "ApprovalOut",
+        "type": "object"
+      },
+      "app__modules__agent__schemas__ApprovalOut": {
+        "properties": {
+          "action": {
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "by_user_id": {
+            "format": "uuid",
+            "title": "By User Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "by_user_id",
+          "at",
+          "reason"
+        ],
+        "title": "ApprovalOut",
         "type": "object"
       },
       "app__modules__auth__schemas__SwitchIn": {
@@ -12695,6 +14327,1128 @@
         ]
       }
     },
+    "/v1/admin/usage": {
+      "get": {
+        "operationId": "get_usage_v1_admin_usage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "This month's usage with limits and percent used, and the months before",
+        "tags": [
+          "plans and usage"
+        ]
+      }
+    },
+    "/v1/admin/webhooks": {
+      "get": {
+        "operationId": "list_webhooks_v1_admin_webhooks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookOut"
+                  },
+                  "title": "Response List Webhooks V1 Admin Webhooks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "This department's webhooks (never the secrets)",
+        "tags": [
+          "admin: webhooks"
+        ]
+      },
+      "post": {
+        "operationId": "create_webhook_v1_admin_webhooks_post",
+        "parameters": [
+          {
+            "description": "Accepted; a repeat for the same address is a 409 `webhook_exists`",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Accepted; a repeat for the same address is a 409 `webhook_exists`",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Create a webhook; the response is the only time the signing secret is shown",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/events": {
+      "get": {
+        "operationId": "list_events_v1_admin_webhooks_events_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EventOut"
+                  },
+                  "title": "Response List Events V1 Admin Webhooks Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "The events a webhook can subscribe to",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/mock-receiver/received": {
+      "get": {
+        "operationId": "mock_received_v1_admin_webhooks_mock_receiver_received_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "webhook_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Webhook Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 300,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MockReceived"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "What the built-in mock receiver (url `mock://receiver`) got, with whether each signature verified",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/{webhook_id}": {
+      "delete": {
+        "operationId": "delete_webhook_v1_admin_webhooks__webhook_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Delete a webhook and its delivery log",
+        "tags": [
+          "admin: webhooks"
+        ]
+      },
+      "get": {
+        "operationId": "get_webhook_v1_admin_webhooks__webhook_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "One webhook (never the secret)",
+        "tags": [
+          "admin: webhooks"
+        ]
+      },
+      "patch": {
+        "operationId": "update_webhook_v1_admin_webhooks__webhook_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Change the address or events, or disable it",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/{webhook_id}/deliveries": {
+      "get": {
+        "operationId": "list_deliveries_v1_admin_webhooks__webhook_id__deliveries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(pending|delivered|failed|dead)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "The delivery log, newest first",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/{webhook_id}/deliveries/{delivery_id}/redeliver": {
+      "post": {
+        "operationId": "redeliver_v1_admin_webhooks__webhook_id__deliveries__delivery_id__redeliver_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "delivery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Delivery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Send an earlier event again (a new delivery; the old one stays in the log)",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/{webhook_id}/rotate-secret": {
+      "post": {
+        "operationId": "rotate_secret_v1_admin_webhooks__webhook_id__rotate_secret_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Make a new signing secret; shown once, the old one stops",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/admin/webhooks/{webhook_id}/test": {
+      "post": {
+        "operationId": "test_webhook_v1_admin_webhooks__webhook_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Send a `webhook.test` event now and return how it went",
+        "tags": [
+          "admin: webhooks"
+        ]
+      }
+    },
+    "/v1/agent/runs/{agent_run_id}": {
+      "get": {
+        "operationId": "get_run_v1_agent_runs__agent_run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agent Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "One agent run with its steps",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/steps/{step_id}/approve": {
+      "post": {
+        "operationId": "approve_step_v1_agent_steps__step_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Approve a proposed action: the guard checks again, then it runs once",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/steps/{step_id}/reject": {
+      "post": {
+        "operationId": "reject_step_v1_agent_steps__step_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Reject a proposed action: nothing runs",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/appeals": {
+      "get": {
+        "operationId": "staff_appeals_v1_appeals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "open",
+              "enum": [
+                "open",
+                "upheld",
+                "overturned",
+                "withdrawn",
+                "all"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealStaffList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "The appeals queue, oldest first",
+        "tags": [
+          "appeals and complaints"
+        ]
+      },
+      "post": {
+        "operationId": "create_appeal_v1_appeals_post",
+        "parameters": [
+          {
+            "description": "A repeat with the same key returns the first result",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A repeat with the same key returns the first result",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Appeal a rejection (within 30 days, once per decision); opens a case for a different officer",
+        "tags": [
+          "appeals and complaints"
+        ]
+      }
+    },
+    "/v1/appeals/{appeal_id}": {
+      "get": {
+        "operationId": "staff_appeal_v1_appeals__appeal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appeal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Appeal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealStaffDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "One appeal: the citizen's reason, the original decision, and whether you may decide it",
+        "tags": [
+          "appeals and complaints"
+        ]
+      }
+    },
+    "/v1/appeals/{appeal_id}/decide": {
+      "post": {
+        "operationId": "decide_appeal_v1_appeals__appeal_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appeal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Appeal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDecide"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealStaffDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Uphold or overturn (a different officer than the first decision; a reason is required)",
+        "tags": [
+          "appeals and complaints"
+        ]
+      }
+    },
     "/v1/applications": {
       "get": {
         "operationId": "list_applications_v1_applications_get",
@@ -13374,7 +16128,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApprovalOut"
+                  "$ref": "#/components/schemas/app__contracts__api__ApprovalOut"
                 }
               }
             },
@@ -14177,6 +16931,118 @@
         ]
       }
     },
+    "/v1/cases/{case_id}/agent/runs": {
+      "get": {
+        "operationId": "list_runs_v1_cases__case_id__agent_runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 25,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Agent runs for a case, newest first",
+        "tags": [
+          "agent"
+        ]
+      },
+      "post": {
+        "operationId": "start_run_v1_cases__case_id__agent_runs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Start an agent run on a case",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
     "/v1/cases/{case_id}/assign": {
       "post": {
         "operationId": "assign_case_v1_cases__case_id__assign_post",
@@ -14357,6 +17223,257 @@
         "summary": "Reopen a resolved case",
         "tags": [
           "cases"
+        ]
+      }
+    },
+    "/v1/complaints": {
+      "get": {
+        "operationId": "staff_complaints_v1_complaints_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "active",
+              "enum": [
+                "active",
+                "resolved",
+                "all"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintStaffList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "The complaints queue (scam reports included)",
+        "tags": [
+          "appeals and complaints"
+        ]
+      },
+      "post": {
+        "operationId": "create_complaint_v1_complaints_post",
+        "parameters": [
+          {
+            "description": "A repeat with the same key returns the first result",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A repeat with the same key returns the first result",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplaintCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "File a complaint about service, staff, a payment or a scam attempt; opens a case",
+        "tags": [
+          "appeals and complaints"
+        ]
+      }
+    },
+    "/v1/complaints/{case_id}/resolve": {
+      "post": {
+        "operationId": "resolve_complaint_v1_complaints__case_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplaintResolve"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintStaffOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Resolve or dismiss a complaint; the citizen is told",
+        "tags": [
+          "appeals and complaints"
         ]
       }
     },
@@ -16142,6 +19259,220 @@
         ]
       }
     },
+    "/v1/me/appeals": {
+      "get": {
+        "operationId": "my_appeals_v1_me_appeals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "My appeals, newest first, with keyed text in English and Urdu",
+        "tags": [
+          "appeals and complaints"
+        ]
+      }
+    },
+    "/v1/me/complaints": {
+      "get": {
+        "operationId": "my_complaints_v1_me_complaints_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          },
+          {
+            "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+            "in": "header",
+            "name": "X-Helper-Ticket",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the ticket from POST /v1/helper/switch for that person",
+              "title": "X-Helper-Ticket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "My complaints and where each one stands",
+        "tags": [
+          "appeals and complaints"
+        ]
+      }
+    },
     "/v1/me/corrections": {
       "post": {
         "operationId": "request_correction_v1_me_corrections_post",
@@ -17075,6 +20406,31 @@
         "summary": "Register: send a one-time code to a mock phone (same answer whether or not it is registered)",
         "tags": [
           "people"
+        ]
+      }
+    },
+    "/v1/plans": {
+      "get": {
+        "operationId": "list_plans_v1_plans_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlanOut"
+                  },
+                  "title": "Response List Plans V1 Plans Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "The plans and their monthly limits (prototype figures)",
+        "tags": [
+          "plans and usage"
         ]
       }
     },

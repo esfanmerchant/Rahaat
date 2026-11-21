@@ -296,6 +296,265 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** This month's usage with limits and percent used, and the months before */
+        get: operations["get_usage_v1_admin_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** This department's webhooks (never the secrets) */
+        get: operations["list_webhooks_v1_admin_webhooks_get"];
+        put?: never;
+        /** Create a webhook; the response is the only time the signing secret is shown */
+        post: operations["create_webhook_v1_admin_webhooks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The events a webhook can subscribe to */
+        get: operations["list_events_v1_admin_webhooks_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks/mock-receiver/received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the built-in mock receiver (url `mock://receiver`) got, with whether each signature verified */
+        get: operations["mock_received_v1_admin_webhooks_mock_receiver_received_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks/{webhook_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One webhook (never the secret) */
+        get: operations["get_webhook_v1_admin_webhooks__webhook_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete a webhook and its delivery log */
+        delete: operations["delete_webhook_v1_admin_webhooks__webhook_id__delete"];
+        options?: never;
+        head?: never;
+        /** Change the address or events, or disable it */
+        patch: operations["update_webhook_v1_admin_webhooks__webhook_id__patch"];
+        trace?: never;
+    };
+    "/v1/admin/webhooks/{webhook_id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The delivery log, newest first */
+        get: operations["list_deliveries_v1_admin_webhooks__webhook_id__deliveries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks/{webhook_id}/deliveries/{delivery_id}/redeliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send an earlier event again (a new delivery; the old one stays in the log) */
+        post: operations["redeliver_v1_admin_webhooks__webhook_id__deliveries__delivery_id__redeliver_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks/{webhook_id}/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make a new signing secret; shown once, the old one stops */
+        post: operations["rotate_secret_v1_admin_webhooks__webhook_id__rotate_secret_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/webhooks/{webhook_id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a `webhook.test` event now and return how it went */
+        post: operations["test_webhook_v1_admin_webhooks__webhook_id__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agent/runs/{agent_run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One agent run with its steps */
+        get: operations["get_run_v1_agent_runs__agent_run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agent/steps/{step_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a proposed action: the guard checks again, then it runs once */
+        post: operations["approve_step_v1_agent_steps__step_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agent/steps/{step_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a proposed action: nothing runs */
+        post: operations["reject_step_v1_agent_steps__step_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The appeals queue, oldest first */
+        get: operations["staff_appeals_v1_appeals_get"];
+        put?: never;
+        /** Appeal a rejection (within 30 days, once per decision); opens a case for a different officer */
+        post: operations["create_appeal_v1_appeals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/appeals/{appeal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One appeal: the citizen's reason, the original decision, and whether you may decide it */
+        get: operations["staff_appeal_v1_appeals__appeal_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/appeals/{appeal_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Uphold or overturn (a different officer than the first decision; a reason is required) */
+        post: operations["decide_appeal_v1_appeals__appeal_id__decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/applications": {
         parameters: {
             query?: never;
@@ -644,6 +903,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/cases/{case_id}/agent/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agent runs for a case, newest first */
+        get: operations["list_runs_v1_cases__case_id__agent_runs_get"];
+        put?: never;
+        /** Start an agent run on a case */
+        post: operations["start_run_v1_cases__case_id__agent_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/cases/{case_id}/assign": {
         parameters: {
             query?: never;
@@ -689,6 +966,41 @@ export interface paths {
         put?: never;
         /** Reopen a resolved case */
         post: operations["reopen_case_v1_cases__case_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The complaints queue (scam reports included) */
+        get: operations["staff_complaints_v1_complaints_get"];
+        put?: never;
+        /** File a complaint about service, staff, a payment or a scam attempt; opens a case */
+        post: operations["create_complaint_v1_complaints_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/complaints/{case_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve or dismiss a complaint; the citizen is told */
+        post: operations["resolve_complaint_v1_complaints__case_id__resolve_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1156,6 +1468,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/me/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My appeals, newest first, with keyed text in English and Urdu */
+        get: operations["my_appeals_v1_me_appeals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My complaints and where each one stands */
+        get: operations["my_complaints_v1_me_complaints_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me/corrections": {
         parameters: {
             query?: never;
@@ -1372,6 +1718,23 @@ export interface paths {
         put?: never;
         /** Register: send a one-time code to a mock phone (same answer whether or not it is registered) */
         post: operations["register_start_v1_people_register_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The plans and their monthly limits (prototype figures) */
+        get: operations["list_plans_v1_plans_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2056,6 +2419,21 @@ export interface components {
             /** Tenant Slug */
             tenant_slug: string;
         };
+        /** AgentDecisionOut */
+        AgentDecisionOut: {
+            /** Abstained */
+            abstained: boolean;
+            /** Choice */
+            choice: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Model Version */
+            model_version: string;
+            /** Reasons */
+            reasons: string[];
+            /** Route */
+            route: string;
+        };
         /**
          * AnomalyEvidence
          * @description Result of anomaly detection (Phase 3). A flagged case is a guard.
@@ -2220,6 +2598,177 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** AppealCreate */
+        AppealCreate: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /**
+             * Reason
+             * @description Why the person disagrees, in their own words (a few sentences)
+             */
+            reason: string;
+        };
+        /** AppealDecide */
+        AppealDecide: {
+            /**
+             * Outcome
+             * @description `upheld`: the first answer stays. `overturned`: the application is approved and paid.
+             * @enum {string}
+             */
+            outcome: "upheld" | "overturned";
+            /**
+             * Reason
+             * @description Required; stored in the audit log and the case
+             */
+            reason: string;
+        };
+        /** AppealList */
+        AppealList: {
+            /** Items */
+            items: components["schemas"]["AppealOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /**
+         * AppealOut
+         * @description What the citizen (or their helper) sees.
+         */
+        AppealOut: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Created At */
+            created_at: string;
+            /** Due At */
+            due_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** @description Keyed text in English and Urdu; the app also plays the matching audio */
+            message: components["schemas"]["KeyedText"];
+            /** Reason */
+            reason?: string | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "upheld" | "overturned" | "withdrawn";
+            /**
+             * Status Key
+             * @enum {string}
+             */
+            status_key: "being_checked" | "first_answer_stays" | "approved_after_appeal" | "withdrawn";
+            /** Tracking Code */
+            tracking_code?: string | null;
+        };
+        /** AppealStaffDetail */
+        AppealStaffDetail: {
+            /** Age Days */
+            age_days: number;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /**
+             * Can Decide
+             * @description False when the caller took part in the first decision: a different officer must decide
+             */
+            can_decide: boolean;
+            /** Cannot Decide Reason */
+            cannot_decide_reason?: string | null;
+            /** Case Id */
+            case_id: string | null;
+            /** Created At */
+            created_at: string;
+            /** Decision Id */
+            decision_id?: string | null;
+            /** Due At */
+            due_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Original Outcome */
+            original_outcome?: string | null;
+            /**
+             * Original Reasons
+             * @default []
+             */
+            original_reasons: string[];
+            /**
+             * Outcome
+             * @description The deciding officer's reason, once decided
+             */
+            outcome?: string | null;
+            /**
+             * Reason
+             * @description The citizen's reason
+             */
+            reason: string | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "upheld" | "overturned" | "withdrawn";
+            /**
+             * Tracking Code
+             * @description Hidden (null) while the person's consent does not allow reading the application
+             */
+            tracking_code?: string | null;
+        };
+        /** AppealStaffList */
+        AppealStaffList: {
+            /** Items */
+            items: components["schemas"]["AppealStaffOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** AppealStaffOut */
+        AppealStaffOut: {
+            /** Age Days */
+            age_days: number;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Case Id */
+            case_id: string | null;
+            /** Created At */
+            created_at: string;
+            /** Due At */
+            due_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "upheld" | "overturned" | "withdrawn";
+            /**
+             * Tracking Code
+             * @description Hidden (null) while the person's consent does not allow reading the application
+             */
+            tracking_code?: string | null;
+        };
         /** ApplicationCreate */
         ApplicationCreate: {
             /**
@@ -2379,36 +2928,9 @@ export interface components {
         /** ApprovalList */
         ApprovalList: {
             /** Items */
-            items: components["schemas"]["ApprovalOut"][];
+            items: components["schemas"]["app__contracts__api__ApprovalOut"][];
             /** Next Cursor */
             next_cursor?: string | null;
-        };
-        /** ApprovalOut */
-        ApprovalOut: {
-            /** Approver Id */
-            approver_id?: string | null;
-            /** Created At */
-            created_at: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Kind */
-            kind: string;
-            /** Reason */
-            reason?: string | null;
-            /** Requested By */
-            requested_by?: string | null;
-            /** Status */
-            status: string;
-            /**
-             * Subject Id
-             * Format: uuid
-             */
-            subject_id: string;
-            /** Subject Type */
-            subject_type: string;
         };
         /** AskIn */
         AskIn: {
@@ -2877,6 +3399,103 @@ export interface components {
             weights: {
                 [key: string]: number;
             };
+        };
+        /** ComplaintCreate */
+        ComplaintCreate: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "service" | "staff" | "scam_attempt" | "payment" | "other";
+            /**
+             * Details
+             * @description Optional: what happened, in a few sentences
+             */
+            details?: string | null;
+        };
+        /** ComplaintList */
+        ComplaintList: {
+            /** Items */
+            items: components["schemas"]["ComplaintOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** ComplaintOut */
+        ComplaintOut: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "service" | "staff" | "scam_attempt" | "payment" | "other";
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            message: components["schemas"]["KeyedText"];
+            /** Outcome */
+            outcome?: ("resolved" | "closed") | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "received" | "being_checked" | "resolved";
+        };
+        /** ComplaintResolve */
+        ComplaintResolve: {
+            /**
+             * Outcome
+             * @description `resolved`: action was taken. `dismissed`: nothing could be changed.
+             * @enum {string}
+             */
+            outcome: "resolved" | "dismissed";
+            /** Reason */
+            reason: string;
+        };
+        /** ComplaintStaffList */
+        ComplaintStaffList: {
+            /** Items */
+            items: components["schemas"]["ComplaintStaffOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** ComplaintStaffOut */
+        ComplaintStaffOut: {
+            /**
+             * Case Kind
+             * @enum {string}
+             */
+            case_kind: "complaint" | "scam_review";
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "service" | "staff" | "scam_attempt" | "payment" | "other";
+            /** Created At */
+            created_at: string;
+            /**
+             * Details
+             * @description Null while the person's consent does not allow reading it
+             */
+            details?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description The case id: also usable on GET /v1/cases/{id}
+             */
+            id: string;
+            /** Priority */
+            priority: number;
+            /** Resolution */
+            resolution?: string | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /** Status */
+            status: string;
         };
         /** ConfusionOut */
         ConfusionOut: {
@@ -3626,6 +4245,51 @@ export interface components {
              */
             status: "live" | "expired" | "revoked";
         };
+        /** DeliveryList */
+        DeliveryList: {
+            /** Items */
+            items: components["schemas"]["DeliveryOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** DeliveryOut */
+        DeliveryOut: {
+            /** Attempts */
+            attempts: number;
+            /** Created At */
+            created_at: string;
+            /** Delivered At */
+            delivered_at?: string | null;
+            /** Event */
+            event: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Error */
+            last_error?: string | null;
+            /** Max Attempts */
+            max_attempts: number;
+            /** Next Attempt At */
+            next_attempt_at?: string | null;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Response Code */
+            response_code?: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "delivered" | "failed" | "dead";
+            /**
+             * Webhook Id
+             * Format: uuid
+             */
+            webhook_id: string;
+        };
         /** DemoAccountOut */
         DemoAccountOut: {
             /** Identifier */
@@ -3925,6 +4589,13 @@ export interface components {
             notes: string[];
             /** Silent Guesses Total */
             silent_guesses_total: number;
+        };
+        /** EventOut */
+        EventOut: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
         };
         /**
          * Explanation
@@ -4421,6 +5092,15 @@ export interface components {
             /** Seconds To Full */
             seconds_to_full: number;
         };
+        /** KeyedText */
+        KeyedText: {
+            /** En */
+            en: string;
+            /** Key */
+            key: string;
+            /** Ur */
+            ur: string;
+        };
         /** LabelIn */
         LabelIn: {
             /**
@@ -4670,6 +5350,27 @@ export interface components {
             /** Tenant Slug */
             tenant_slug: string;
         };
+        /** MetricUsage */
+        MetricUsage: {
+            /** Label */
+            label: string;
+            /**
+             * Limit
+             * @description None when the plan does not limit this metric
+             */
+            limit: number | null;
+            /** Metric */
+            metric: string;
+            /** Percent Used */
+            percent_used: number | null;
+            /**
+             * Reached
+             * @description True when the next unit would be refused
+             */
+            reached: boolean;
+            /** Used */
+            used: number;
+        };
         /** MistakeCounts */
         MistakeCounts: {
             /** False Approvals */
@@ -4704,6 +5405,18 @@ export interface components {
              */
             service?: ("identity" | "registry" | "payment" | "sms") | null;
         };
+        /** MockReceived */
+        MockReceived: {
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Reachable
+             * @default true
+             */
+            reachable: boolean;
+        };
         /** MocksOut */
         MocksOut: {
             /**
@@ -4717,6 +5430,18 @@ export interface components {
             };
             /** Transport */
             transport: string;
+        };
+        /** MonthUsage */
+        MonthUsage: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Period
+             * @description YYYY-MM, UTC
+             */
+            period: string;
         };
         /** MyReportList */
         MyReportList: {
@@ -5017,6 +5742,38 @@ export interface components {
             national_id_masked?: string | null;
             /** Phone Masked */
             phone_masked?: string | null;
+        };
+        /** PlanOut */
+        PlanOut: {
+            /** Code */
+            code: string;
+            /** Limits */
+            limits: {
+                [key: string]: number;
+            };
+            /** Name */
+            name: string;
+            /**
+             * Price Pkr
+             * @description Per month; prototype figures only
+             */
+            price_pkr: number;
+        };
+        /** PlanRef */
+        PlanRef: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** PlannerOut */
+        PlannerOut: {
+            /** Fallback Reason */
+            fallback_reason?: string | null;
+            /** Model Version */
+            model_version: string;
+            /** Type */
+            type: string;
         };
         /** PrPoint */
         PrPoint: {
@@ -5516,6 +6273,58 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** RunList */
+        RunList: {
+            /** Items */
+            items: components["schemas"]["RunOut"][];
+        };
+        /** RunOut */
+        RunOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Created At */
+            created_at: string;
+            decision: components["schemas"]["AgentDecisionOut"];
+            /**
+             * Flags
+             * @description Instruction-like text found in case text and treated as data; staff only
+             */
+            flags: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Outcome
+             * @description proposed | abstained | proposal_blocked | approved | rejected | failed
+             */
+            outcome: string;
+            planner: components["schemas"]["PlannerOut"];
+            /** Rationale */
+            rationale: string | null;
+            /**
+             * Reused
+             * @default false
+             */
+            reused: boolean;
+            /**
+             * Status
+             * @description running | waiting_approval | done | failed | cancelled
+             */
+            status: string;
+            /** Step Budget */
+            step_budget: number;
+            /** Steps */
+            steps: components["schemas"]["StepOut"][];
+            /** Steps Used */
+            steps_used: number;
+            /** Updated At */
+            updated_at: string;
+        };
         /** ScamCheckIn */
         ScamCheckIn: {
             /**
@@ -5853,6 +6662,53 @@ export interface components {
             thresholds: {
                 [key: string]: number;
             };
+        };
+        /** StepDecisionIn */
+        StepDecisionIn: {
+            /**
+             * Reason
+             * @description Why the officer approves or rejects this proposal; stored in the audit log
+             */
+            reason: string;
+        };
+        /** StepOut */
+        StepOut: {
+            approval?: components["schemas"]["app__modules__agent__schemas__ApprovalOut"] | null;
+            /** Args */
+            args: {
+                [key: string]: unknown;
+            };
+            /** Block Codes */
+            block_codes?: string[];
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "read" | "action";
+            /** Ordinal */
+            ordinal: number;
+            /** Output */
+            output: {
+                [key: string]: unknown;
+            };
+            /** Rationale */
+            rationale?: string | null;
+            /** Requires Approval */
+            requires_approval: boolean;
+            /**
+             * Status
+             * @description done | waiting_approval | rejected | failed | blocked
+             */
+            status: string;
+            /** Tool */
+            tool: string;
         };
         /** SttOut */
         SttOut: {
@@ -6262,6 +7118,22 @@ export interface components {
              */
             url: string;
         };
+        /** UsageOut */
+        UsageOut: {
+            /**
+             * History
+             * @description The five months before this one, newest first
+             */
+            history: components["schemas"]["MonthUsage"][];
+            /** Metrics */
+            metrics: components["schemas"]["MetricUsage"][];
+            /** Period */
+            period: string;
+            /** @description None when the department has no plan: nothing is limited */
+            plan: components["schemas"]["PlanRef"] | null;
+            /** Resets At */
+            resets_at: string;
+        };
         /** UserOut */
         UserOut: {
             /** Display Name */
@@ -6483,6 +7355,156 @@ export interface components {
             status: string;
             /** Title */
             title: string;
+        };
+        /** WebhookCreate */
+        WebhookCreate: {
+            /**
+             * Events
+             * @description Event names (GET /v1/admin/webhooks/events) or `*`
+             */
+            events: string[];
+            /**
+             * Url
+             * @description https address of your server, or `mock://receiver` for the built-in demo receiver
+             */
+            url: string;
+        };
+        /** WebhookCreated */
+        WebhookCreated: {
+            /** Active */
+            active: boolean;
+            /** Created At */
+            created_at: string;
+            /** Created By */
+            created_by?: string | null;
+            /**
+             * Deliveries Dead
+             * @default 0
+             */
+            deliveries_dead: number;
+            /**
+             * Deliveries Pending
+             * @default 0
+             */
+            deliveries_pending: number;
+            /** Events */
+            events: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Is Mock Receiver
+             * @default false
+             */
+            is_mock_receiver: boolean;
+            /**
+             * Secret
+             * @description The signing secret. Shown once: only an encrypted copy is kept. Rotate it to get a new one.
+             */
+            secret: string;
+            /**
+             * Secret Hint
+             * @description The last 4 characters of the signing secret, to tell secrets apart
+             */
+            secret_hint: string;
+            /** Url */
+            url: string;
+        };
+        /** WebhookOut */
+        WebhookOut: {
+            /** Active */
+            active: boolean;
+            /** Created At */
+            created_at: string;
+            /** Created By */
+            created_by?: string | null;
+            /**
+             * Deliveries Dead
+             * @default 0
+             */
+            deliveries_dead: number;
+            /**
+             * Deliveries Pending
+             * @default 0
+             */
+            deliveries_pending: number;
+            /** Events */
+            events: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Is Mock Receiver
+             * @default false
+             */
+            is_mock_receiver: boolean;
+            /**
+             * Secret Hint
+             * @description The last 4 characters of the signing secret, to tell secrets apart
+             */
+            secret_hint: string;
+            /** Url */
+            url: string;
+        };
+        /** WebhookUpdate */
+        WebhookUpdate: {
+            /**
+             * Active
+             * @description false disables the webhook: nothing new is queued for it
+             */
+            active?: boolean | null;
+            /** Events */
+            events?: string[] | null;
+            /** Url */
+            url?: string | null;
+        };
+        /** ApprovalOut */
+        app__contracts__api__ApprovalOut: {
+            /** Approver Id */
+            approver_id?: string | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Reason */
+            reason?: string | null;
+            /** Requested By */
+            requested_by?: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /** Subject Type */
+            subject_type: string;
+        };
+        /** ApprovalOut */
+        app__modules__agent__schemas__ApprovalOut: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "approved" | "rejected";
+            /** At */
+            at: string;
+            /**
+             * By User Id
+             * Format: uuid
+             */
+            by_user_id: string;
+            /** Reason */
+            reason: string;
         };
         /** SwitchIn */
         app__modules__auth__schemas__SwitchIn: {
@@ -7112,6 +8134,598 @@ export interface operations {
             };
         };
     };
+    get_usage_v1_admin_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageOut"];
+                };
+            };
+        };
+    };
+    list_webhooks_v1_admin_webhooks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOut"][];
+                };
+            };
+        };
+    };
+    create_webhook_v1_admin_webhooks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Accepted; a repeat for the same address is a 409 `webhook_exists` */
+                "Idempotency-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_v1_admin_webhooks_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventOut"][];
+                };
+            };
+        };
+    };
+    mock_received_v1_admin_webhooks_mock_receiver_received_get: {
+        parameters: {
+            query?: {
+                webhook_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MockReceived"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_webhook_v1_admin_webhooks__webhook_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_webhook_v1_admin_webhooks__webhook_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_webhook_v1_admin_webhooks__webhook_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_deliveries_v1_admin_webhooks__webhook_id__deliveries_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    redeliver_v1_admin_webhooks__webhook_id__deliveries__delivery_id__redeliver_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+                delivery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rotate_secret_v1_admin_webhooks__webhook_id__rotate_secret_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_webhook_v1_admin_webhooks__webhook_id__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_v1_agent_runs__agent_run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_step_v1_agent_steps__step_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                step_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StepDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_step_v1_agent_steps__step_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                step_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StepDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    staff_appeals_v1_appeals_get: {
+        parameters: {
+            query?: {
+                status?: "open" | "upheld" | "overturned" | "withdrawn" | "all";
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealStaffList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_appeal_v1_appeals_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A repeat with the same key returns the first result */
+                "Idempotency-Key"?: string | null;
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    staff_appeal_v1_appeals__appeal_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appeal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealStaffDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_appeal_v1_appeals__appeal_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appeal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealStaffDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_applications_v1_applications_get: {
         parameters: {
             query?: {
@@ -7393,7 +9007,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApprovalOut"];
+                    "application/json": components["schemas"]["app__contracts__api__ApprovalOut"];
                 };
             };
             /** @description Validation Error */
@@ -7814,6 +9428,70 @@ export interface operations {
             };
         };
     };
+    list_runs_v1_cases__case_id__agent_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_run_v1_cases__case_id__agent_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     assign_case_v1_cases__case_id__assign_post: {
         parameters: {
             query?: never;
@@ -7906,6 +9584,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    staff_complaints_v1_complaints_get: {
+        parameters: {
+            query?: {
+                status?: "active" | "resolved" | "all";
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintStaffList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_complaint_v1_complaints_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A repeat with the same key returns the first result */
+                "Idempotency-Key"?: string | null;
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_complaint_v1_complaints__case_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintResolve"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintStaffOut"];
                 };
             };
             /** @description Validation Error */
@@ -8812,6 +10598,80 @@ export interface operations {
             };
         };
     };
+    my_appeals_v1_me_appeals_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_complaints_v1_me_complaints_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+                /** @description Helpers only: the ticket from POST /v1/helper/switch for that person */
+                "X-Helper-Ticket"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     request_correction_v1_me_corrections_post: {
         parameters: {
             query?: never;
@@ -9265,6 +11125,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_plans_v1_plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"][];
                 };
             };
         };

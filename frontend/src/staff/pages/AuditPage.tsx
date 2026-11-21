@@ -231,6 +231,11 @@ function RowDetail({ row, onClose }: { row: AuditEntry; onClose: () => void }) {
       <div class="border-t border-line p-3">
         <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">Details</h3>
         <pre class="max-h-72 overflow-auto whitespace-pre-wrap break-words border border-line bg-sunken p-2 font-mono text-xs">{JSON.stringify(row.details, null, 2)}</pre>
+        {(row.object_type === 'agent_run' || (row.object_type === 'agent_step' && typeof (row.details as Record<string, unknown> | null)?.['run_id'] === 'string')) && row.object_id ? (
+          <p class="mt-2">
+            <a href={`/staff/agent-runs/${row.object_type === 'agent_run' ? row.object_id : String((row.details as Record<string, unknown>)['run_id'])}`}>Open this assistant run</a>
+          </p>
+        ) : null}
         {row.object_type === 'decision' && row.object_id ? (
           <p class="mt-2">
             <a href={`/staff/decisions/${row.object_id}`}>Open this decision</a>
