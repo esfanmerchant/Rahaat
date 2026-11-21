@@ -95,7 +95,7 @@ def test_unknown_fields_and_shapes_are_repairable_errors() -> None:
 
 
 def test_only_mock_identifier_formats_are_accepted() -> None:
-    real_looking = forms.check_client_patch({"national_id": {"value": "42101-1234567-1", "provenance": "typed"}}, ApplicationFormV1())  # mock-lint: allow
+    real_looking = forms.check_client_patch({"national_id": {"value": "42101-1234567-1"}}, ApplicationFormV1())  # mock-lint: allow
     assert "mock_id_format" in _codes(real_looking)
     bad_digit = MOCK_ID[:-1] + str((int(MOCK_ID[-1]) + 1) % 10)
     assert "mock_id_check_digit" in _codes(forms.check_client_patch({"national_id": {"value": bad_digit}}, ApplicationFormV1()))

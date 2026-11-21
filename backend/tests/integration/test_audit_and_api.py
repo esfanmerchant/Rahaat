@@ -165,8 +165,10 @@ def test_policy_registry_is_visible_to_admin_and_auditor_only(client: TestClient
 def test_contract_stubs_are_marked_and_enforce_roles(client: TestClient, factory: Any) -> None:
     tenant = factory.tenant()
     citizen, officer = factory.account(tenant, "citizen"), factory.account(tenant, "officer")
-    mine = client.get("/v1/applications", headers=factory.headers(client, citizen))
+    # Any path that is still a stub in this build. /v1/applications became real with Track A's applications module.
+    mine = client.get("/v1/notifications", headers=factory.headers(client, citizen))
     assert mine.status_code == 200 and mine.headers["x-rahat-stub"] == "1"
+    assert "x-rahat-stub" not in client.get("/v1/applications", headers=factory.headers(client, citizen)).headers
     assert client.get("/v1/cases", headers=factory.headers(client, citizen)).status_code == 403
     assert client.get("/v1/cases", headers=factory.headers(client, officer)).json()["items"][0]["kind"] == "application_review"
 
