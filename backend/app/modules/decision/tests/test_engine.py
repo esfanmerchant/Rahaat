@@ -162,7 +162,9 @@ def test_more_confidence_never_makes_approval_less_likely(p1: float, p2: float, 
 @given(probability, cost_matrices)
 def test_reject_cost_uses_p_ineligible(p_eligible: float, costs: CostMatrix) -> None:
     result = decide(base_input(registry=registry(verified_income_pkr=60_000)), RULES, costs, FixedModel(p_eligible, 1.0))
-    assert result.expected_costs["reject"] == round(result.p_eligible * costs.wrong_reject, 4)
+    # Both numbers are stored to 4 decimals, so recomputing from the rounded p_eligible can differ by half a unit of
+    # its last place times the cost, plus the final rounding (Hypothesis found p=0.5033, cost 5.5: 2.7682 vs 2.7681).
+    assert result.expected_costs["reject"] == pytest.approx(result.p_eligible * costs.wrong_reject, abs=5e-5 * costs.wrong_reject + 1e-4)
     if result.outcome == "rejected":
         assert round(1 - result.p_eligible, 4) >= result.thresholds["reject"] - 1e-4
 
