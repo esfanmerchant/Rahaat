@@ -10,7 +10,7 @@ import { Badge, fmtTime, humanize, INPUT, Mono, TD, Th } from '../ui';
 
 type S = components['schemas'];
 type Payment = S['PaymentOut'];
-type Approval = S['ApprovalOut'];
+type Approval = S['app__contracts__api__ApprovalOut'];
 type PaymentStatus = NonNullable<NonNullable<components['schemas']['PaymentOut']>['status']>;
 
 const PAYMENT_STATUSES = ['pending_approval', 'approved', 'submitted', 'settled', 'failed', 'reversed', 'cancelled'] as const;
