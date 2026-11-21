@@ -6,10 +6,12 @@ import { call } from '../../shared/api/problem';
 import { Button } from '../../shared/components/Button';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
-import { Badge, ConfBar, fmtAge, fmtTime, humanize, INPUT, Mono, Section, TD, Th, useLoad, type CaseAction, type CaseDetail } from '../ui';
+import { SectionTabs } from '../SectionTabs';
+import { Badge, ConfBar, fmtAge, fmtTime, humanize, INPUT, TD, Th, useLoad, type CaseAction, type CaseDetail } from '../ui';
 import { AgentPanel } from './AgentPanel';
-import { DecisionAnatomy } from './Anatomy';
+import { DecisionAnatomy, ProvBadge } from './Anatomy';
 import { DocumentsView, HandoffView, TraceView } from './parts';
+import { Card, Check, Info } from './pg';
 
 const ACTION_LABEL: Record<CaseAction, string> = {
   approve: 'Approve',
@@ -18,9 +20,9 @@ const ACTION_LABEL: Record<CaseAction, string> = {
   escalate: 'Escalate',
 };
 const ACTION_HELP: Record<CaseAction, string> = {
-  approve: 'Approves the application. The reason is stored in the audit log.',
-  reject: 'Rejects the application. The citizen is told a person checked it.',
-  request_proof: 'Asks the citizen for one more proof. The case waits until it arrives.',
+  approve: 'Approves the application.',
+  reject: 'Rejects it. The citizen hears that a person checked.',
+  request_proof: 'Asks the citizen for one more proof.',
   escalate: 'Hands the case to a senior officer.',
 };
 const PROOF_KINDS = ['rahat_id', 'income_proof', 'other'] as const;
@@ -67,75 +69,125 @@ export function CasePage({ id }: { id: string }) {
   const c = fresh ?? loaded.data;
 
   return (
-    <article aria-labelledby="page-title" class="flex flex-col gap-4">
-      <header class="flex flex-col gap-1">
-        <a href="/staff/queue" class="text-xs">
-          Back to the queue
+    <article aria-labelledby="page-title" class="flex flex-col gap-3">
+      <header class="pg-head pg-rise">
+        <a href="/staff/queue" aria-label="Back to the queue" class="text-xs">
+          &larr; Queue
         </a>
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-2xl font-black tracking-tight">
-            {c.subject_name ?? 'Unnamed subject'}
-          </h1>
-          <Badge>{humanize(c.kind)}</Badge>
-          <Badge tone="info">{humanize(c.status)}</Badge>
-          <span class="text-xs">
-            Priority <span class="font-mono">{c.priority}</span>
-          </span>
-          <span class="flex items-center gap-1 text-xs">
-            Confidence <ConfBar value={c.confidence} />
-          </span>
-          <span class="text-xs">Open for {fmtAge(c.age_minutes)}</span>
-          <span class="text-xs">Opened because: {humanize(c.opened_reason)}</span>
-        </div>
-        <Mono>{c.id}</Mono>
+        <h1 id="page-title" ref={headingRef} tabIndex={-1}>
+          {c.subject_name ?? 'Unnamed subject'}
+        </h1>
+        <Badge>{humanize(c.kind)}</Badge>
+        <Badge tone="info">{humanize(c.status)}</Badge>
+        <span class="st-chip" title="Priority (0 is most urgent)">
+          P <span class="font-mono">{c.priority}</span>
+        </span>
+        <span class="st-chip" title="Confidence">
+          <ConfBar value={c.confidence} />
+        </span>
+        <span class="st-chip" title="Open for">
+          {fmtAge(c.age_minutes)}
+        </span>
+        <span class="st-chip warn" title="Opened because">
+          {humanize(c.opened_reason)}
+        </span>
+        <span class="st-chip font-mono" title={c.id}>
+          {c.id.slice(0, 8)}
+        </span>
       </header>
 
-      <ActionBar detail={c} onDone={(next, message) => { setFresh(next); setResult(message); }} />
+      <ActionBar
+        detail={c}
+        onDone={(next, message) => {
+          setFresh(next);
+          setResult(message);
+        }}
+      />
       {result ? (
-        <p role="status" class="border border-primary bg-primary-soft px-3 py-2 text-primary-strong">
-          {result}
+        <p role="status" class="pg-rise flex items-center gap-2 rounded-xl border border-primary bg-primary-soft px-3 py-2 text-primary-strong">
+          <Check size={14} /> {result}
         </p>
       ) : null}
 
-      <HandoffView handoff={c.handoff} />
-      <AgentPanel caseId={c.id} />
-      {c.decision ? <DecisionAnatomy trace={c.decision} form={c.form} /> : null}
-      <FormTable detail={c} />
-      <DocumentsView checks={c.document_checks ?? []} />
-      <Section
-        id="trace"
-        title="Decision trace"
-        aside={c.decision ? <a href={`/staff/decisions/${c.decision.decision_id}`} class="text-xs">Open in decision viewer</a> : undefined}
+      <SectionTabs
+        label="Case sections"
+        sections={[
+          { id: 'brief', label: 'Briefing' },
+          { id: 'anatomy', label: 'Anatomy' },
+          { id: 'assistant', label: 'Assistant' },
+          { id: 'evidence', label: 'Evidence', badge: (c.document_checks ?? []).length },
+          { id: 'history', label: 'History', badge: (c.events ?? []).length },
+        ]}
       >
-        {c.decision ? <TraceView trace={c.decision} /> : <p class="text-ink-muted">No automatic decision was recorded for this case.</p>}
-      </Section>
-      <NotesPanel detail={c} onChange={setFresh} />
-      <Section id="events" title="Case history">
-        {(c.events ?? []).length === 0 ? (
-          <p class="text-ink-muted">No events yet.</p>
-        ) : (
-          <table class="w-full border-collapse">
-            <thead>
-              <tr>
-                <Th>When</Th>
-                <Th>Event</Th>
-                <Th>Change</Th>
-                <Th>By</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {(c.events ?? []).map((e, i) => (
-                <tr key={`${e.at}-${i}`}>
-                  <td class={`${TD} font-mono text-xs`}>{fmtTime(e.at)}</td>
-                  <td class={TD}>{humanize(e.event)}</td>
-                  <td class={TD}>{e.from_status || e.to_status ? `${e.from_status ?? 'none'} to ${e.to_status ?? 'none'}` : ''}</td>
-                  <td class={TD}>{e.actor_name ?? 'system'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Section>
+        {(tab) => {
+          if (tab === 'brief') return <HandoffView handoff={c.handoff} />;
+          if (tab === 'anatomy') {
+            return c.decision ? (
+              <DecisionAnatomy trace={c.decision} form={c.form} />
+            ) : (
+              <Card title="Anatomy">
+                <p class="text-ink-muted">No automatic decision was recorded.</p>
+              </Card>
+            );
+          }
+          if (tab === 'assistant') return <AgentPanel caseId={c.id} />;
+          if (tab === 'evidence') {
+            return (
+              <div class="flex flex-col gap-3">
+                <FormTable detail={c} />
+                <DocumentsView checks={c.document_checks ?? []} />
+              </div>
+            );
+          }
+          return (
+            <div class="flex flex-col gap-3">
+              <div class="pg-grid pg-21">
+                <Card title="Events" i={0}>
+                  <div class="pg-scroll" style={{ maxHeight: '22rem' }}>
+                    {(c.events ?? []).length === 0 ? (
+                      <p class="text-ink-muted">No events yet.</p>
+                    ) : (
+                      <table class="st-table w-full border-collapse">
+                        <thead>
+                          <tr>
+                            <Th>When</Th>
+                            <Th>Event</Th>
+                            <Th>Change</Th>
+                            <Th>By</Th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(c.events ?? []).map((e, i) => (
+                            <tr key={`${e.at}-${i}`} class="st-row-in" style={{ '--i': i }}>
+                              <td class={`${TD} font-mono text-xs`}>{fmtTime(e.at)}</td>
+                              <td class={TD}>{humanize(e.event)}</td>
+                              <td class={TD}>{e.from_status || e.to_status ? `${e.from_status ?? 'none'} to ${e.to_status ?? 'none'}` : ''}</td>
+                              <td class={TD}>{e.actor_name ?? 'system'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </Card>
+                <NotesPanel detail={c} onChange={setFresh} />
+              </div>
+              <Card title="Trace" i={1} aside={c.decision ? <a href={`/staff/decisions/${c.decision.decision_id}`} class="text-xs">Decision viewer</a> : undefined}>
+                {c.decision ? (
+                  <details>
+                    <summary class="cursor-pointer text-xs font-semibold text-ink-muted">Rule by rule</summary>
+                    <div class="mt-2">
+                      <TraceView trace={c.decision} />
+                    </div>
+                  </details>
+                ) : (
+                  <p class="text-ink-muted">No automatic decision.</p>
+                )}
+              </Card>
+            </div>
+          );
+        }}
+      </SectionTabs>
     </article>
   );
 }
@@ -191,10 +243,10 @@ function ActionBar({ detail, onDone }: { detail: CaseDetail; onDone: (next: Case
   };
 
   return (
-    <section aria-label="Actions" class="st-panel st-lit p-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="font-semibold">Decide</span>
-        {allowed.length === 0 ? <span class="text-ink-muted">No action is available for this case in its current status.</span> : null}
+    <section aria-label="Actions" class="pg-decide pg-rise" style={{ '--i': 1 }}>
+      <div class="pg-decide-row">
+        <span class="pg-cap">Decide</span>
+        {allowed.length === 0 ? <span class="text-ink-muted">No action in this status.</span> : null}
         {allowed.map((a) => (
           <Button
             key={a}
@@ -210,48 +262,50 @@ function ActionBar({ detail, onDone }: { detail: CaseDetail; onDone: (next: Case
             {ACTION_LABEL[a]}
           </Button>
         ))}
+        <span class="ms-auto">
+          <Info label="About decisions">Every action needs a written reason and is written to the audit chain.</Info>
+        </span>
       </div>
       {pending ? (
-        <form class="mt-3 flex max-w-2xl flex-col gap-2 border-t border-line pt-3" onSubmit={submit} onKeyDown={(e) => e.key === 'Escape' && close()} aria-label={`Confirm ${ACTION_LABEL[pending]}`}>
-          <p class="font-semibold">Confirm: {ACTION_LABEL[pending]}</p>
-          <p class="text-ink-muted">{ACTION_HELP[pending]}</p>
-          {pending === 'request_proof' ? (
-            <label class="flex items-center gap-2">
-              Proof wanted
-              <select class={INPUT} value={proof} onChange={(e) => setProof(e.currentTarget.value as (typeof PROOF_KINDS)[number])}>
-                {PROOF_KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {humanize(k)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <label class="flex flex-col gap-1">
-            <span>
-              Reason (required, at least {MIN_REASON} characters; stored in the audit log)
+        <form class="pg-decide-form" onSubmit={submit} onKeyDown={(e) => e.key === 'Escape' && close()} aria-label={`Confirm ${ACTION_LABEL[pending]}`}>
+          <div class="flex flex-col gap-1">
+            <p class="font-semibold">{ACTION_LABEL[pending]}</p>
+            <p class="text-xs text-ink-muted" style={{ maxWidth: '13rem' }}>
+              {ACTION_HELP[pending]}
+            </p>
+            {pending === 'request_proof' ? (
+              <label class="flex items-center gap-2 text-xs">
+                Proof
+                <select class={INPUT} value={proof} onChange={(e) => setProof(e.currentTarget.value as (typeof PROOF_KINDS)[number])}>
+                  {PROOF_KINDS.map((k) => (
+                    <option key={k} value={k}>
+                      {humanize(k)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
+          <label class="flex min-w-0 flex-1 flex-col gap-1" style={{ flexBasis: '22rem' }}>
+            <span class="text-xs">
+              Reason (required, {MIN_REASON}+ characters, audited)
             </span>
             <textarea
               ref={reasonRef}
-              rows={3}
+              rows={2}
               maxLength={1000}
               required
-              class="rounded-sm border border-line-strong bg-paper p-2 text-sm"
+              class="rounded-md border border-line-strong bg-paper p-2 text-sm"
               value={reason}
               aria-invalid={touched && tooShort}
               aria-describedby="reason-help"
               onInput={(e) => setReason(e.currentTarget.value)}
             />
+            <span id="reason-help" class={touched && tooShort ? 'text-xs text-danger' : 'text-xs text-ink-subtle'} role={touched && tooShort ? 'alert' : undefined}>
+              {touched && tooShort ? `At least ${MIN_REASON} characters.` : `${trimmed.length} of ${MIN_REASON} minimum`}
+            </span>
           </label>
-          <p id="reason-help" class={touched && tooShort ? 'text-danger' : 'text-xs text-ink-subtle'} role={touched && tooShort ? 'alert' : undefined}>
-            {touched && tooShort ? `A reason of at least ${MIN_REASON} characters is required.` : `${trimmed.length} of ${MIN_REASON} characters minimum.`}
-          </p>
-          {error ? (
-            <p role="alert" class="border border-danger bg-danger-soft px-2 py-1 text-danger">
-              {error}
-            </p>
-          ) : null}
-          <div class="flex gap-2">
+          <div class="flex flex-col gap-2">
             <Button size="sm" type="submit" busy={busy} variant={pending === 'reject' ? 'danger' : 'primary'}>
               Confirm {ACTION_LABEL[pending].toLowerCase()}
             </Button>
@@ -259,6 +313,11 @@ function ActionBar({ detail, onDone }: { detail: CaseDetail; onDone: (next: Case
               Cancel
             </Button>
           </div>
+          {error ? (
+            <p role="alert" class="w-full rounded-md border border-danger bg-danger-soft px-2 py-1 text-danger">
+              {error}
+            </p>
+          ) : null}
         </form>
       ) : null}
     </section>
@@ -269,39 +328,55 @@ function FormTable({ detail }: { detail: CaseDetail }) {
   const form = detail.form;
   if (!form) {
     return (
-      <Section id="form" title="Application form">
-        <p class="text-ink-muted">This case has no application form attached.</p>
-      </Section>
+      <Card title="Form">
+        <p class="text-ink-muted">No application form.</p>
+      </Card>
     );
   }
   const rows = Object.entries(form).filter(([k, v]) => typeof v === 'object' && v !== null && k !== 'language') as Array<
     [string, { value?: unknown; confidence?: number; provenance?: string; verified?: boolean }]
   >;
   return (
-    <Section id="form" title="Application form" aside={<span class="text-xs text-ink-subtle">Form language {form.language}</span>}>
-      <table class="w-full border-collapse">
+    <Card
+      title="Form"
+      i={0}
+      aside={
+        <span class="st-chip font-mono" title="Form language">
+          {form.language}
+        </span>
+      }
+    >
+      <table class="st-table w-full border-collapse">
         <thead>
           <tr>
             <Th>Field</Th>
             <Th>Value</Th>
-            <Th>Provenance</Th>
+            <Th>Source</Th>
             <Th>Confidence</Th>
             <Th>Verified</Th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(([name, f]) => (
-            <tr key={name}>
+          {rows.map(([name, f], i) => (
+            <tr key={name} class="st-row-in" style={{ '--i': i }}>
               <td class={`${TD} font-mono text-xs`}>{name}</td>
               <td class={TD}>{f.value === null || f.value === undefined ? <span class="text-ink-subtle">unknown</span> : name === 'phone' ? <span class="rh-ltr">{formatPhone(String(f.value))}</span> : String(f.value)}</td>
-              <td class={TD}>{f.provenance ?? 'n/a'}</td>
+              <td class={TD}>{f.provenance ? <ProvBadge prov={f.provenance} verified={f.verified} /> : <span class="text-ink-subtle">n/a</span>}</td>
               <td class={TD}>{f.value === null || f.value === undefined ? <span class="text-ink-subtle">n/a</span> : <ConfBar value={f.confidence} />}</td>
-              <td class={TD}>{f.verified ? <Badge tone="good">verified</Badge> : <span class="text-ink-subtle">not verified</span>}</td>
+              <td class={TD}>
+                {f.verified ? (
+                  <span class="st-chip ok">
+                    <Check /> verified
+                  </span>
+                ) : (
+                  <span class="text-ink-subtle">no</span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </Section>
+    </Card>
   );
 }
 
@@ -333,15 +408,15 @@ function NotesPanel({ detail, onChange }: { detail: CaseDetail; onChange: (next:
   };
 
   return (
-    <Section id="notes" title="Notes">
+    <Card title="Notes" i={1} aside={<span class="st-chip">{(detail.notes ?? []).length}</span>}>
       {(detail.notes ?? []).length === 0 ? (
-        <p class="mb-3 text-ink-muted">No notes yet.</p>
+        <p class="mb-3 text-ink-muted">No notes.</p>
       ) : (
-        <ul class="mb-3 flex flex-col gap-2">
+        <ul class="mb-3 flex flex-col gap-2 overflow-auto" style={{ maxHeight: '10rem' }}>
           {(detail.notes ?? []).map((n) => (
-            <li key={n.id} class="border border-line p-2">
+            <li key={n.id} class="rounded-lg border border-line p-2">
               <p class="text-xs text-ink-muted">
-                {n.author_name ?? n.author_kind} ({n.author_kind}) at <span class="font-mono">{fmtTime(n.created_at)}</span>
+                {n.author_name ?? n.author_kind} ({n.author_kind}) <span class="font-mono">{fmtTime(n.created_at)}</span>
               </p>
               {/* Notes can carry text from outside the system: plain text only. */}
               <p class="whitespace-pre-wrap break-words">{n.body}</p>
@@ -349,23 +424,27 @@ function NotesPanel({ detail, onChange }: { detail: CaseDetail; onChange: (next:
           ))}
         </ul>
       )}
-      <form class="flex max-w-2xl flex-col gap-2" onSubmit={add}>
-        <label class="flex flex-col gap-1">
+      <form class="flex flex-col gap-2" onSubmit={add}>
+        <label class="flex flex-col gap-1 text-xs">
           Add a note
-          <textarea rows={2} maxLength={4000} class="rounded-sm border border-line-strong bg-paper p-2 text-sm" value={body} onInput={(e) => setBody(e.currentTarget.value)} />
+          <textarea rows={2} maxLength={4000} class="rounded-md border border-line-strong bg-paper p-2 text-sm" value={body} onInput={(e) => setBody(e.currentTarget.value)} />
         </label>
         {error ? (
           <p role="alert" class="text-danger">
             {error}
           </p>
         ) : null}
-        {saved ? <p role="status" class="text-primary-strong">Note added.</p> : null}
+        {saved ? (
+          <p role="status" class="text-primary-strong">
+            Note added.
+          </p>
+        ) : null}
         <div>
           <Button size="sm" type="submit" variant="neutral" busy={busy}>
             Add note
           </Button>
         </div>
       </form>
-    </Section>
+    </Card>
   );
 }
