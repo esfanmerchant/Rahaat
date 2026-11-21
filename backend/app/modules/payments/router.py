@@ -18,7 +18,7 @@ from app.modules.cases import paging
 from app.modules.payments import service
 
 router = APIRouter(prefix="/v1", tags=["payments"])
-_read = Policy("payments:read", ["officer"], description="Payments of this department")
+_read = Policy("payments:read", ["officer"], api_scopes=["payments:read"], description="Payments of this department")
 _approvals_read = Policy("approvals:read", ["officer"], description="Payments waiting for a second person")
 _approvals_decide = Policy("approvals:decide", ["officer"], description="Release or stop a payment above the limit (four-eyes)")
 

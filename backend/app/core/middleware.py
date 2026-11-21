@@ -12,7 +12,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core import metrics
 from app.core.context import client_ip_var, request_id_var
-from app.core.errors import problem
+from app.core.errors import mark_logged, problem
 from app.core.logging import get_logger
 
 log = get_logger("rahat.access")
@@ -109,6 +109,15 @@ class RequestContextMiddleware:
             if not state["started"]:
                 response = problem(413, "payload_too_large", "That upload is too large", "Send a smaller file.")
                 await response(scope, receive, send_wrapper)
+        except Exception as exc:
+            # Starlette renders unexpected errors outside every middleware: without the security headers, and after
+            # the request id is gone. Answer here instead, then let the error continue so the server and tests see it.
+            if not state["started"]:
+                log.exception("unhandled error: %s", type(exc).__name__)
+                mark_logged(exc)
+                response = problem(500, "internal_error", "Something went wrong on our side", "Quote the request id if you report this.")
+                await response(scope, receive, send_wrapper)
+            raise
         finally:
             elapsed = time.perf_counter() - started_at
             route = getattr(scope.get("route"), "path", "unmatched")

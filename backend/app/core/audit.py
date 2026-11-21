@@ -86,6 +86,8 @@ def write(
     The row is committed or rolled back together with the change it describes. Never put raw personal
     data in `details`; store ids and hashes.
     """
+    if actor_role == "api_client" and actor_type == "user":
+        actor_type = "api_key"  # services pass the principal's id; a key is never recorded as a person
     db.execute(_LOCK, {"tenant_id": str(tenant_id)})
     last = db.execute(
         select(models.AuditLog.seq, models.AuditLog.hash)

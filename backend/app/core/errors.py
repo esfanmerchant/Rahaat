@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -92,6 +93,15 @@ def problem(
     return JSONResponse(body, status_code=status, media_type=PROBLEM_JSON, headers=headers)
 
 
+_LOGGED_FLAG = "_rahat_logged"
+
+
+def mark_logged(exc: BaseException) -> None:
+    """The request middleware already logged this error (with its request id) and answered the client."""
+    with contextlib.suppress(AttributeError):  # a type that refuses new attributes is then logged twice, which is harmless
+        setattr(exc, _LOGGED_FLAG, True)
+
+
 def _field_path(loc: tuple[Any, ...]) -> str:
     return ".".join(str(part) for part in loc)
 
@@ -111,7 +121,15 @@ def install_error_handlers(app: FastAPI) -> None:
         return problem(422, "invalid_input", Unprocessable.title, "Check the fields listed in 'errors'.", extra={"errors": errors})
 
     @app.exception_handler(StarletteHTTPException)
-    async def _http(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+    async def _http(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        if exc.status_code in (404, 405):
+            # No route matched, so no policy charged the caller: probing for endpoints counts against the network.
+            from app.core import ratelimit  # imported here because ratelimit imports this module
+
+            try:
+                ratelimit.charge_anonymous(request.url.path)
+            except TooManyRequests as limited:
+                return problem(limited.status, limited.code, limited.title, limited.detail, extra=limited.extra, headers=limited.headers)
         code = {401: "not_authenticated", 403: "forbidden", 404: "not_found", 405: "method_not_allowed"}.get(
             exc.status_code, "http_error"
         )
@@ -120,5 +138,8 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
-        log.exception("unhandled error: %s", type(exc).__name__)
+        # Normally the request middleware has already answered (with headers and the request id); this is the
+        # fallback for an error raised outside it.
+        if not getattr(exc, _LOGGED_FLAG, False):
+            log.exception("unhandled error: %s", type(exc).__name__)
         return problem(500, "internal_error", "Something went wrong on our side", "Quote the request id if you report this.")

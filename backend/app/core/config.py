@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import os
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Literal
 
@@ -22,6 +23,22 @@ APP_DB_ROLE = "rahat_app"
 Env = Literal["dev", "test", "demo", "prod"]
 
 _url_cache: dict[str, URL] = {}
+
+
+@dataclass(frozen=True, slots=True)
+class RateLimits:
+    """Requests per minute for each token bucket. A bucket holds one minute's worth, so short bursts pass."""
+
+    enabled: bool
+    anonymous_per_minute: int  # per client network, for calls without a valid credential
+    user_per_minute: int  # per signed-in user in a department
+    tenant_per_minute: int  # everything a department does together (users and API keys)
+    api_key_default_per_minute: int  # used when an admin creates a key without naming a limit
+
+
+# Deployed defaults. Tests use very high values unless a test sets its own, so the suite never trips them.
+_RATE_DEFAULTS = {"anonymous": 300, "user": 600, "tenant": 6000}
+_RATE_TEST_DEFAULT = 1_000_000
 
 
 def _normalise(url: str) -> URL:
@@ -67,6 +84,25 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_lock_minutes: int = 15
     login_ip_attempts_per_minute: int = 30
+    rate_limit_enabled: bool = True
+    rate_limit_anonymous_per_minute: int | None = None
+    rate_limit_user_per_minute: int | None = None
+    rate_limit_tenant_per_minute: int | None = None
+    api_key_default_per_minute: int = 60
+
+    def rate_limits(self) -> RateLimits:
+        def pick(value: int | None, name: str) -> int:
+            if value is not None:
+                return max(1, value)
+            return _RATE_TEST_DEFAULT if self.app_env == "test" else _RATE_DEFAULTS[name]
+
+        return RateLimits(
+            enabled=self.rate_limit_enabled,
+            anonymous_per_minute=pick(self.rate_limit_anonymous_per_minute, "anonymous"),
+            user_per_minute=pick(self.rate_limit_user_per_minute, "user"),
+            tenant_per_minute=pick(self.rate_limit_tenant_per_minute, "tenant"),
+            api_key_default_per_minute=max(1, self.api_key_default_per_minute),
+        )
 
     @property
     def demo_mode(self) -> bool:

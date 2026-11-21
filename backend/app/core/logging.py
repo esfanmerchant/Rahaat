@@ -19,6 +19,8 @@ _REDACTIONS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\b[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}\b"), "[email]"),
     (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}"), "Bearer [token]"),
     (re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"), "[token]"),
+    # API keys keep their public prefix (useful when reading logs) and lose the secret.
+    (re.compile(r"\brk_([a-f0-9]{6,16})_[A-Za-z0-9_-]{8,}"), r"rk_\1_[key]"),
 )
 
 

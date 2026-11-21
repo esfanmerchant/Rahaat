@@ -15,6 +15,8 @@ from app.core.policy import Policy
 from app.modules.cases import service
 
 router = APIRouter(prefix="/v1/cases", tags=["cases"])
+# API keys may read the queue, never the case file: that holds detection details meant for staff only.
+_queue = Policy("cases:read", ["officer"], api_scopes=["cases:read"], description="The review queue (API keys with cases:read too)")
 _read = Policy("cases:read", ["officer"], description="The review queue and a case's handoff package")
 _work = Policy("cases:work", ["officer"], description="Take or hand over a case, add notes")
 _decide = Policy("cases:decide", ["officer"], description="Approve, reject, request proof, escalate or reopen, with a reason")
@@ -31,7 +33,7 @@ class CaseReopenIn(Strict):
 
 @router.get("", response_model=CaseList, summary="Review queue")
 def list_cases(
-    principal: Principal = Depends(_read),
+    principal: Principal = Depends(_queue),
     db: Session = Depends(get_db),
     status: service.StatusFilter = Query("active", description="A status, 'active' (default) or 'all'"),
     kind: CaseKind | None = Query(None),

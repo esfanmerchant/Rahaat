@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.contracts.api import DocumentOut
 from app.contracts.common import DocumentKind
 from app.core.deps import Principal, get_db
-from app.core.policy import Policy
+from app.core.policy import Cost, Policy
 from app.modules.documents import service
 from app.modules.people.context import PersonContext, acting_person
 
@@ -19,7 +19,8 @@ _view = Policy("documents:read-content", ["officer"], description="Officers view
 
 
 @router.post("/applications/{application_id}/documents", response_model=DocumentOut, status_code=201,
-             summary="Upload a photo of an ID or proof (JPEG, PNG or WebP, at most 5 MB)")  # fmt: skip
+             summary="Upload a photo of an ID or proof (JPEG, PNG or WebP, at most 5 MB)",
+             dependencies=[Depends(Cost(10))])  # an upload is checked by the document AI: it counts as ten requests  # fmt: skip
 def upload_document(
     application_id: UUID,
     file: UploadFile = File(..., description="The photo. Its name and declared type are ignored."),
