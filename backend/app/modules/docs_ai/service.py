@@ -233,13 +233,23 @@ def check_document(
         return _result(document_id, kind, "not_a_card", _abstain("human", ["check_failed"]), signals=[signal])
 
 
+def _locate(rgb: np.ndarray) -> Any:
+    """Find the card by its outline and, when it is fully in frame, fine-tune the fit on the static print."""
+    from app.modules.docs_ai.geometry import locate_card, refine
+
+    geom = locate_card(rgb)
+    if geom.matrix is not None and not geom.touches_border and geom.header_found:
+        geom.matrix, _ = refine(rgb, geom.matrix)
+    return geom
+
+
 def _check(
     image_bytes: bytes, kind: DocumentKind, *, document_id: str,
     trusted_keys: dict[str, Ed25519PublicKey] | None, ocr_engine: Any,
 ) -> DocumentCheck:  # fmt: skip
     from app.modules.docs_ai import issuer
     from app.modules.docs_ai.forensics import ela_check, print_check
-    from app.modules.docs_ai.geometry import locate_card, rectify
+    from app.modules.docs_ai.geometry import from_qr, rectify, refine
     from app.modules.docs_ai.imageio import DecodeError, decode
     from app.modules.docs_ai.payload import verify
     from app.modules.docs_ai.qr import read_qr
@@ -260,9 +270,16 @@ def _check(
     if kind != "rahat_id":
         return _check_other(decoded.rgb, kind, document_id, evidence, engine.available())
 
-    geom = locate_card(decoded.rgb)
+    geom = _locate(decoded.rgb)
     card = rectify(decoded.rgb, geom.matrix) if geom.matrix is not None else None
-    qr_read = read_qr(decoded.rgb, card if geom.header_found else None)
+    qr_read = read_qr(decoded.rgb, card if geom.header_found and not geom.touches_border else None)
+    if (card is None or geom.touches_border or not geom.header_found) and qr_read.points is not None and qr_read.modules:
+        anchored = from_qr(decoded.rgb, qr_read.points, qr_read.modules)
+        if anchored.header_found or anchored.touches_border:
+            if not anchored.touches_border:
+                anchored.matrix, _ = refine(decoded.rgb, anchored.matrix)  # type: ignore[arg-type]
+            geom = anchored
+            card = rectify(decoded.rgb, geom.matrix)  # type: ignore[arg-type]
     ocr_off = OcrResult(available=engine.available())
 
     def retake(quality: DocumentQuality, reason: str, detail: str) -> DocumentCheck:
@@ -271,12 +288,12 @@ def _check(
                        qr=QrResult(found=qr_read.found), ocr=ocr_off, signals=signals)  # fmt: skip
 
     # 2. Quality gate -------------------------------------------------------------------------------
-    if card is None or (not geom.header_found and not qr_read.text):
+    if geom.touches_border and (geom.header_found or geom.card_colours or qr_read.found):
+        return retake("cropped", "card_touches_border", "The card runs off the edge of the photo.")
+    if card is None or geom.touches_border or (not geom.header_found and not qr_read.text):
         if qr_read.found:
             return retake("cropped", "card_outline_not_found", "A QR code is visible but the card outline is not.")
         return retake("not_a_card", "card_not_found", "No Rahat card was found in the image.")
-    if geom.touches_border:
-        return retake("cropped", "card_touches_border", "The card runs off the edge of the photo.")
     width = card_width_px(geom.matrix) if geom.matrix is not None else 0.0
     if width < MIN_CARD_PX:
         return retake("blurry", "card_too_small", f"The card is only {width:.0f} px wide; move closer.")

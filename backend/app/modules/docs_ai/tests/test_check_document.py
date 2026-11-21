@@ -37,7 +37,7 @@ def assert_routing_is_safe(check: DocumentCheck) -> None:
         assert a.route == "human"
 
 
-@pytest.mark.parametrize("name", ["clean", "flat", "upside_down", "forwarded"])
+@pytest.mark.parametrize("name", ["clean", "flat", "upside_down", "forwarded", "white_table", "screenshot"])
 def test_genuine_card_passes(images: dict[str, bytes], name: str) -> None:
     check = run(images[name])
     assert check.quality == "ok" and check.retake_hint is None

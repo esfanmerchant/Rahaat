@@ -75,4 +75,20 @@ def images(key) -> dict[str, bytes]:  # type: ignore[no-untyped-def]
     out["cropped_bottom"] = make_variant("cropped", PERSON, key, shot=shot, crop_side="bottom", crop_fraction=0.3).image
     out["upside_down"] = make_variant("clean", PERSON, key, shot=Shot(angle=178.0, seed=5)).image
     out["forwarded"] = make_variant("clean", PERSON, key, shot=Shot(quality=90, seed=6), forwarded_quality=75).image
+    out["white_table"] = make_variant("clean", PERSON, key, shot=Shot(background=(236, 234, 230), angle=4.0, seed=7)).image
+    out["screenshot"] = _on_white_page(out["flat"])
     return out
+
+
+def _on_white_page(card_png: bytes) -> bytes:
+    """The card file shown inside a white page, as in a screenshot."""
+    import io
+
+    from PIL import Image
+
+    with Image.open(io.BytesIO(card_png)) as card:
+        page = Image.new("RGB", (1400, 1100), (255, 255, 255))
+        page.paste(card.convert("RGB"), (200, 240))
+    buf = io.BytesIO()
+    page.save(buf, "PNG")
+    return buf.getvalue()

@@ -29,6 +29,7 @@ GLYPH_MIN = 0.68
 SATURATED = 248
 GLYPH_SATURATED_MAX = 0.05
 READABLE_GLYPHS_MIN = 0.6
+DIGIT_MARGIN = 0.03  # another digit must fit this much better than the signed one
 
 ELA_RATIO = 1.6
 ELA_MIN_DIFF = 0.8
@@ -43,6 +44,7 @@ MAX_JUDGED_BLUR = 2.0  # above this (in card pixels) printed glyphs are too soft
 class PrintCheck:
     fields: dict[str, FieldResult] = field(default_factory=dict)
     scores: dict[str, float] = field(default_factory=dict)  # lowest readable glyph score per field
+    digit_gaps: dict[str, float] = field(default_factory=dict)  # largest (best other digit - signed digit) per field
     blur_sigma: float = 0.0
 
     @property
@@ -62,10 +64,21 @@ class ElaCheck:
 
 
 @dataclass(frozen=True)
+class _Glyph:
+    x0: int  # x range in template coordinates
+    x1: int
+    char: str
+    left: float  # where the glyph is drawn, in render-canvas coordinates
+
+
+@dataclass(frozen=True)
 class _Template:
     pixels: np.ndarray  # float32, PRINT_FILL text on PRINT_BACKGROUND
     origin: tuple[int, int]  # card coordinates of the template's top-left
-    glyphs: tuple[tuple[int, int], ...]  # x ranges of each visible glyph, in template coordinates
+    glyphs: tuple[_Glyph, ...]  # every visible glyph
+    size: int  # font size
+    rows: tuple[int, int]  # template rows, in render-canvas coordinates
+    x0: int  # template left edge, in render-canvas coordinates
 
 
 @lru_cache(maxsize=256)
@@ -86,11 +99,24 @@ def _template(field_name: str, value: str) -> _Template | None:
     for i, ch in enumerate(text):
         if ch.isspace():
             continue
-        g0 = int(L.FIELD_X + font.getlength(text[:i])) - x0 - 1
+        left = L.FIELD_X + font.getlength(text[:i])
+        g0 = int(left) - x0 - 1
         g1 = int(np.ceil(L.FIELD_X + font.getlength(text[: i + 1]))) - x0 + 1
-        glyphs.append((max(0, g0), min(x1 - x0, g1)))
+        glyphs.append(_Glyph(max(0, g0), min(x1 - x0, g1), ch, left))
     row_y = L.row_top(L.field_index(field_name)) + L.VALUE_DY
-    return _Template(arr[y0:y1, x0:x1].copy(), (x0, y0 - pad_top + row_y), tuple(glyphs))
+    return _Template(arr[y0:y1, x0:x1].copy(), (x0, y0 - pad_top + row_y), tuple(glyphs), size, (y0, y1), x0)
+
+
+@lru_cache(maxsize=512)
+def _digit_cells(size: int, left: float, rows: tuple[int, int], cols: tuple[int, int]) -> dict[str, np.ndarray]:
+    """Each digit drawn alone at one glyph position and cropped like that glyph's cell (the font's digits are tabular)."""
+    font = L.font(size)
+    out = {}
+    for d in "0123456789":
+        img = Image.new("L", (cols[1] + 4, 90), PRINT_BACKGROUND)
+        ImageDraw.Draw(img).text((left, 20), d, font=font, fill=PRINT_FILL)
+        out[d] = np.asarray(img, dtype=np.float32)[rows[0] : rows[1], cols[0] : cols[1]].copy()
+    return out
 
 
 def _ncc_max(window: np.ndarray, templ: np.ndarray) -> tuple[float, tuple[int, int]]:
@@ -162,21 +188,33 @@ def print_check(card_rgb: np.ndarray, signed: dict[str, str]) -> PrintCheck:
         best, (bx, by) = _ncc_max(window, t)
         glyph_scores: list[float] = []
         unreadable = 0
-        for g0, g1 in tpl.glyphs:
-            gx0, gy0 = max(0, bx + g0 - glyph_slack), max(0, by - 2)
-            win = window[gy0 : by + t.shape[0] + 2, gx0 : bx + g1 + glyph_slack]
+        other_digit = 0
+        gap = -1.0
+        for g in tpl.glyphs:
+            gx0, gy0 = max(0, bx + g.x0 - glyph_slack), max(0, by - 2)
+            win = window[gy0 : by + t.shape[0] + 2, gx0 : bx + g.x1 + glyph_slack]
             if win.size == 0 or float((win >= SATURATED).mean()) > GLYPH_SATURATED_MAX:
                 unreadable += 1
                 continue
-            score, _ = _ncc_max(win, t[:, g0:g1])
+            score, _ = _ncc_max(win, t[:, g.x0 : g.x1])
             glyph_scores.append(score)
+            if g.char.isdigit():
+                # Closed-set reading: does another digit explain this cell better than the signed one?
+                cells = _digit_cells(tpl.size, g.left, tpl.rows, (g.x0 + tpl.x0, g.x1 + tpl.x0))
+                fits = {d: _ncc_max(win, _soften(c, sigma))[0] for d, c in cells.items()}
+                rival = max((d for d in fits if d != g.char), key=lambda d: fits[d])
+                gap = max(gap, fits[rival] - fits[g.char])
+                if fits[rival] - fits[g.char] > DIGIT_MARGIN:
+                    other_digit += 1
         total = len(tpl.glyphs)
         if total == 0 or len(glyph_scores) / total < READABLE_GLYPHS_MIN:
             out.fields[name] = "unclear"
             continue
         low = min(glyph_scores)
         out.scores[name] = round(low, 3)
-        if low < GLYPH_MIN or (unreadable == 0 and best < GLOBAL_MIN):
+        if gap > -1.0:
+            out.digit_gaps[name] = round(gap, 3)
+        if low < GLYPH_MIN or other_digit or (unreadable == 0 and best < GLOBAL_MIN):
             out.fields[name] = "mismatch"
         else:
             out.fields[name] = "match"

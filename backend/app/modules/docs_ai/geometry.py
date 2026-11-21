@@ -8,13 +8,14 @@ card coordinates to image coordinates. A card whose outline runs into the image 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Literal
 
 import numpy as np
 
 from app.modules.docs_ai import layout as L
 
-Method = Literal["outline", "full_frame", "none"]
+Method = Literal["outline", "full_frame", "qr_anchor", "none"]
 
 MIN_AREA_SHARE = 0.08
 BORDER_TOUCH_PX = 3
@@ -27,6 +28,7 @@ class CardGeometry:
     touches_border: bool = False
     header_found: bool = False
     area_share: float = 0.0
+    card_colours: bool = False  # solid patches of the header green or the SPECIMEN red are in the photo
 
     @property
     def located(self) -> bool:
@@ -93,6 +95,17 @@ def _quad_from_contour(contour: np.ndarray) -> np.ndarray:
     return _order_corners(np.asarray(box, dtype=np.float32))
 
 
+def _card_colours(green: np.ndarray, r: np.ndarray, g: np.ndarray, b: np.ndarray) -> bool:
+    """True when the photo holds solid patches of the card's own colours (not speckle from noise or texture)."""
+    import cv2
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    red = (((r - g) > 22) & ((r - b) > 22) & (np.abs(g - b) < 12)).astype(np.uint8) * 255  # pink-red, not brown wood
+    red_share = float(cv2.morphologyEx(red, cv2.MORPH_OPEN, kernel).mean()) / 255.0
+    green_share = float(cv2.morphologyEx(green, cv2.MORPH_OPEN, kernel).mean()) / 255.0
+    return red_share >= 0.002 or green_share >= 0.005
+
+
 def locate_card(rgb: np.ndarray) -> CardGeometry:
     import cv2
 
@@ -128,7 +141,8 @@ def locate_card(rgb: np.ndarray) -> CardGeometry:
             return CardGeometry("outline", _homography(corners), touches_border=False, header_found=header, area_share=share)
         if share >= MIN_AREA_SHARE and touches and not (frame_like and share > 0.5):
             corners, header = _oriented(_quad_from_contour(biggest), rgb)
-            return CardGeometry("outline", _homography(corners), touches_border=True, header_found=header, area_share=share)
+            colours = _card_colours(green, r, g, b)
+            return CardGeometry("outline", _homography(corners), touches_border=True, header_found=header, area_share=share, card_colours=colours)
 
     if frame_like:
         # The upload is the card itself, edge to edge (a scan or the generated file).
@@ -137,3 +151,95 @@ def locate_card(rgb: np.ndarray) -> CardGeometry:
         if header:
             return CardGeometry("full_frame", _homography(corners), touches_border=False, header_found=True, area_share=1.0)
     return CardGeometry("none")
+
+
+def _project(matrix: np.ndarray, pts: np.ndarray) -> np.ndarray:
+    h = np.hstack([pts.astype(np.float64), np.ones((len(pts), 1))]) @ matrix.T
+    return np.asarray(h[:, :2] / h[:, 2:3])
+
+
+CARD_CORNERS = np.array([[0, 0], [L.CARD_W, 0], [L.CARD_W, L.CARD_H], [0, L.CARD_H]], dtype=np.float64)
+
+
+def from_qr(rgb: np.ndarray, points: np.ndarray, modules: int) -> CardGeometry:
+    """Locate the card from its QR when the outline is lost (a white table, a screenshot with margins).
+
+    The QR sits at a fixed place on the card, so its four corners fix the whole card. A card whose predicted
+    corners fall outside the photo is cut off.
+    """
+    import cv2
+
+    from app.modules.docs_ai.qr import symbol_box
+
+    left, top, side = symbol_box(modules)
+    # Only the three finder-pattern corners are measured; OpenCV extrapolates the fourth, so it is not used.
+    src = np.array([[left, top], [left + side, top], [left, top + side]], dtype=np.float32)
+    dst = points[[0, 1, 3]].astype(np.float32)
+    matrix = np.vstack([cv2.getAffineTransform(src, dst), [0.0, 0.0, 1.0]])
+    corners = _project(matrix, CARD_CORNERS)
+    h, w = rgb.shape[:2]
+    inside = bool(((corners[:, 0] >= -2) & (corners[:, 0] <= w + 1) & (corners[:, 1] >= -2) & (corners[:, 1] <= h + 1)).all())
+    header = header_score(rectify(rgb, matrix)) >= 0.5
+    area = float(cv2.contourArea(corners.astype(np.float32))) / float(w * h)
+    return CardGeometry("qr_anchor", matrix, touches_border=not inside, header_found=header, area_share=area)
+
+
+# Static print that is the same on every card, used to fine-tune the alignment: (x0, y0, x1, y1) in card pixels.
+_ANCHORS: tuple[tuple[int, int, int, int], ...] = (
+    (30, 12, 320, 66),  # RAHAT CARD
+    (34, 66, 420, 94),  # PROTOTYPE - MOCK RELIEF PROGRAMME
+    (770, 28, 966, 78),  # SPECIMEN badge
+    (36, 132, 236, 392),  # photo placeholder
+    (712, 384, 972, 404),  # SCAN TO VERIFY
+    (30, 562, 760, 588),  # footer line 1
+    (30, 592, 640, 612),  # footer line 2
+    *((L.FIELD_X - 4, L.row_top(i) - 2, L.FIELD_X + 160, L.row_top(i) + 21) for i in range(len(L.FIELDS))),
+)
+ANCHOR_SEARCH = 18
+ANCHOR_MIN_SCORE = 0.6
+
+
+@lru_cache(maxsize=1)
+def _reference_gray() -> np.ndarray:
+    """A rendered card; only its static print is used."""
+    import cv2
+
+    from app.modules.docs_ai.card import render_card
+    from app.modules.docs_ai.payload import CardFields
+
+    fields = CardFields("Reference Card", "00000-0000000-0", "2000-01-01", "other", "Reference")
+    card = render_card(fields, "RC1|reference", key_id="reference")
+    return np.asarray(cv2.cvtColor(np.asarray(card), cv2.COLOR_RGB2GRAY), dtype=np.float32)
+
+
+def refine(rgb: np.ndarray, matrix: np.ndarray) -> tuple[np.ndarray, int]:
+    """Re-fit the homography to the static print. Returns the matrix and how many anchors agreed."""
+    import cv2
+
+    ref = _reference_gray()
+    observed = cv2.cvtColor(rectify(rgb, matrix), cv2.COLOR_RGB2GRAY).astype(np.float32)
+    card_pts, seen_pts = [], []
+    s = ANCHOR_SEARCH
+    for x0, y0, x1, y1 in _ANCHORS:
+        templ = ref[y0:y1, x0:x1]
+        wx0, wy0 = max(0, x0 - s), max(0, y0 - s)
+        window = observed[wy0 : min(L.CARD_H, y1 + s), wx0 : min(L.CARD_W, x1 + s)]
+        if window.shape[0] < templ.shape[0] or window.shape[1] < templ.shape[1]:
+            continue
+        res = cv2.matchTemplate(window, templ, cv2.TM_CCOEFF_NORMED)
+        _, score, _, (bx, by) = cv2.minMaxLoc(res)
+        if score < ANCHOR_MIN_SCORE:
+            continue
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        card_pts.append((cx, cy))
+        seen_pts.append((wx0 + bx + (x1 - x0) / 2, wy0 + by + (y1 - y0) / 2))
+    if len(card_pts) < 6:
+        return matrix, len(card_pts)
+    image_pts = _project(matrix, np.array(seen_pts))
+    refined, inliers = cv2.findHomography(np.array(card_pts, dtype=np.float32), image_pts.astype(np.float32), cv2.RANSAC, 2.0)
+    if refined is None or inliers is None or int(inliers.sum()) < 6:
+        return matrix, len(card_pts)
+    moved = np.abs(_project(refined, CARD_CORNERS) - _project(matrix, CARD_CORNERS)).max()
+    if moved > 0.06 * L.CARD_W:  # a big jump means the anchors disagree with the outline; keep the outline
+        return matrix, int(inliers.sum())
+    return np.asarray(refined), int(inliers.sum())
