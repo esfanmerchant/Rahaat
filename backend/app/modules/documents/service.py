@@ -32,6 +32,7 @@ from app.modules.applications import hooks
 from app.modules.applications.forms import merge_signed, signed_fields
 from app.modules.applications.service import form_of, load_owned
 from app.modules.applications.status import EDITABLE
+from app.modules.consent.access_log import record_view
 from app.modules.consent.rules import active_consent, require_consent
 from app.modules.documents import imaging
 from app.modules.documents.views import KIND_SCOPES, citizen_view, document_status, signed_qr_valid
@@ -143,6 +144,11 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
         details: dict[str, Any] = {"kind": kind, "sha256": document.sha256, "checked": check is not None, "merged_fields": merged}
         audit.write(db, tenant_id=ctx.tenant_id, action="document.uploaded", object_type="document", object_id=document_id,
                     model_version=check.model_version if check else None, details=details, **ctx.audit_fields())  # fmt: skip
+        if merged:
+            # The form changed: offline sync reads these rows to know which fields changed after a given version.
+            audit.write(db, tenant_id=ctx.tenant_id, action="application.fields_verified", object_type="application",
+                        object_id=application.id, details={"fields": merged, "version": application.version, "source": "qr_signed",
+                                                           "document_id": str(document_id)}, **ctx.audit_fields())  # fmt: skip
         if mismatch:
             audit.write(db, tenant_id=ctx.tenant_id, action="document.identity_mismatch", actor_type="system", object_type="document",
                         object_id=document_id, result="flagged", reason="signed_id_differs_from_registered_id",
@@ -169,23 +175,25 @@ def _proof_received(db: Session, ctx: PersonContext, application_id: UUID) -> No
         log.exception("proof_received failed; the case stays where it is")
 
 
-def _exists_in_tenant(document_id: UUID, tenant_id: UUID) -> bool:
-    """Narrow system lookup: does the row exist at all? Lets an officer see "consent withdrawn" instead of a bare 404."""
+def _owner_in_tenant(document_id: UUID, tenant_id: UUID) -> UUID | None:
+    """Narrow system lookup: whose document is this, if it exists at all? Lets an officer see "consent withdrawn"
+    instead of a bare 404, and lets the refused attempt appear in that person's access log."""
     with system_session() as sdb:
-        found = sdb.scalar(
-            select(func.count()).select_from(models.Document).where(models.Document.id == document_id, models.Document.tenant_id == tenant_id)
+        return sdb.scalar(
+            select(models.Document.person_id).where(models.Document.id == document_id, models.Document.tenant_id == tenant_id)
         )
-        return bool(found)
 
 
 def content_for_officer(db: Session, principal: Principal, document_id: UUID) -> tuple[bytes, str]:
     document = db.get(models.Document, document_id)  # RLS: same tenant and an active consent for the person
     if document is None or document.tenant_id != principal.tenant_id:
-        if _exists_in_tenant(document_id, principal.tenant_id):
+        owner = _owner_in_tenant(document_id, principal.tenant_id)
+        if owner is not None:
             metrics.ACCESS_DENIED.labels("consent").inc()
             audit.write_independent(
                 tenant_id=principal.tenant_id, action="access.denied", actor_id=principal.user_id, actor_role=principal.role,
-                object_type="document", object_id=document_id, result="denied", reason="consent_required",
+                acting_for_person_id=owner, object_type="document", object_id=document_id, result="denied", reason="consent_required",
+                details={"attempted": "document_content"},
             )  # fmt: skip
             raise Forbidden("This person has not agreed to share their information.", code="consent_required")
         raise NotFound("That document does not exist.")
@@ -194,7 +202,8 @@ def content_for_officer(db: Session, principal: Principal, document_id: UUID) ->
         # The database allows the read while any consent is active; a consent narrowed to exclude documents still stops it.
         audit.write_independent(
             tenant_id=principal.tenant_id, action="access.denied", actor_id=principal.user_id, actor_role=principal.role,
-            object_type="document", object_id=document_id, result="denied", reason="consent_scope_missing",
+            acting_for_person_id=document.person_id, object_type="document", object_id=document_id, result="denied",
+            reason="consent_scope_missing", details={"attempted": "document_content"},
         )  # fmt: skip
         raise Forbidden("This person has not agreed to share their documents.", code="consent_scope_missing")
     path = _path_for(document.storage_key)
@@ -203,5 +212,6 @@ def content_for_officer(db: Session, principal: Principal, document_id: UUID) ->
     data = path.read_bytes()
     audit.write(db, tenant_id=principal.tenant_id, action="document.viewed", actor_id=principal.user_id, actor_role=principal.role,
                 object_type="document", object_id=document.id, details={"kind": document.kind})  # fmt: skip
+    record_view(db, principal, document.person_id, what="document_content", ref_id=document.id, details={"kind": document.kind})
     db.commit()
     return data, document.mime

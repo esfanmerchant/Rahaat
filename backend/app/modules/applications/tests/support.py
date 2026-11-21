@@ -1,7 +1,8 @@
 """Shared integration-test setup for the people, consent, applications and documents modules.
 
 `world` builds an isolated department with the Rahat program (rule version 1), a citizen with a full consent,
-a helper with a delegation for that citizen, a second citizen and an officer.
+a helper with a delegation for that citizen (family PIN `FAMILY_PIN`), a second citizen and an officer.
+`world.h("helper", person_id)` switches the helper to that family first, so the request carries a ticket.
 
 `fakes` stands in for the other tracks' functions by putting modules into `sys.modules` at the exact
 import paths from `app/contracts/engine.py`. Each fake returns the contract types and records its calls.
@@ -27,10 +28,12 @@ from app.contracts.documents import DocumentCheck, QrResult
 from app.contracts.engine import DecisionInput, IdentityCheck, RegistryRecord
 from app.core.config import get_settings
 from app.core.db import system_session
+from app.core.security import hash_secret
 from app.db import models
 from app.seed import RULES_V1
 
 ALL_SCOPES = ["identity", "contact", "household", "income", "documents"]
+FAMILY_PIN = "5937"
 
 # Track A2's notify(): it raises ValueError for any other template and keeps only these payload keys.
 NOTIFY_TEMPLATES = frozenset({"approved", "person_will_check", "proof_needed", "rejected", "application_received",
@@ -50,12 +53,34 @@ class World:
     helper: Any
     officer: Any
     headers: dict[str, dict[str, str]] = field(default_factory=dict)
+    client: Any = None
+    delegated: set[uuid.UUID] = field(default_factory=set)  # people who gave the helper a delegation with FAMILY_PIN
+    tickets: dict[uuid.UUID, str] = field(default_factory=dict)
+    switched_to: uuid.UUID | None = None
 
-    def h(self, who: str, acting_for: uuid.UUID | None = None) -> dict[str, str]:
+    def h(self, who: str, acting_for: uuid.UUID | None = None, *, ticket: bool = True) -> dict[str, str]:
         headers = dict(self.headers[who])
         if acting_for is not None:
             headers["X-Acting-For"] = str(acting_for)
+            if who == "helper" and ticket:
+                value = self.ticket_for(acting_for)
+                if value:
+                    headers["X-Helper-Ticket"] = value
         return headers
+
+    def ticket_for(self, person_id: uuid.UUID) -> str | None:
+        """The helper's ticket for this family, switching to it when the session is on another family."""
+        if self.switched_to == person_id and person_id in self.tickets:
+            return self.tickets[person_id]
+        if person_id not in self.delegated:
+            return None
+        response = self.client.post("/v1/helper/switch", json={"person_id": str(person_id), "pin": FAMILY_PIN},
+                                    headers=self.headers["helper"])  # fmt: skip
+        if response.status_code != 200:
+            return None
+        self.tickets[person_id] = response.json()["ticket"]
+        self.switched_to = person_id
+        return self.tickets[person_id]
 
 
 def build_world(factory: Any, client: Any, *, helper_scopes: tuple[str, ...] = ("apply", "track", "upload")) -> World:
@@ -79,10 +104,11 @@ def build_world(factory: Any, client: Any, *, helper_scopes: tuple[str, ...] = (
         for consent in db.scalars(select(models.Consent).where(models.Consent.tenant_id == tenant.id)).all():
             consent.field_scopes = list(ALL_SCOPES)
         db.add(models.HelperDelegation(tenant_id=tenant.id, helper_user_id=helper.user_id, person_id=citizen.person_id,
-                                       scopes=list(helper_scopes), expires_at=datetime.now(UTC) + timedelta(days=30)))  # fmt: skip
+                                       scopes=list(helper_scopes), pin_hash=hash_secret(FAMILY_PIN),
+                                       expires_at=datetime.now(UTC) + timedelta(days=30)))  # fmt: skip
         program_id, version_id = program.id, version.id
     world = World(tenant=tenant, program_id=program_id, rule_version_id=version_id, citizen=citizen, other_citizen=other,
-                  helper=helper, officer=officer)  # fmt: skip
+                  helper=helper, officer=officer, client=client, delegated={citizen.person_id})  # fmt: skip
     for name in ("citizen", "other_citizen", "helper", "officer"):
         world.headers[name] = factory.headers(client, getattr(world, name))
     return world

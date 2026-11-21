@@ -29,6 +29,7 @@ from app.core.errors import Conflict, Forbidden, NotFound, Unprocessable
 from app.core.logging import get_logger
 from app.db import models
 from app.modules.cases import paging, rules
+from app.modules.consent.access_log import record_view
 
 log = get_logger("rahat.cases")
 
@@ -346,6 +347,8 @@ def get_detail(db: Session, principal: Principal, case_id: uuid.UUID) -> CaseDet
         _event(db, case, "viewed", from_status=case.status, to_status=case.status, actor_id=principal.user_id)
     audit.write(db, tenant_id=principal.tenant_id, action="case.viewed", actor_id=principal.user_id, actor_role=principal.role,
                 acting_for_person_id=case.subject_person_id, object_type="case", object_id=case.id)  # fmt: skip
+    if case.subject_person_id is not None:  # the person's access log shows this read (consent centre)
+        record_view(db, principal, case.subject_person_id, what="case_detail", ref_id=case.id, details={"case_kind": case.kind})
     db.flush()
     return build_detail(db, case, application)
 
@@ -461,6 +464,13 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
         details["priority"] = case.priority
     if case.assigned_to is None and body.action != "escalate":
         case.assigned_to = principal.user_id
+    if case.kind == "correction" and body.action in ("approve", "reject"):
+        # A correction or erasure request from the consent centre: apply it or close it with the case. This runs
+        # before this transaction's first audit row: an erasure commits in its own transaction and needs the
+        # tenant's audit lock, which this one would otherwise hold until it ends.
+        from app.modules.consent.requests import on_case_decided
+
+        on_case_decided(db, principal, case, approve=body.action == "approve", reason=body.reason)
     _event(db, case, body.action, from_status=old, to_status=new_status, actor_id=principal.user_id, details={**details, "reason": body.reason[:300]})
     audit.write(db, tenant_id=principal.tenant_id, action=f"case.{body.action}", actor_id=principal.user_id, actor_role=principal.role,
                 acting_for_person_id=case.subject_person_id, object_type="case", object_id=case.id, reason=body.reason,

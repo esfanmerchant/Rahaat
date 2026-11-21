@@ -46,4 +46,4 @@ def optional(target: tuple[str, str]) -> Callable[..., Any] | None:
             _warned.add(key)
             log.warning("optional function %s is missing; degrading safely", key)
         return None
-    return fn
+    return fn  # type: ignore[no-any-return]

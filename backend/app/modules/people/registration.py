@@ -143,6 +143,7 @@ def start(body: RegisterStartIn, *, ip: str) -> RegisterStartOut:
         user = db.scalar(select(models.User).where(models.User.phone_hash == blind_index(phone)))
         # Every answer carries a fresh random id, so two starts for one number never reveal whether it exists.
         registration_id = uuid.uuid4()
+        payload: dict[str, Any]
         if user is not None:
             # Already registered. Say the same thing, send a sign-in reminder instead of a code.
             existing = db.scalar(select(models.Person.id).where(models.Person.tenant_id == tenant.id, models.Person.user_id == user.id))

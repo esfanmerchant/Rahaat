@@ -1,9 +1,10 @@
 """Which person is this request about? One dependency answers it for every person-facing route.
 
 * A citizen is always their own person (`person_id` from the verified token).
-* A helper names the person in `X-Acting-For` and must hold a live, unexpired delegation from that
-  person whose scopes cover the action. Anything else is a 403 and an audit row that survives the
-  failed request.
+* A helper names the person in `X-Acting-For`, must hold a live, unexpired delegation from that person
+  whose scopes cover the action, and must send the switch ticket that the family's PIN unlocked for this
+  session (`X-Helper-Ticket`, see `app/modules/helpers/tickets.py`). Anything else is a 403 and an audit
+  row that survives the failed request.
 
 A person id is never read from the body or the query string. Row Level Security checks the same thing
 again inside the database (`app_can_read_person`), so a bug here still cannot leak another person's data.
@@ -27,12 +28,18 @@ from app.core.deps import Principal, get_db
 from app.core.errors import Forbidden
 from app.core.policy import Policy
 from app.db import models
+from app.modules.helpers import tickets
 
 Scope = Literal["track", "apply", "upload"]
 DELEGATION_SCOPES: Final[frozenset[str]] = frozenset({"track", "apply", "upload"})
 PERSON_ROLES: Final = ("citizen", "helper")
 
 _DENIED_MESSAGE = "You cannot do this for that person."
+_TICKET_MESSAGES: Final[dict[str, str]] = {
+    "ticket_required": "Enter this family's PIN first.",
+    "ticket_invalid": "Enter this family's PIN again.",
+    "ticket_expired": "Enter this family's PIN again.",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,8 +109,12 @@ def live_delegations(db: Session, *, tenant_id: UUID, helper_user_id: UUID, pers
     )
 
 
-def resolve_person(db: Session, principal: Principal, acting_for: str | None, scope: str) -> PersonContext:
-    """The core check, separate from FastAPI so it can be called from sync and other non-HTTP entry points."""
+def resolve_person(db: Session, principal: Principal, acting_for: str | None, scope: str, ticket: str | None = None) -> PersonContext:
+    """The core check, separate from FastAPI so it can be called from sync and other non-HTTP entry points.
+
+    Order for a helper: which person, a live delegation, the scope, then the switch ticket. Every refusal
+    is audited in its own transaction.
+    """
     if scope not in DELEGATION_SCOPES:
         raise ValueError(f"unknown delegation scope {scope!r}")
     if principal.role == "citizen":
@@ -125,6 +136,11 @@ def resolve_person(db: Session, principal: Principal, acting_for: str | None, sc
             raise deny(principal, "no_delegation", scope=scope, person_id=person_id)
         if not any(scope in (d.scopes or []) for d in delegations):
             raise deny(principal, "scope_not_delegated", scope=scope, person_id=person_id)
+        record = tickets.latest_switch(db, tenant_id=principal.tenant_id, session_id=principal.session_id)
+        refused = tickets.check_ticket(record, ticket=ticket, person_id=person_id, live_delegation_ids=[d.id for d in delegations],
+                                       now=datetime.now(UTC))  # fmt: skip
+        if refused is not None:
+            raise deny(principal, refused, scope=scope, person_id=person_id, detail=_TICKET_MESSAGES[refused])
         acting = dataclasses.replace(principal, acting_for_person_id=person_id)
         return PersonContext(principal=acting, person_id=person_id, via_helper=True, scope=scope)
 
@@ -142,8 +158,12 @@ def acting_person(policy_name: str, scope: Scope, *, description: str = "") -> C
         x_acting_for: str | None = Header(
             default=None, alias="X-Acting-For", description="Helpers only: the person id this request is for"
         ),
+        x_helper_ticket: str | None = Header(
+            default=None, alias="X-Helper-Ticket", max_length=128,
+            description="Helpers only: the ticket from POST /v1/helper/switch for that person",
+        ),
     ) -> PersonContext:
-        ctx = resolve_person(db, principal, x_acting_for, scope)
+        ctx = resolve_person(db, principal, x_acting_for, scope, x_helper_ticket)
         request.state.principal = ctx.principal
         return ctx
 

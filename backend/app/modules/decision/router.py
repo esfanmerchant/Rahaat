@@ -24,6 +24,7 @@ from app.core.deps import Principal, get_db
 from app.core.errors import Forbidden, NotFound
 from app.core.policy import Policy
 from app.db import models
+from app.modules.consent.access_log import record_view
 from app.modules.decision import replay as replay_service
 from app.modules.decision import service
 from app.modules.decision.model import get_model
@@ -45,8 +46,8 @@ def _load(db: Session, principal: Principal, decision_id: UUID) -> models.Decisi
         metrics.ACCESS_DENIED.labels("consent").inc()
         audit.write_independent(
             tenant_id=principal.tenant_id, action="access.denied", actor_id=principal.user_id, actor_role=principal.role,
-            object_type="decision", object_id=decision.id, result="denied", reason="no_active_consent",
-            details={"application_id": str(decision.application_id)},
+            acting_for_person_id=decision.person_id, object_type="decision", object_id=decision.id, result="denied",
+            reason="no_active_consent", details={"application_id": str(decision.application_id), "attempted": "decision_trace"},
         )  # fmt: skip
         raise Forbidden("You cannot see this person's case without their active consent.", code="consent_required")
     return decision
@@ -75,8 +76,12 @@ def list_decisions(
 def get_decision(decision_id: UUID, principal: Principal = Depends(_read), db: Session = Depends(get_db)) -> DecisionView:
     decision = _load(db, principal, decision_id)
     redact = principal.role != "officer"
-    return DecisionView(user_view=service.user_view(decision), trace=service.trace_view(db, decision, redact=redact), case_id=decision.case_id,
+    view = DecisionView(user_view=service.user_view(decision), trace=service.trace_view(db, decision, redact=redact), case_id=decision.case_id,
                         replay_available=decision.model_version == get_model().version)  # fmt: skip
+    # The person's access log shows who read their decision (an auditor sees it masked).
+    record_view(db, principal, decision.person_id, what="decision_trace", ref_id=decision.id, details={"masked": redact})
+    db.commit()
+    return view
 
 
 @router.post("/{decision_id}/replay", response_model=ReplayResult, summary="Recompute from the stored snapshot and pinned versions")
