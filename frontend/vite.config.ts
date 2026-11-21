@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // FastAPI serves the built app and the API from one origin. In dev, Vite
 // forwards these prefixes to the API so cookies and paths behave the same.
-const API_ORIGIN = 'http://127.0.0.1:8000';
+const API_ORIGIN = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env['RAHAT_API_ORIGIN'] ?? 'http://127.0.0.1:8000';
 const SERVER_PREFIXES = ['/v1', '/healthz', '/readyz', '/metrics', '/docs', '/redoc', '/openapi.json', '/mock'];
 const proxy: Record<string, ProxyOptions> = Object.fromEntries(
   SERVER_PREFIXES.map((prefix) => [prefix, { target: API_ORIGIN, changeOrigin: false }]),
@@ -30,7 +30,7 @@ const PREVIEW_CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
-  "img-src 'self'",
+  "img-src 'self' data: blob:",
   "media-src 'self'",
   "connect-src 'self'",
   "worker-src 'self'",

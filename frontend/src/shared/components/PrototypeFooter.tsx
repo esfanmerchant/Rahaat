@@ -6,16 +6,19 @@ export const PROTOTYPE_LABEL_UR =
 
 interface PrototypeFooterProps {
   density?: 'citizen' | 'staff';
+  tone?: 'paper' | 'night';
 }
 
 /** Shown in both languages regardless of the UI language. */
-export function PrototypeFooter({ density = 'citizen' }: PrototypeFooterProps) {
+export function PrototypeFooter({ density = 'citizen', tone = 'paper' }: PrototypeFooterProps) {
   const box =
     density === 'citizen'
       ? 'px-4 py-4 text-sm flex flex-col gap-1'
       : 'px-3 py-1.5 text-xs flex flex-wrap gap-x-6 gap-y-0.5 justify-center';
   return (
-    <footer class={`border-t border-line bg-surface text-center text-ink-muted ${box}`}>
+    <footer
+      class={`border-t text-center ${tone === 'night' ? 'border-night-line bg-night text-night-muted' : 'border-line bg-surface text-ink-muted'} ${box}`}
+    >
       <p lang="en" dir="ltr">
         {PROTOTYPE_LABEL_EN}
       </p>
