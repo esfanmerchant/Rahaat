@@ -33,7 +33,7 @@ from dataclasses import dataclass
 from typing import Any, Final
 
 from app.contracts.common import INCOME_BAND_BOUNDS
-from app.contracts.decision import CostMatrix, TypedDecision
+from app.contracts.decision import CostMatrix, RuleTraceItem, TypedDecision
 from app.contracts.documents import Authenticity, DocumentCheck, QrResult
 from app.contracts.engine import DecisionInput, DecisionResult, EvidenceModel, Fact, RuleSetSnapshot
 from app.core.audit import canonical_json, hash_payload
@@ -181,33 +181,41 @@ def silent_guess_violations(result: DecisionResult, floor: float | None = None) 
 
     Checked from the result alone, so evals and audits can recompute the metric over stored decisions.
     """
-    if result.route != "auto":
+    return invariant_violations(route=result.route, outcome=result.outcome, guards=result.guards, facts=result.facts,
+                                rule_trace=result.rule_trace, p_ok=result.p_ok, p_eligible=result.p_eligible,
+                                thresholds=result.thresholds, floor=floor)  # fmt: skip
+
+
+def invariant_violations(*, route: str, outcome: str, guards: Sequence[str], facts: Mapping[str, Fact], rule_trace: Sequence[RuleTraceItem],
+                         p_ok: float, p_eligible: float, thresholds: Mapping[str, float], floor: float | None = None) -> list[str]:  # fmt: skip
+    """The silent-guess invariant on the fields a stored decision keeps (facts are rebuilt from its snapshot)."""
+    if route != "auto":
         return []
-    floor = result.thresholds.get("confidence_floor", F.DEFAULT_CONFIDENCE_FLOOR) if floor is None else floor
+    floor = thresholds.get("confidence_floor", F.DEFAULT_CONFIDENCE_FLOOR) if floor is None else floor
     problems: list[str] = []
-    if result.guards:
+    if guards:
         problems.append("guard_active")
-    if not identity_confirmed(result.facts):
+    if not identity_confirmed(facts):
         problems.append("identity_not_verified")
-    hard = [t for t in result.rule_trace if t.hard]
+    hard = [t for t in rule_trace if t.hard]
     tolerance = 0.5 * 10**-PRECISION  # thresholds and probabilities are both rounded to PRECISION decimals
 
     def below_floor(trace_vars: Sequence[str]) -> bool:
-        return any(result.facts.get(v, F.UNKNOWN_FACT).confidence < floor for v in trace_vars)
+        return any(facts.get(v, F.UNKNOWN_FACT).confidence < floor for v in trace_vars)
 
-    if result.outcome == "approved":
-        if result.p_ok < result.thresholds.get("approve", 1.0) - tolerance:
+    if outcome == "approved":
+        if p_ok < thresholds.get("approve", 1.0) - tolerance:
             problems.append("below_approve_threshold")
         if any(t.result != "pass" or not t.verified_inputs for t in hard):
             problems.append("hard_rule_not_verified_pass")
         if any(below_floor([v for v in t.values_used if not v.startswith("param.")]) for t in hard):
             problems.append("below_confidence_floor")
-    elif result.outcome == "rejected":
+    elif outcome == "rejected":
         failing = [t for t in hard if t.result == "fail" and t.verified_inputs
                    and not below_floor([v for v in t.values_used if not v.startswith("param.")])]  # fmt: skip
         if not failing:
             problems.append("reject_without_verified_failure")
-        if round(1 - result.p_eligible, PRECISION) < result.thresholds.get("reject", 1.0) - tolerance:
+        if round(1 - p_eligible, PRECISION) < thresholds.get("reject", 1.0) - tolerance:
             problems.append("below_reject_threshold")
     else:
         problems.append("auto_without_outcome")

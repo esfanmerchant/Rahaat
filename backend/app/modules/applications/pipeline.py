@@ -26,7 +26,7 @@ from app.contracts.api import SubmitOut
 from app.contracts.application import ApplicationFormV1
 from app.contracts.decision import HandoffPackage, UncertainField
 from app.contracts.documents import DocumentCheck
-from app.contracts.engine import DecisionInput, IdentityCheck, RegistryRecord, RegistryStatus
+from app.contracts.engine import DecisionInput, DuplicateEvidence, IdentityCheck, RegistryRecord, RegistryStatus
 from app.core import audit, metrics
 from app.core.crypto import blind_index
 from app.core.logging import get_logger
@@ -146,6 +146,21 @@ def build_input(application: models.Application, program: models.Program, form: 
         queue_days=1.0,
         decided_at=_now_iso(),
     )
+
+
+def _duplicates(db: Session, ctx: PersonContext, application: models.Application) -> DuplicateEvidence | None:
+    """Track B's dedupe (B8), run when the engine decides: a possible duplicate is a guard that sends the case
+    to a person (and opens a duplicate_review case). A failure leaves no evidence; it never invents one."""
+    try:
+        from app.modules.matching.service import check_duplicates
+    except ImportError:
+        return None
+    try:
+        with db.begin_nested():
+            return check_duplicates(db, tenant_id=ctx.tenant_id, person_id=ctx.person_id, application_id=application.id)
+    except Exception:  # noqa: BLE001
+        log.exception("duplicate check failed; deciding without dedupe evidence")
+        return None
 
 
 def _safe_call(db: Session, what: str, fn: Any, /, **kwargs: Any) -> Any:
@@ -289,6 +304,7 @@ def run(db: Session, ctx: PersonContext, application: models.Application) -> Sub
         # to be theirs. A person checks the identity; the engine is not asked.
         reason = "identity_unbound"
     else:
+        inp = inp.model_copy(update={"duplicate": _duplicates(db, ctx, application)})
         decision, reason = _decide(db, ctx, application, inp)
 
     if decision is None:

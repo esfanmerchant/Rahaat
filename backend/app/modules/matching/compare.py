@@ -39,8 +39,9 @@ NAME_LINK: Final = 0.90
 # Name weight by name score, linear between the knots.
 NAME_KNOTS: Final = ((0.0, -6.0), (0.55, -5.0), (0.70, -2.0), (0.80, 0.5), (0.88, 2.5), (0.92, 4.0), (0.97, 5.0), (1.0, 5.0))
 WEIGHTS: Final[dict[str, dict[str, float]]] = {
-    # A person has one national ID; a typo in one digit still points at the same person.
-    "national_id": {"same": 6.0, "near": 2.5, "different": -3.5},
+    # A person has exactly one national ID, so two different ones (not a one-digit typo) mean two people, even
+    # with the same name and date of birth; one wrong digit or check digit still points at the same person.
+    "national_id": {"same": 6.0, "near": 2.5, "different": -7.0},
     # Dates of birth are rarely shared by two people with similar names; typos happen.
     "dob": {"same": 4.0, "near": 1.5, "different": -3.5},
     # Phones are shared in households and by helpers, and change often: weak either way.

@@ -3,10 +3,13 @@
 Trust order, per variable:
 - `identity_verified`: true only when a Rahat card carries a valid signed QR whose ID matches the form and
   the identity service says `match`. False on an invalid signature, a signed card for a different ID, or an
-  identity `mismatch`. Anything else is unknown.
+  identity `mismatch`. Anything else is unknown. With the rule parameter `identity_partial_min_name_score`,
+  a `partial` answer also counts when the signed card has the form's ID and date of birth and the form's
+  name is a spelling of the card's name (dedupe's name matcher scores it at least that high).
 - `verified_income_pkr`: the registry's income record, or the income in a signed income proof. The declared
   income band is never used here; it is evidence for the model and for choosing which proof to ask for.
-  An old registry record keeps its value but drops below the confidence floor.
+  An old registry record keeps its value but drops below the confidence floor, unless the rule parameter
+  `stale_income_settles_below` is set and the old income is at most that share of the income cap.
 - household facts: the registry value (verified) when present, else the declared value (not verified).
 """
 
@@ -23,6 +26,7 @@ from app.contracts.engine import DecisionInput, Fact, RegistryRecord
 DEFAULT_CONFIDENCE_FLOOR: Final = 0.9
 DEFAULT_INCOME_MAX_AGE_DAYS: Final = 365
 STALE_INCOME_CONFIDENCE: Final = 0.7  # below the default floor: an old record can never settle a rule alone
+STALE_FAR_BELOW_CONFIDENCE: Final = 0.95  # an old record far below the cap (only with stale_income_settles_below)
 
 _PAYLOAD_ID_KEYS: Final = ("national_id", "id", "nid")
 _PAYLOAD_NAME_KEYS: Final = ("full_name", "name")
@@ -99,7 +103,28 @@ def income_age_days(inp: DecisionInput) -> int | None:
     return max(0, (decided - as_of).days)
 
 
-def _identity_fact(inp: DecisionInput) -> Fact:
+def partial_identity_confirmed_by_card(inp: DecisionInput, min_name_score: float) -> bool:
+    """A `partial` identity answer explained by spelling alone: a validly signed card with the form's ID and
+    date of birth, whose name the form's name matches at least this well (dedupe's name matcher)."""
+    from app.modules.matching.names import name_similarity
+
+    form = inp.form
+    form_id, form_dob, form_name = (form.national_id.value or "").strip(), (form.dob.value or "")[:10], form.full_name.value
+    if not (form_id and form_dob and form_name):
+        return False
+    for doc in id_documents(inp):
+        if not signed(doc):
+            continue
+        card_id = str(payload_value(doc, _PAYLOAD_ID_KEYS) or "").strip()
+        card_dob = str(payload_value(doc, ("dob", "date_of_birth")) or "")[:10]
+        card_name = payload_value(doc, _PAYLOAD_NAME_KEYS)
+        if card_id == form_id and card_dob == form_dob and isinstance(card_name, str):
+            if name_similarity(form_name, card_name) >= min_name_score:
+                return True
+    return False
+
+
+def _identity_fact(inp: DecisionInput, params: Mapping[str, Any] | None = None) -> Fact:
     docs = id_documents(inp)
     status = inp.identity.status if inp.identity else None
     if any(doc.qr.signature_valid is False for doc in docs) or signed_card_id_mismatch(inp):
@@ -108,6 +133,10 @@ def _identity_fact(inp: DecisionInput) -> Fact:
         return Fact(value=False, known=True, verified=True, confidence=1.0, source="identity")
     if status == "match" and any(signed(doc) for doc in docs):
         return Fact(value=True, known=True, verified=True, confidence=1.0, source="identity")
+    min_name = (params or {}).get("identity_partial_min_name_score")
+    if status == "partial" and isinstance(min_name, int | float) and not isinstance(min_name, bool):
+        if partial_identity_confirmed_by_card(inp, float(min_name)):
+            return Fact(value=True, known=True, verified=True, confidence=1.0, source="document")
     return UNKNOWN_FACT
 
 
@@ -118,8 +147,13 @@ def _income_fact(inp: DecisionInput, params: Mapping[str, Any] | None) -> Fact:
     if reg is not None and reg.verified_income_pkr is not None:
         age = income_age_days(inp)
         fresh = age is None or age <= param(params, "income_max_age_days", DEFAULT_INCOME_MAX_AGE_DAYS)
-        registry_fact = Fact(value=reg.verified_income_pkr, known=True, verified=True,
-                             confidence=1.0 if fresh else STALE_INCOME_CONFIDENCE, source="registry")  # fmt: skip
+        confidence = 1.0 if fresh else STALE_INCOME_CONFIDENCE
+        share = (params or {}).get("stale_income_settles_below")
+        if not fresh and isinstance(share, int | float) and not isinstance(share, bool):
+            cap = (params or {}).get("income_cap")
+            if isinstance(cap, int | float) and not isinstance(cap, bool) and reg.verified_income_pkr <= float(share) * float(cap):
+                confidence = STALE_FAR_BELOW_CONFIDENCE  # old, but so far below the cap that its age cannot change the answer
+        registry_fact = Fact(value=reg.verified_income_pkr, known=True, verified=True, confidence=confidence, source="registry")
     if proofs and (registry_fact is None or registry_fact.confidence < 1.0):
         # A signed proof is fresh evidence; when two proofs disagree the higher income counts (conservative).
         return Fact(value=max(proofs), known=True, verified=True, confidence=1.0, source="document")
@@ -168,7 +202,7 @@ def build_facts(inp: DecisionInput, params: Mapping[str, Any] | None = None) -> 
     reg = registry_record(inp)
     form = inp.form
     return {
-        "identity_verified": _identity_fact(inp),
+        "identity_verified": _identity_fact(inp, params),
         "verified_income_pkr": _income_fact(inp, params),
         "receives_other_aid": _registry_or_declared(reg, "receives_other_aid", form.receives_other_aid),
         "is_widow": _registry_or_declared(reg, "is_widow", form.is_widow),
