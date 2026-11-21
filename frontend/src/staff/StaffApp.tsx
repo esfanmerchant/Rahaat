@@ -12,7 +12,12 @@ import { PlaceholderPage } from './PlaceholderPage';
 import { AuditPage } from './pages/AuditPage';
 import { CasePage } from './pages/CasePage';
 import { DecisionIndex, DecisionPage } from './pages/DecisionPage';
+import { JobsPage, MocksPage } from './pages/AdminPages';
+import { HealthPage } from './pages/HealthPage';
+import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
+import { OutboxPage } from './pages/OutboxPage';
 import { QueuePage } from './pages/QueuePage';
+import { RulesPage } from './pages/RulesPage';
 import { StaffLogin } from './StaffLogin';
 import { StaffShell, StaffSignOutButton } from './StaffShell';
 
@@ -138,6 +143,20 @@ function SectionPage({ item }: { item: NavItem }) {
       return <AuditPage />;
     case 'decisions':
       return <DecisionIndex />;
+    case 'rules':
+      return <RulesPage />;
+    case 'approvals':
+      return <ApprovalsPage />;
+    case 'payments':
+      return <PaymentsPage />;
+    case 'outbox':
+      return <OutboxPage />;
+    case 'jobs':
+      return <JobsPage />;
+    case 'mocks':
+      return <MocksPage />;
+    case 'health':
+      return <HealthPage />;
     default:
       return <PlaceholderPage item={item} />;
   }
