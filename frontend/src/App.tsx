@@ -7,6 +7,8 @@ import { lazyRoute, routeLoading } from './shared/routing';
 // Separate lazy chunks (vite.config.ts manualChunks): never in the citizen budget.
 const StaffApp = lazyRoute(() => import('./staff/StaffApp'));
 const DemoPage = lazyRoute(() => import('./staff/demo/DemoPage'));
+// /live: the Loom of Light. Its own chunks (live, live-three); three.js loads only when the scene will run.
+const LivePage = lazyRoute(() => import('./live/LivePage'));
 
 function RouteProgress() {
   return routeLoading.value ? (
@@ -33,6 +35,7 @@ export function App() {
           <Route path="/staff" component={StaffApp} />
           <Route path="/staff/*" component={StaffApp} />
           <Route path="/demo" component={DemoPage} />
+          <Route path="/live" component={LivePage} />
           <Route default component={CitizenNotFound} />
         </Router>
       </ErrorBoundary>
