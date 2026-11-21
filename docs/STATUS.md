@@ -102,6 +102,15 @@ Primary: **https://rahat-zeta.vercel.app** (Vercel, function in bom1 Mumbai, Sup
 - [x] Uploaded documents in Postgres on Vercel (`DOCUMENT_STORE=db`, migration 0008), because instances share no disk
 - [ ] No OCR on Vercel: the RapidOCR stack does not fit the 500 MB function limit, so the printed-text versus QR check runs only on the PC host; the signed QR is verified on both
 
+## Visual language v2: Noor (Sat 21 Nov, 20:00 to 20:50)
+
+- [x] Tokens, motion, ajrak lattice, the self-drawing emblem; rules in `docs/DESIGN.md` (3c6884e)
+- [x] Citizen: night start screen, journey stars, verdict reveal with chime and touch, scam shield, verify-code seal, monogram avatars, `+92 999` phone entry and display, new favicon and icons. Citizen JS 92.9 KB gzip (budget 100)
+- [x] Staff: night mission control (day toggle), live pulse strip, Ctrl/Cmd+K palette, queue heat bars, decision anatomy, animated replay, hash-chain audit view, dashboards; `/demo` judges' briefing room
+- [x] `/live` "Loom of Light": three.js in its own lazy chunks (live 8.7 KB, live-three 136.7 KB gzip, outside the citizen budget and the PWA precache), `GET /v1/public/pulse` (public, aggregate counts only, cached 15 s), static Sankey fallback for no WebGL, reduced motion or Save-Data
+- [x] Checked after deploy (71bdf32): `npm run verify` 1271 passed; Vercel READY; `/`, `/demo`, `/staff`, `/live`, `/v1/public/pulse` 200 on https://rahat-zeta.vercel.app; the phone start screen renders at 390 px with no overflow; PC backup updated
+- [ ] Not verified on a real phone: sound, vibration, view-transition slide, voice; not verified on a real GPU: `/live` frame rate (36 fps at 1080p on a software rasteriser)
+
 ## Integration and submission
 
 - [ ] E1 Merge loop running  - [ ] E2 Demo fixtures and reset  - [ ] E3 End-to-end tests  - [ ] E4 Docs and reports
