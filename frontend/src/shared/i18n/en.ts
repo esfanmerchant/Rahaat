@@ -96,7 +96,6 @@ export const en = {
   apply_waiting: 'Not sent yet. It will go when the internet is back.',
   apply_save_failed: 'Could not save. Please try again.',
   apply_need_consent: 'We need your permission first.',
-  apply_conflict: 'Your application was changed on another phone. We opened the new one.',
   apply_starting: 'Opening your application. Please wait.',
 
   consent_title: 'Can we use your information?',
@@ -172,7 +171,6 @@ export const en = {
   submit: 'Send my application',
   submit_sending: 'Sending your application. Please wait.',
   submit_offline: 'No internet. We will send it when the internet is back.',
-  submit_wait_saving: 'Some answers are not sent yet. Please wait a moment.',
 
   result_approved_title: 'Your application is approved',
   result_needs_proof_title: 'We need one more paper',
