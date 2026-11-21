@@ -21,7 +21,7 @@ ApplicationStatus = Literal[
 DecisionOutcome = Literal["approved", "rejected", "needs_proof", "needs_human"]
 
 CaseKind = Literal[
-    "application_review", "duplicate_review", "document_review", "complaint", "appeal", "correction", "scam_review"
+    "application_review", "duplicate_review", "document_review", "complaint", "appeal", "correction", "scam_review", "anomaly_review"
 ]
 CaseStatus = Literal["open", "assigned", "in_review", "waiting_proof", "escalated", "resolved", "closed"]
 CaseAction = Literal["approve", "reject", "request_proof", "escalate"]

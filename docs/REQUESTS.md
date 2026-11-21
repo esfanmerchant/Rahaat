@@ -124,3 +124,13 @@ From: Track A (A17)   To: Lead   Status: open
 What: (1) add `"callback"` to `CaseKind` in `contracts/common.py` (SLA about 24 hours, like `correction`) so a call-back request from USSD or SMS is not filed as a `complaint`; the code uses `kind="complaint"` with `opened_reason="callback_requested"` today and switches in one line. (2) Regenerate `backend/openapi.json` and the typed client (`npm run gen:api`): the new routes `/v1/channels/*`, `/v1/demo/ussd*` and `/v1/demo/sms` are not in it yet (the simulator uses plain `fetch` for the demo relay, so nothing is blocked). (3) An ADR in `docs/DECISIONS.md`: the simulator calls a demo-mode relay instead of holding a channel key (a key in the bundle would be usable by anyone); Roman Urdu is the regional language on feature phones, which rarely draw Urdu script.
 Why: the case-kind list, the OpenAPI file and DECISIONS are the lead's.
 Until then: callbacks show in the officer queue as `complaint` with reason `callback_requested`.
+
+## Anomaly guard in the submit pipeline, a scan trigger and a case SLA
+From: Track B (WP-D)   To: Track A (applications pipeline, cases)   Status: open
+What: (1) In `applications/pipeline.py`, before `decide`, set `inp.anomaly = anomaly.service.anomaly_evidence_for(db, tenant_id, application.id)` so an application named in an open anomaly case is held for a person by the engine's existing `anomaly_flag` guard (it returns `None` when nothing is flagged). (2) After an application is submitted, call `anomaly.service.enqueue_scan(db, tenant_id, trigger="event")`; it reuses a waiting job, so a burst of submissions makes one scan. Until then the scan runs when an admin or officer presses "Run detection now". (3) Add `"anomaly_review": 24` to `SLA_HOURS` in `cases/rules.py` (it defaults to 48 hours today).
+Why: the detectors only help a decision if the guard sees them, and a ring is easiest to stop before the second payment.
+Until then: anomaly cases are reviewed on their own; no decision is held because of them.
+
+## Regenerate the API client after WP-D merges
+From: Track B (WP-D)   To: Lead   Status: open
+What: run `npm run gen:api` once the branch is merged. `CaseKind` gained `anomaly_review` and three routes were added (`/v1/anomalies`, `/v1/anomalies/run`, `/v1/admin/impact`). The WP-D pages use the types in `frontend/src/staff/pages/wpdApi.ts` so that `schema.d.ts` (shared, generated) was not edited on this branch.

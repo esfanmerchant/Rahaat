@@ -36,6 +36,8 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { slug: 'costs', label: 'Cost of being wrong', roles: ['admin', 'auditor'], workItem: 'D2.5', built: true },
   { slug: 'twin', label: 'Digital Twin', roles: ['admin', 'auditor'], workItem: 'D2.5', built: true },
   { slug: 'evals', label: 'Evaluation', roles: ['admin', 'auditor'], workItem: 'D2.5', built: true },
+  { slug: 'impact', label: 'Impact', roles: ['admin', 'officer'], workItem: 'B14', built: true },
+  { slug: 'anomalies', label: 'Anomalies', roles: ['admin', 'officer', 'auditor'], workItem: 'B15', built: true },
   { slug: 'lab', label: 'Challenge Lab', roles: 'staff', workItem: 'D2.8', built: true },
   { slug: 'settings', label: 'Settings', roles: 'staff', workItem: 'D2.12', built: true },
   { slug: 'health', label: 'System health', roles: 'staff', workItem: 'D2.11', built: true },

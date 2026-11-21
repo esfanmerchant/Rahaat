@@ -211,7 +211,7 @@ On Vercel there is no OCR (the function limit is 500 MB), so only the signed QR 
 - **Urdu wording quality** by a native speaker.
 - **Fairness slices** are computed by the Digital Twin (age band, district, gender) but are not reported here.
 - **Load and slow-network behaviour** beyond the 17-call latency sample above.
-- **Anomaly detection** has no separate quality evaluation in this report. The agent is evaluated in section 10, on synthetic labels written by its author, not by independent officers.
+- **Anomaly detection** is evaluated only on synthetic injected patterns (section 11), never on real traffic. The agent is evaluated in section 10, on synthetic labels written by its author, not by independent officers.
 - `p_ok` assumes the evidence is independent.
 
 ## 10. Agent with an approval gate (WP-B)
@@ -237,3 +237,28 @@ On Vercel there is no OCR (the function limit is 500 MB), so only the signed QR 
 | Trials where the attack text was withheld from the hosted planner's prompt | 48 of 63 (flagged text is not shown to the model at all) |
 
 The first run of this suite failed 12 of 63 trials: a mocked obedient model could propose a fixed-template message the attack asked for. No attacker text got through, but a hosted model must not widen the plan, so it may now only choose the action the local ladder chose (or hand the case up), and the suite passes. The attacks were written by the same author as the defences; this shows the known attacks are covered, not that unknown ones are. The hosted (Gemini) planner is tested only over a mock transport; it was not called with a real key.
+
+## 11. Anomaly detection (WP-D)
+
+**Command** (DB-free, deterministic): `cd backend && uv run python -m app.modules.anomaly.evaluate` (one seed: `--seeds 1`).
+
+**Dataset.** A synthetic month (30 days, 12 districts, about 1,600 applications per world) from `app/synth/anomaly_world.py`, seeds `20261201` to `20261205` (five separate worlds). Normal traffic has a daily rate per district (weekends quieter), one person and one wallet per application, and eight helpers who register families over weeks. Injected per world: 6 rings (one wallet behind 3 to 8 households), 5 district spikes, 4 helper bursts (12 to 25 families in under an hour), 4 IDs on two or three people and 3 IDs tried four times. 23 **benign look-alikes** are mixed in on purpose: relatives sharing a wallet (6), a shop wallet used by three unrelated customers (2), two neighbours on one wallet (5), a helper's busy hour of six families (4) and a person who applied twice (6).
+
+**Matching.** A finding is correct when it covers at least half of an injected pattern's applications and at least 30% of the finding is that pattern. A spike that an injected ring or burst caused counts as a correct spike flag. The detector parameters are set from reasoning (a robust z of 3.5, a Poisson spread floor, 10 families in 60 minutes); they were not tuned on these worlds.
+
+| Detector | Injected (5 worlds) | Found | Flags | False alarms | Precision | Recall | False alarms per 1,000 applications |
+|---|---|---|---|---|---|---|---|
+| Shared payout (3+ people, 2+ households) | 30 | 30 | 40 | 10 | 0.75 | 1.00 | 1.38 |
+| Application spike (robust z, 14-day baseline) | 25 | 25 | 48 | 10 | 0.79 | 1.00 | 1.38 |
+| Helper burst | 20 | 20 | 20 | 0 | 1.00 | 1.00 | 0.00 |
+| Repeated identity | 35 | 35 | 35 | 0 | 1.00 | 1.00 | 0.00 |
+
+First world only (seed 20261201, 1,613 applications): shared payout 6 of 6 found, 8 flags; spike 5 of 5, 13 flags (1.5 false alarms per 100 district-days tested); helper burst 4 of 4, 4 flags; repeated identity 7 of 7, 7 flags.
+
+**How to read this.**
+- **Recall of 1.00 is a property of the injected size, not a claim about real fraud.** The injected patterns are well above the thresholds. A ring of two, or a spike of 1.5 times normal, would be missed by design; none was injected.
+- **The shared-payout false alarms are all the shop wallet** (2 per world, 10 in 5 worlds): three unrelated customers on one cash-out wallet look exactly like a ring in this data. Every flag goes to a person with the cheapest check ("ask the provider for the holder's name"); nothing is rejected on an anomaly. Relatives sharing a wallet (same household) and two neighbours are correctly left alone.
+- **Spike false alarms are ordinary busy days** (Poisson noise on top of the weekday pattern): about 1.5 per 100 district-days.
+- **Abstention.** On the first five days of a world the spike detector abstains with `thin_baseline` (it needs 7 days of history); the test `test_evaluation_is_reproducible_and_meets_the_stated_floor` checks this. Shared payout, repeated identity and helper burst abstain when the data holds no payout accounts, no ID numbers or fewer helper submissions than the threshold.
+- **Scores are not probabilities.** A finding's confidence grows with the size of the pattern; it is a heuristic score and is labelled so in the API and on the page.
+- **Not evaluated:** real traffic (we have none), colluding patterns spread to stay under the thresholds, and how long officers take to settle a flag.
