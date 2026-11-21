@@ -263,9 +263,9 @@ def report(rows: list[Row], ocr_available: bool) -> dict[str, Any]:
         print("\nOCR was not available on this host (Tesseract binary missing), so these signals could not fire:")
         print("  ocr_qr_mismatch (printed text differs from the signed QR, read by OCR) and ocr_matches_qr.")
         print("  The OCR-free print check (print_qr_mismatch) compares the printed glyphs with the signed payload instead.")
-    misses = [r for r in rows if (r.variant in FORGED and r.choice != "suspect") or (r.variant in GENUINE and r.choice == "suspect")]
+    misses = [r for r in rows if _is_miss(r)]
     if misses:
-        print("\nMisses (forged not flagged, or genuine flagged):")
+        print("\nMisses (forged not flagged; genuine flagged or asked to retake; poor quality not asked or wrong hint):")
         for r in misses[:25]:
             print(f"  person {r.person:2d} {r.variant:15s} q={r.quality:10s} choice={r.choice} route={r.route} signals={r.signals} {r.params}")
     return summary
