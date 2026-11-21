@@ -1,0 +1,762 @@
+{
+  "notice": "Fictional Rahat specimen cards for a hackathon prototype. Invented people, mock 00000- numbers, SPECIMEN watermark. Not a real ID and not modelled on one.",
+  "issuer_key_id": "mi-4ad84dcd",
+  "files": [
+    {
+      "file": "zainab-bibi/card.png",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "variant": "flat",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "bytes": 79594
+    },
+    {
+      "file": "zainab-bibi/clean.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 137568,
+      "variant": "clean",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      }
+    },
+    {
+      "file": "zainab-bibi/glare.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 130999,
+      "variant": "glare",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      }
+    },
+    {
+      "file": "zainab-bibi/blurry.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 39397,
+      "variant": "blurry",
+      "expected": {
+        "retake": "blurry",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      }
+    },
+    {
+      "file": "zainab-bibi/glare_qr.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 120214,
+      "variant": "glare_qr",
+      "expected": {
+        "retake": "glare",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      }
+    },
+    {
+      "file": "zainab-bibi/cropped.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 121181,
+      "variant": "cropped",
+      "expected": {
+        "retake": "cropped",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "crop_side": "right"
+    },
+    {
+      "file": "zainab-bibi/altered.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 118367,
+      "variant": "altered",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 92,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Nasreen Akhtar",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "edited_region": "full_name",
+      "editor_metadata": "GIMP 2.10.38",
+      "first_quality": 70
+    },
+    {
+      "file": "zainab-bibi/wrong_qr.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 139600,
+      "variant": "wrong_qr",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "edited_region": "qr",
+      "editor_metadata": null,
+      "first_quality": 85
+    },
+    {
+      "file": "zainab-bibi/unknown_issuer.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 135544,
+      "variant": "unknown_issuer",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      }
+    },
+    {
+      "file": "zainab-bibi/bad_signature.jpg",
+      "person": "Zainab Bibi",
+      "national_id": "00000-1000201-2",
+      "bytes": 137381,
+      "variant": "bad_signature",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1987-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1987-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      }
+    },
+    {
+      "file": "aslam-khan/card.png",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "variant": "flat",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "bytes": 79576
+    },
+    {
+      "file": "aslam-khan/clean.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 133941,
+      "variant": "clean",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      }
+    },
+    {
+      "file": "aslam-khan/glare.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 131249,
+      "variant": "glare",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      }
+    },
+    {
+      "file": "aslam-khan/blurry.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 39456,
+      "variant": "blurry",
+      "expected": {
+        "retake": "blurry",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      }
+    },
+    {
+      "file": "aslam-khan/glare_qr.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 119144,
+      "variant": "glare_qr",
+      "expected": {
+        "retake": "glare",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      }
+    },
+    {
+      "file": "aslam-khan/cropped.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 119241,
+      "variant": "cropped",
+      "expected": {
+        "retake": "cropped",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "crop_side": "right"
+    },
+    {
+      "file": "aslam-khan/altered.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 118406,
+      "variant": "altered",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 92,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Tariq Mehmood",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "edited_region": "full_name",
+      "editor_metadata": "GIMP 2.10.38",
+      "first_quality": 70
+    },
+    {
+      "file": "aslam-khan/wrong_qr.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 139103,
+      "variant": "wrong_qr",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "edited_region": "qr",
+      "editor_metadata": null,
+      "first_quality": 85
+    },
+    {
+      "file": "aslam-khan/unknown_issuer.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 134609,
+      "variant": "unknown_issuer",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1981-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      }
+    },
+    {
+      "file": "aslam-khan/bad_signature.jpg",
+      "person": "Aslam Khan",
+      "national_id": "00000-1000202-0",
+      "bytes": 134525,
+      "variant": "bad_signature",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1990-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      },
+      "printed": {
+        "full_name": "Aslam Khan",
+        "national_id": "00000-1000202-0",
+        "dob": "1990-09-02",
+        "gender": "male",
+        "district": "Hyderabad"
+      }
+    },
+    {
+      "file": "rukhsana-parveen/card.png",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "variant": "flat",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "bytes": 80648
+    },
+    {
+      "file": "rukhsana-parveen/clean.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 139428,
+      "variant": "clean",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      }
+    },
+    {
+      "file": "rukhsana-parveen/glare.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 131199,
+      "variant": "glare",
+      "expected": {
+        "retake": null,
+        "authenticity": "genuine"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      }
+    },
+    {
+      "file": "rukhsana-parveen/blurry.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 40517,
+      "variant": "blurry",
+      "expected": {
+        "retake": "blurry",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      }
+    },
+    {
+      "file": "rukhsana-parveen/glare_qr.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 120717,
+      "variant": "glare_qr",
+      "expected": {
+        "retake": "glare",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      }
+    },
+    {
+      "file": "rukhsana-parveen/cropped.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 122463,
+      "variant": "cropped",
+      "expected": {
+        "retake": "cropped",
+        "authenticity": null
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "crop_side": "right"
+    },
+    {
+      "file": "rukhsana-parveen/altered.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 117146,
+      "variant": "altered",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 92,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Saima Begum",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "edited_region": "full_name",
+      "editor_metadata": "GIMP 2.10.38",
+      "first_quality": 70
+    },
+    {
+      "file": "rukhsana-parveen/wrong_qr.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 140912,
+      "variant": "wrong_qr",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Zainab Bibi",
+        "national_id": "00000-1000201-2",
+        "dob": "1978-03-14",
+        "gender": "female",
+        "district": "Karachi East"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "edited_region": "qr",
+      "editor_metadata": null,
+      "first_quality": 85
+    },
+    {
+      "file": "rukhsana-parveen/unknown_issuer.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 136564,
+      "variant": "unknown_issuer",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1985-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      }
+    },
+    {
+      "file": "rukhsana-parveen/bad_signature.jpg",
+      "person": "Rukhsana Parveen",
+      "national_id": "00000-1000301-0",
+      "bytes": 139446,
+      "variant": "bad_signature",
+      "expected": {
+        "retake": null,
+        "authenticity": "suspect"
+      },
+      "jpeg_quality": 84,
+      "qr_claims": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1994-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      },
+      "printed": {
+        "full_name": "Rukhsana Parveen",
+        "national_id": "00000-1000301-0",
+        "dob": "1994-06-21",
+        "gender": "female",
+        "district": "Lahore"
+      }
+    }
+  ]
+}
