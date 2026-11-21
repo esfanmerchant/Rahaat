@@ -374,6 +374,16 @@ export const en = {
   helper_banner_note: 'This family closes after 3 minutes without a touch.',
   home_rules: 'Ask about the rules',
   voice_say: 'Say your answer',
+  journey_title: 'Where my application is',
+  journey_sent: 'Sent',
+  journey_checked: 'Checked',
+  journey_decided: 'Decided',
+  journey_paid: 'Paid',
+  greeting_morning: 'Good morning, {name}',
+  greeting_afternoon: 'Good afternoon, {name}',
+  greeting_evening: 'Good evening, {name}',
+  sound_on: 'Sound is on',
+  sound_off: 'Sound is off',
 } as const;
 
 export type MessageKey = keyof typeof en;
