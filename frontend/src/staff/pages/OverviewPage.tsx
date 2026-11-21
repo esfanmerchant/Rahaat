@@ -8,13 +8,17 @@ import { HBars } from '../charts';
 import { bucketize, Donut, HexLegend, HexMap, PROVINCES, provinceOf, QuietView, Sparkline, useQuiet, type HexRow, type Quiet, type Seg } from '../dash';
 import type { components } from '../../shared/api/schema';
 import { activeRole, labelText, PUNJAB_TILES, SINDH_TILES } from '../scam';
-import { Badge, Section, fmtTime, pct } from '../ui';
+import { Section, fmtTime, pct } from '../ui';
 import type { Tone } from '../charts';
 import { CountUp } from '../viz';
+import { DragGrid, resetLayouts, type DragItem } from '../DragGrid';
+import { InfoTip } from '../InfoTip';
+import { SectionTabs } from '../SectionTabs';
 
 /**
  * The Command Center: the staff landing page. Every number comes from an endpoint that exists; a panel whose endpoint
- * refuses this role says so in words and shows nothing in its place. Everything refreshes quietly (pulse 15 s, stream 10 s).
+ * refuses this role says so and shows nothing in its place. Everything refreshes quietly (pulse 15 s, stream 10 s).
+ * Sub-sections are tabs (Live, Map & scams, System); tiles and panels can be reordered (DragGrid) and the order is remembered.
  */
 
 const SINDH = new Set(SINDH_TILES.flat().filter((d): d is string => d !== null));
@@ -24,10 +28,10 @@ type Analysis = components['schemas']['DecisionAnalysisOut'];
 type Lane = 'approve' | 'ask' | 'human' | 'reject';
 const laneOf = (d: { route: string; outcome: string }): Lane => (d.route === 'ask_more' ? 'ask' : d.route === 'human' ? 'human' : d.outcome === 'rejected' ? 'reject' : 'approve');
 const LANE: Record<Lane, { label: string; tone: Tone }> = {
-  approve: { label: 'auto-approved', tone: 'ok' },
-  ask: { label: 'asked for proof', tone: 'warn' },
-  human: { label: 'a person', tone: 'info' },
-  reject: { label: 'hard-rule reject', tone: 'bad' },
+  approve: { label: 'auto', tone: 'ok' },
+  ask: { label: 'proof', tone: 'warn' },
+  human: { label: 'person', tone: 'info' },
+  reject: { label: 'reject', tone: 'bad' },
 };
 const CHIP: Record<Tone, string> = { ok: 'ok', warn: 'warn', info: 'info', bad: 'bad', muted: '' };
 
@@ -60,17 +64,15 @@ function Tile({
   sparkLabel: string;
 }) {
   return (
-    <li class={`st-tile st-tone-${tone} flex min-w-0 flex-col gap-1 p-3`} data-testid={`tile-${id}`}>
+    <div class={`st-tile st-tone-${tone} flex min-w-0 flex-col gap-1 p-3`} data-testid={`tile-${id}`} title={spark ? `${hint}, last ${spark.window}` : hint}>
       <p class="text-xs font-bold uppercase tracking-widest text-ink-muted">{label}</p>
-      <p class="st-tile-num rh-num flex items-baseline gap-1 text-4xl font-black leading-none tracking-tight 2xl:text-5xl">
+      <p class="st-tile-num rh-num flex items-baseline gap-1 text-3xl font-black leading-none tracking-tight 2xl:text-4xl">
         <CountUp value={value} ms={1100} {...(format ? { format } : {})} />
-        {suffix ? <span class="text-xl font-bold text-ink-muted">{suffix}</span> : null}
+        {suffix ? <span class="text-base font-bold text-ink-muted">{suffix}</span> : null}
       </p>
-      <div class="mt-1 min-h-[38px]">
-        {spark ? <Sparkline values={spark.values} tone={tone} label={sparkLabel} /> : <span class="text-xs text-ink-subtle">no history for this role</span>}
-      </div>
-      <p class="text-xs text-ink-subtle">{spark ? `${hint}, last ${spark.window}` : hint}</p>
-    </li>
+      <div class="mt-1 min-h-[34px]">{spark ? <Sparkline values={spark.values} tone={tone} label={sparkLabel} /> : <span class="text-xs text-ink-subtle">no history</span>}</div>
+      <p class="truncate text-xs text-ink-subtle">{hint}</p>
+    </div>
   );
 }
 
@@ -112,151 +114,224 @@ export function OverviewPage() {
   const latencies = items ? items.map((d) => d.latency_ms).filter((x): x is number => typeof x === 'number') : [];
   const med = median(latencies);
 
-  return (
-    <section aria-labelledby="page-title" class="flex flex-col gap-4">
-      <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-xl font-black tracking-tight">
-          Overview
-        </h1>
-        <span class="text-xs text-ink-subtle">
-          The live system, {dept ? `${dept}, ` : ''}as {role || 'staff'}. Updates by itself; nothing on this page is typed in.
-        </span>
-        <button
-          type="button"
-          class="ms-auto rounded-md border border-line-strong px-2 py-0.5 text-xs text-ink-muted hover:bg-surface"
-          onClick={() => {
-            reloadPulse();
-            reloadDecisions();
-            reloadPayments();
-            reloadMap();
-            reloadCamps();
-            reloadEvals();
-            reloadHealth();
-            reloadJobs();
-            reloadChain();
-          }}
-        >
-          Refresh now
-        </button>
-      </div>
+  const refreshAll = (): void => {
+    reloadPulse();
+    reloadDecisions();
+    reloadPayments();
+    reloadMap();
+    reloadCamps();
+    reloadEvals();
+    reloadHealth();
+    reloadJobs();
+    reloadChain();
+  };
 
-      {/* Row 1: six numbers */}
-      <section aria-label="Key numbers">
-        {pulse.state !== 'ok' ? (
-          <QuietView q={pulse} reload={reloadPulse} what="the live counters" rows={2}>
-            {() => null}
-          </QuietView>
+  const kpis: DragItem[] = [
+    { id: 'applications', label: 'Applications', node: <Tile id="applications" label="Applications" tone="info" value={appTotal} hint="All statuses" spark={sparks['apps'] ?? null} sparkLabel="Decisions per bucket" /> },
+    {
+      id: 'auto',
+      label: 'Auto decided',
+      node: (
+        <Tile
+          id="auto"
+          label="Auto decided"
+          tone="ok"
+          value={routeTotal > 0 ? Math.round((rt('auto') / routeTotal) * 100) : 0}
+          suffix="%"
+          hint={`${rt('auto')} of ${routeTotal}`}
+          spark={sparks['auto'] ?? null}
+          sparkLabel="Automatic approvals per bucket"
+        />
+      ),
+    },
+    { id: 'human', label: 'To a person', node: <Tile id="human" label="To a person" tone="info" value={rt('human')} hint="With briefing" spark={sparks['human'] ?? null} sparkLabel="Handoffs per bucket" /> },
+    {
+      id: 'paid',
+      label: 'Paid',
+      node: (
+        <Tile id="paid" label="Paid (mock)" tone="ok" value={p?.live.payments.settled_amount_pkr ?? 0} suffix="PKR" hint={`${p?.live.payments.settled ?? 0} settled`} spark={sparks['paid'] ?? null} sparkLabel="Rupees settled per bucket" />
+      ),
+    },
+    {
+      id: 'scams',
+      label: 'Scams blocked',
+      node: <Tile id="scams" label="Scams blocked" tone="bad" value={p?.live.scam.blocked ?? 0} hint={`${p?.live.scam.reports ?? 0} reports`} spark={sparks['scams'] ?? null} sparkLabel="Scam reports per day" />,
+    },
+    {
+      id: 'median',
+      label: med !== null ? 'Median time' : 'Audit entries',
+      node:
+        med !== null ? (
+          <Tile
+            id="median"
+            label="Median time"
+            tone="warn"
+            value={med}
+            suffix="ms"
+            hint={`${latencies.length} decisions`}
+            spark={items ? { values: latencies.slice(0, 30).reverse(), window: `${Math.min(30, latencies.length)} decisions` } : null}
+            sparkLabel="Engine time per decision"
+          />
         ) : (
-          <ul class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Tile id="applications" label="Applications" tone="info" value={appTotal} hint="All statuses, both departments" spark={sparks['apps'] ?? null} sparkLabel="Decisions per bucket" />
-            <Tile
-              id="auto"
-              label="Decided automatically"
-              tone="ok"
-              value={routeTotal > 0 ? Math.round((rt('auto') / routeTotal) * 100) : 0}
-              suffix="%"
-              hint={`${rt('auto')} of ${routeTotal} decisions`}
-              spark={sparks['auto'] ?? null}
-              sparkLabel="Automatic approvals per bucket"
-            />
-            <Tile id="human" label="Sent to a person" tone="info" value={rt('human')} hint="Handed over with a briefing" spark={sparks['human'] ?? null} sparkLabel="Handoffs per bucket" />
-            <Tile
-              id="paid"
-              label="Paid (mock rail)"
-              tone="ok"
-              value={p?.live.payments.settled_amount_pkr ?? 0}
-              suffix="PKR"
-              hint={`${p?.live.payments.settled ?? 0} settled`}
-              spark={sparks['paid'] ?? null}
-              sparkLabel="Rupees settled per bucket"
-            />
-            <Tile id="scams" label="Scams blocked" tone="bad" value={p?.live.scam.blocked ?? 0} hint={`${p?.live.scam.reports ?? 0} reports in total`} spark={sparks['scams'] ?? null} sparkLabel="Scam reports per day" />
-            {med !== null ? (
-              <Tile
-                id="median"
-                label="Median decision time"
-                tone="warn"
-                value={med}
-                suffix="ms"
-                hint={`Engine time, ${latencies.length} recent decisions`}
-                spark={items ? { values: latencies.slice(0, 30).reverse(), window: `${Math.min(30, latencies.length)} decisions` } : null}
-                sparkLabel="Engine time per decision"
-              />
-            ) : (
-              <Tile id="chain" label="Audit entries" tone="warn" value={p?.live.audit_chain_length ?? 0} hint="Hash-chained, append-only" spark={null} sparkLabel="Audit entries" />
-            )}
-          </ul>
-        )}
-      </section>
+          <Tile id="chain" label="Audit entries" tone="warn" value={p?.live.audit_chain_length ?? 0} hint="Hash-chained" spark={null} sparkLabel="Audit entries" />
+        ),
+    },
+  ];
 
-      {/* Row 2: stream and mix */}
-      <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+  const livePanels: DragItem[] = [
+    {
+      id: 'stream',
+      label: 'Decision stream',
+      node: (
         <Section id="stream-h" title="Decision stream" aside={<span class="text-xs text-ink-subtle">every 10 s</span>}>
           <QuietView q={decisions} reload={reloadDecisions} what="the decision stream (auditors and officers read it)" rows={6}>
-            {(d) => <Stream items={d.items} dept={dept} />}
+            {(d) => <Stream items={d.items} />}
           </QuietView>
         </Section>
-        <Section id="mix-h" title="Decision mix">
+      ),
+    },
+    {
+      id: 'mix',
+      label: 'Decision mix',
+      node: (
+        <Section id="mix-h" title="Decision mix" aside={<InfoTip text="Reject means a hard rule failed on verified input. Everything the system is unsure about goes to proof or to a person." />}>
           <QuietView q={pulse} reload={reloadPulse} what="the decision mix" rows={4}>
             {(d) => {
               const r = d.live.decisions_by_route;
               const segs: Seg[] = [
-                { key: 'auto', label: 'Auto-approved', value: r['auto'] ?? 0, tone: 'ok' },
-                { key: 'ask_more', label: 'Ask for proof', value: r['ask_more'] ?? 0, tone: 'warn' },
-                { key: 'human', label: 'A person', value: r['human'] ?? 0, tone: 'info' },
+                { key: 'auto', label: 'Auto', value: r['auto'] ?? 0, tone: 'ok' },
+                { key: 'ask_more', label: 'Proof', value: r['ask_more'] ?? 0, tone: 'warn' },
+                { key: 'human', label: 'Person', value: r['human'] ?? 0, tone: 'info' },
                 { key: 'reject', label: 'Reject', value: r['reject'] ?? 0, tone: 'bad' },
               ];
-              return (
-                <>
-                  <Donut segs={segs} centreLabel="decisions" id="mix" />
-                  <p class="mt-2 text-xs text-ink-subtle">Reject means a hard rule failed on verified input. Everything the system is unsure about goes to proof or to a person.</p>
-                </>
-              );
+              return <Donut segs={segs} centreLabel="decisions" id="mix" />;
             }}
           </QuietView>
         </Section>
-      </div>
+      ),
+    },
+  ];
 
-      {/* Row 3: map, cost, radar */}
-      <div class="grid gap-4 xl:grid-cols-3">
-        <Section id="map-h" title="Where help is going" aside={<span class="text-xs text-ink-subtle">scam reports, 30 d</span>}>
+  const mapPanels: DragItem[] = [
+    {
+      id: 'map',
+      label: 'Scam map',
+      node: (
+        <Section id="map-h" title="Scam map" aside={<span class="text-xs text-ink-subtle">30 days</span>}>
           <QuietView q={smap} reload={reloadMap} what="the scam map" rows={5}>
             {(m) => <MapBody totals={m.district_totals} hidden={m.hidden['district_totals'] ?? 0} k={m.k} />}
           </QuietView>
         </Section>
-        <Section id="cost-h" title="The cost of being wrong">
-          <CostBody pulse={pulse} evals={evals} reloadPulse={reloadPulse} />
-        </Section>
-        <Section id="radar-h" title="Scam radar" aside={<span class="text-xs text-ink-subtle">campaigns, 7 d</span>}>
+      ),
+    },
+    {
+      id: 'radar',
+      label: 'Scam radar',
+      node: (
+        <Section id="radar-h" title="Scam radar" aside={<InfoTip text="Messages per cluster of near-identical text, last 7 days. Every bar is a lower bound." />}>
           <QuietView q={camps} reload={reloadCamps} what="scam campaigns" rows={5}>
             {(c) =>
               c.items.length === 0 ? (
-                <p class="text-ink-muted">No campaign of five or more similar messages in this window.</p>
+                <p class="text-ink-muted">No campaigns.</p>
               ) : (
-                <>
-                  <HBars
-                    rows={c.items.slice(0, 7).map((x) => ({ label: `${labelText(x.label)}: ${x.hosts[0] ?? x.sample_text.slice(0, 24)}`, value: x.size_in_window, cls: 'fill-danger' }))}
-                  />
-                  <p class="mt-2 text-xs text-ink-subtle">Messages per cluster of near-identical text. Groups under {c.k} are hidden, so every bar is a lower bound.</p>
-                </>
+                <HBars rows={c.items.slice(0, 7).map((x) => ({ label: `${labelText(x.label)}: ${x.hosts[0] ?? x.sample_text.slice(0, 24)}`, value: x.size_in_window, cls: 'fill-danger' }))} />
               )
             }
           </QuietView>
         </Section>
+      ),
+    },
+  ];
+
+  const systemPanels: DragItem[] = [
+    {
+      id: 'health',
+      label: 'System health',
+      node: (
+        <Section
+          id="health-h"
+          title="System health"
+          aside={
+            <a href="/staff/health" class="text-xs">
+              Details
+            </a>
+          }
+        >
+          <HealthStrip health={health} reloadHealth={reloadHealth} jobs={jobs} reloadJobs={reloadJobs} chain={chain} reloadChain={reloadChain} pulse={p} />
+        </Section>
+      ),
+    },
+    {
+      id: 'cost',
+      label: 'Cost of errors',
+      node: (
+        <Section
+          id="cost-h"
+          title="Cost of errors"
+          aside={
+            <a href="/staff/costs" class="text-xs">
+              Details
+            </a>
+          }
+        >
+          <CostBody pulse={pulse} evals={evals} reloadPulse={reloadPulse} />
+        </Section>
+      ),
+    },
+  ];
+
+  return (
+    <section aria-labelledby="page-title" class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-xl font-black tracking-tight">
+          Command Center
+        </h1>
+        <InfoTip
+          label="About this page"
+          text={`${p?.notice ?? 'Prototype. Not an official service.'} The live system${dept ? `, ${dept}` : ''}, as ${role || 'staff'}. Updates by itself.${p ? ` Pulse ${fmtTime(p.generated_at)}.` : ''}`}
+        />
+        <span class="ms-auto flex gap-2">
+          <button type="button" class="cc-btn" onClick={() => resetLayouts()}>
+            Reset layout
+          </button>
+          <button type="button" class="cc-btn" onClick={refreshAll}>
+            Refresh
+          </button>
+        </span>
       </div>
 
-      {/* Row 4: health */}
-      <Section id="health-h" title="System health" aside={<a href="/staff/health" class="text-xs">Details</a>}>
-        <HealthStrip health={health} reloadHealth={reloadHealth} jobs={jobs} reloadJobs={reloadJobs} chain={chain} reloadChain={reloadChain} pulse={p} />
-      </Section>
-      <p class="text-xs text-ink-subtle">
-        {p?.notice ?? 'Prototype. Not an official service.'} {p ? `Pulse generated ${fmtTime(p.generated_at)}.` : ''}
-      </p>
+      <SectionTabs
+        label="Command Center"
+        sections={[
+          { id: 'live', label: 'Live' },
+          { id: 'map', label: 'Map & scams' },
+          { id: 'system', label: 'System' },
+        ]}
+      >
+        {(tab) =>
+          tab === 'live' ? (
+            <div class="flex flex-col gap-3">
+              {pulse.state !== 'ok' ? (
+                <QuietView q={pulse} reload={reloadPulse} what="the live counters" rows={2}>
+                  {() => null}
+                </QuietView>
+              ) : (
+                <DragGrid id="cc-kpis" class="cc-grid-kpi" items={kpis} />
+              )}
+              <DragGrid id="cc-live" class="cc-grid-2" items={livePanels} />
+            </div>
+          ) : tab === 'map' ? (
+            <DragGrid id="cc-map" class="cc-grid-2" items={mapPanels} />
+          ) : (
+            <DragGrid id="cc-system" class="cc-grid-2" items={systemPanels} />
+          )
+        }
+      </SectionTabs>
     </section>
   );
 }
 
-function Stream({ items: rows, dept }: { items: readonly StreamRow[]; dept: string }) {
+function Stream({ items: rows }: { items: readonly StreamRow[] }) {
   const seen = useRef<Set<string> | null>(null);
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
   useEffect(() => {
@@ -273,14 +348,14 @@ function Stream({ items: rows, dept }: { items: readonly StreamRow[]; dept: stri
     seen.current = ids;
     return undefined;
   }, [rows]);
-  if (rows.length === 0) return <p class="text-ink-muted">No decisions yet. They appear here the moment a citizen submits.</p>;
+  if (rows.length === 0) return <p class="text-ink-muted">No decisions yet.</p>;
   return (
-    <div class="max-h-[22rem] overflow-y-auto">
+    <div class="cc-scroll">
       <table class="st-table w-full border-collapse text-sm">
         <caption class="sr-only">Most recent decisions, newest first</caption>
         <thead>
           <tr>
-            {['Time', 'Route', 'Outcome', 'p_ok', 'Department'].map((h) => (
+            {['Time', 'Route', 'Outcome', 'p_ok'].map((h) => (
               <th key={h} scope="col" class="border-b border-line-strong px-2 py-1.5 text-start text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 {h}
               </th>
@@ -288,7 +363,7 @@ function Stream({ items: rows, dept }: { items: readonly StreamRow[]; dept: stri
           </tr>
         </thead>
         <tbody>
-          {rows.slice(0, 14).map((d, i) => {
+          {rows.slice(0, 12).map((d, i) => {
             const lane = laneOf(d);
             const l = LANE[lane];
             return (
@@ -308,7 +383,6 @@ function Stream({ items: rows, dept }: { items: readonly StreamRow[]; dept: stri
                     <span class="font-mono text-xs tabular-nums">{d.p_ok == null ? 'n/a' : d.p_ok.toFixed(3)}</span>
                   </span>
                 </td>
-                <td class="border-b border-line px-2 py-1 text-xs text-ink-muted">{dept || 'n/a'}</td>
               </tr>
             );
           })}
@@ -350,13 +424,13 @@ function MapBody({ totals, hidden, k }: { totals: readonly { district: string; c
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <div class="flex flex-col gap-2">
+      <span class="self-end">
+        <InfoTip
+          text={`Reports are placed by district; provinces with none are drawn empty, not estimated.${unmapped > 0 ? ` ${unmapped} reports are in districts this map cannot place.` : ''}${hidden > 0 ? ` ${hidden} districts under ${k} reports are hidden.` : ''}`}
+        />
+      </span>
       <HexMap rows={rows} unit="scam reports" />
       <HexLegend max={max} unit="scam reports" />
-      <p class="text-xs text-ink-subtle">
-        Reports are placed by district. Provinces with no district in the data are drawn empty, not estimated.
-        {unmapped > 0 ? ` ${unmapped} reports are in districts this map cannot place.` : ''}
-        {hidden > 0 ? ` ${hidden} districts have fewer than ${k} reports and are hidden.` : ''} Applications by province are not shown: no staff endpoint returns a district per application.
-      </p>
     </div>
   );
 }
@@ -367,7 +441,7 @@ function CostBody({ pulse, evals, reloadPulse }: { pulse: Quiet<Pulse>; evals: Q
     <QuietView q={pulse} reload={reloadPulse} what="the replay headline" rows={4}>
       {(d) => {
         const hl = d.replay.headline;
-        if (!hl) return <p class="text-ink-muted">The replay is not available on this deployment.</p>;
+        if (!hl) return <p class="text-ink-muted">No replay here.</p>;
         const baseline = ev ? ev.cost_per_case + ev.saving_per_case : null;
         return (
           <div class="flex flex-col gap-3">
@@ -385,28 +459,25 @@ function CostBody({ pulse, evals, reloadPulse }: { pulse: Quiet<Pulse>; evals: Q
                 </div>
               ))}
             </dl>
-            <p class="text-xs text-ink-muted">
-              In a replay of {hl.cases.toLocaleString('en-US')} labelled cases ({d.replay.replay_source}): {hl.approved} approved, {hl.rejected} rejected by a hard rule, {hl.asked_for_proof} asked for proof, {hl.sent_to_person}{' '}
-              sent to a person.
-            </p>
             {ev && baseline !== null ? (
               <div class="st-chart flex flex-col gap-1.5" data-testid="cost-bars">
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Expected cost per case, in cost units</p>
+                <p class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Cost per case
+                  <InfoTip
+                    text={`Replay of ${hl.cases.toLocaleString('en-US')} labelled cases (${d.replay.replay_source}): ${hl.approved} approved, ${hl.rejected} rejected by a hard rule, ${hl.asked_for_proof} asked for proof, ${hl.sent_to_person} sent to a person. Saving ${ev.saving_per_case.toFixed(2)} per case on ${ev.n} held-out cases.`}
+                  />
+                </p>
                 <HBars
                   rows={[
                     { label: 'Rahat', value: Number(ev.cost_per_case.toFixed(2)), cls: 'fill-primary' },
-                    { label: 'Everything to a person', value: Number(baseline.toFixed(2)), cls: 'fill-danger' },
+                    { label: 'All to a person', value: Number(baseline.toFixed(2)), cls: 'fill-danger' },
                   ]}
                   max={Math.max(baseline, ev.cost_per_case)}
                 />
-                <p class="text-xs text-ink-subtle">A saving of {ev.saving_per_case.toFixed(2)} per case on {ev.n} held-out cases. Costs are set on the cost page.</p>
               </div>
             ) : (
-              <p class="text-xs text-ink-subtle">The cost per case needs the evaluation endpoint, which your role cannot read.</p>
+              <p class="text-xs text-ink-subtle">Cost per case needs the evaluation endpoint.</p>
             )}
-            <a href="/staff/costs" class="text-xs">
-              Open the cost page
-            </a>
           </div>
         );
       }}
@@ -457,44 +528,41 @@ function HealthStrip({
   );
   const denied = (q: Quiet<unknown>): boolean => q.state === 'fail' && q.failure.kind === 'forbidden';
   return (
-    <div class="flex flex-col gap-2">
-      <ul class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
-        {h ? (
-          <Cell label="Database" tone={h.database === 'ok' ? 'ok' : 'bad'} value={h.database ?? 'unknown'} note="Postgres with row-level security" />
-        ) : (
-          <li class="rounded-lg border border-line px-3 py-2">
-            <p class="text-xs uppercase tracking-wider text-ink-subtle">Database</p>
-            <QuietView q={health} reload={reloadHealth} what="system health" rows={1}>
-              {() => null}
-            </QuietView>
-          </li>
-        )}
-        {jobItems ? (
-          <Cell label="Job queue" tone={failed > 0 ? 'bad' : queued > 5 ? 'warn' : 'ok'} value={`${queued} waiting, ${failed} failed`} note={`${jobItems.length} recent jobs`} />
-        ) : (
-          <li class="rounded-lg border border-line px-3 py-2">
-            <p class="text-xs uppercase tracking-wider text-ink-subtle">Job queue</p>
-            <QuietView q={jobs} reload={reloadJobs} what="the job queue (admins)" rows={1}>
-              {() => null}
-            </QuietView>
-          </li>
-        )}
-        {h ? <Cell label="OCR provider" tone={ocrOk ? 'ok' : 'warn'} value={ocrEngine} note={providers['ocr_tesseract'] === 'missing' ? 'tesseract is not installed here' : 'local, no network'} /> : null}
-        {h ? <Cell label="Speech provider" tone={stt === 'unknown' ? 'warn' : 'ok'} value={stt.replace(/_/g, ' ')} note={`local whisper ${String(voice['stt_local_whisper'] ?? 'unknown').replace(/_/g, ' ')}`} /> : null}
-        {ch ? (
-          <Cell label="Audit chain" tone={ch.ok ? 'ok' : 'bad'} value={ch.ok ? 'verified' : `broken at ${ch.first_broken_seq ?? '?'}`} note={`${ch.checked} entries checked`} />
-        ) : denied(chain) ? (
-          <Cell label="Audit chain" tone="ok" value={`${pulse?.live.audit_chain_length ?? 'n/a'} entries`} note="verifying needs an auditor or admin" />
-        ) : (
-          <li class="rounded-lg border border-line px-3 py-2">
-            <p class="text-xs uppercase tracking-wider text-ink-subtle">Audit chain</p>
-            <QuietView q={chain} reload={reloadChain} what="the audit chain" rows={1}>
-              {() => null}
-            </QuietView>
-          </li>
-        )}
-      </ul>
-      <Badge tone="neutral">{h ? 'AI profile and provider states are read from /v1/system/health' : 'health unavailable'}</Badge>
-    </div>
+    <ul class="grid grid-cols-2 gap-2">
+      {h ? (
+        <Cell label="Database" tone={h.database === 'ok' ? 'ok' : 'bad'} value={h.database ?? 'unknown'} note="Postgres, RLS" />
+      ) : (
+        <li class="rounded-lg border border-line px-3 py-2">
+          <p class="text-xs uppercase tracking-wider text-ink-subtle">Database</p>
+          <QuietView q={health} reload={reloadHealth} what="system health" rows={1}>
+            {() => null}
+          </QuietView>
+        </li>
+      )}
+      {jobItems ? (
+        <Cell label="Job queue" tone={failed > 0 ? 'bad' : queued > 5 ? 'warn' : 'ok'} value={`${queued} wait, ${failed} failed`} note={`${jobItems.length} recent`} />
+      ) : (
+        <li class="rounded-lg border border-line px-3 py-2">
+          <p class="text-xs uppercase tracking-wider text-ink-subtle">Job queue</p>
+          <QuietView q={jobs} reload={reloadJobs} what="the job queue" rows={1}>
+            {() => null}
+          </QuietView>
+        </li>
+      )}
+      {h ? <Cell label="OCR" tone={ocrOk ? 'ok' : 'warn'} value={ocrEngine} note={providers['ocr_tesseract'] === 'missing' ? 'not installed' : 'local'} /> : null}
+      {h ? <Cell label="Speech" tone={stt === 'unknown' ? 'warn' : 'ok'} value={stt.replace(/_/g, ' ')} note={`whisper ${String(voice['stt_local_whisper'] ?? 'unknown').replace(/_/g, ' ')}`} /> : null}
+      {ch ? (
+        <Cell label="Audit chain" tone={ch.ok ? 'ok' : 'bad'} value={ch.ok ? 'verified' : `broken at ${ch.first_broken_seq ?? '?'}`} note={`${ch.checked} checked`} />
+      ) : denied(chain) ? (
+        <Cell label="Audit chain" tone="ok" value={`${pulse?.live.audit_chain_length ?? 'n/a'} entries`} note="no verify access" />
+      ) : (
+        <li class="rounded-lg border border-line px-3 py-2">
+          <p class="text-xs uppercase tracking-wider text-ink-subtle">Audit chain</p>
+          <QuietView q={chain} reload={reloadChain} what="the audit chain" rows={1}>
+            {() => null}
+          </QuietView>
+        </li>
+      )}
+    </ul>
   );
 }
