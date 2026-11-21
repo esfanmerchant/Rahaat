@@ -28,6 +28,11 @@ export function ConsentStep() {
     const result = await giveConsent();
     setBusy(false);
     if (!result.ok) {
+      // One open application per program: the person already has one, so show it.
+      if (result.failure.kind === 'conflict' && result.failure.problem?.code === 'application_exists') {
+        route('/track');
+        return;
+      }
       setFailure(result.failure);
       return;
     }

@@ -8,7 +8,7 @@ import type { ApplicationSummary, AuthUser } from '../shared/api/types';
 import { Button } from '../shared/components/Button';
 import { Pictogram } from '../shared/components/Pictogram';
 import { Spinner } from '../shared/components/Spinner';
-import { lang, LANGUAGES, setLang, t, type Lang } from '../shared/i18n';
+import { lang, LANGUAGES, setLang, t, type Lang, type MessageKey } from '../shared/i18n';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
 import { sayKey } from './apply/parts';
 import { draft } from './apply/flow';
@@ -16,6 +16,9 @@ import { OutboxCard } from './apply/OutboxCard';
 import { pendingCount, runOutbox } from './apply/outbox';
 import { CitizenShell } from './CitizenShell';
 import { WarningsCard } from './WarningsCard';
+
+/** A new application is possible only after these (and a draft is carried on, not started again). */
+const CLOSED_OR_DRAFT: ReadonlySet<string> = new Set(['draft', 'rejected', 'withdrawn']);
 
 type Apps = { state: 'loading' } | { state: 'ready'; items: ApplicationSummary[] } | { state: 'unavailable' };
 
@@ -53,6 +56,9 @@ export function HomeScreen({ user }: { user: AuthUser }) {
   const items = apps.state === 'ready' ? apps.items : [];
   const hasDraft = draft.value !== null || items.some((item) => item.status === 'draft');
   const hasSent = items.some((item) => item.status !== 'draft' && item.status !== 'withdrawn');
+  // One open application per program (the server refuses a second): while one is open, following it is the main action.
+  const hasOpen = !hasDraft && items.some((item) => !CLOSED_OR_DRAFT.has(item.status));
+  const hint: MessageKey = hasOpen ? 'home_open_hint' : hasDraft ? 'home_continue_hint' : 'home_apply_hint';
 
   // Unsent answers live only on this phone: signing out deletes them, so ask first.
   const signOut = async (force = false): Promise<void> => {
@@ -70,7 +76,7 @@ export function HomeScreen({ user }: { user: AuthUser }) {
   };
 
   return (
-    <CitizenShell prompt={hasDraft ? 'home_continue_hint' : 'home_apply_hint'}>
+    <CitizenShell prompt={hint}>
       <div class="flex items-center gap-4 pt-2">
         <Pictogram name="person" size={56} class="text-primary" />
         {/* display_name is rendered as text, never as HTML. */}
@@ -78,13 +84,19 @@ export function HomeScreen({ user }: { user: AuthUser }) {
           {t('home_greeting', { name: user.display_name })}
         </h1>
       </div>
-      <p class="text-lg text-ink-muted">{t(hasDraft ? 'home_continue_hint' : 'home_apply_hint')}</p>
+      <p class="text-lg text-ink-muted">{t(hint)}</p>
 
-      <Button size="hero" icon="document" block onClick={() => route('/apply')}>
-        {t(hasDraft ? 'home_continue' : 'home_apply')}
-      </Button>
+      {hasOpen ? (
+        <Button size="hero" icon="clock" block onClick={() => route('/track')}>
+          {t('home_see_application')}
+        </Button>
+      ) : (
+        <Button size="hero" icon="document" block onClick={() => route('/apply')}>
+          {t(hasDraft ? 'home_continue' : 'home_apply')}
+        </Button>
+      )}
 
-      {apps.state === 'loading' ? (
+      {hasOpen ? null : apps.state === 'loading' ? (
         <p role="status" class="flex min-h-tap-lg items-center justify-center gap-2 text-base text-ink-muted">
           <Spinner size={24} />
           {t('state_loading')}

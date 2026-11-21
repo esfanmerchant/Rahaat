@@ -69,6 +69,7 @@ export const ur: Dict = {
   home_continue: 'اپنی درخواست جاری رکھیں',
   home_continue_hint: 'آپ نے درخواست شروع کی تھی۔ جہاں رکے تھے وہیں سے جاری رکھیں۔',
   home_see_application: 'میری درخواست دیکھیں',
+  home_open_hint: 'آپ اپنی درخواست بھیج چکے ہیں۔ کیا ہو رہا ہے یہ دیکھنے کے لیے بٹن دبائیں۔',
   home_language: 'زبان',
   go_home: 'اپنے پہلے صفحے پر جائیں',
 

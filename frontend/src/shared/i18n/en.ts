@@ -71,6 +71,7 @@ export const en = {
   home_continue: 'Carry on with my application',
   home_continue_hint: 'You started an application. Carry on from where you stopped.',
   home_see_application: 'See my application',
+  home_open_hint: 'You have sent your application. Tap the button to see what is happening.',
   home_language: 'Language',
   go_home: 'Go to my home page',
 
