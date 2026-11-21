@@ -1,0 +1,4387 @@
+{
+  "components": {
+    "schemas": {
+      "ActiveOut": {
+        "properties": {
+          "person_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Id"
+          },
+          "role": {
+            "enum": [
+              "citizen",
+              "helper",
+              "officer",
+              "admin",
+              "auditor"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "tenant_name": {
+            "title": "Tenant Name",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "title": "Tenant Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "tenant_slug",
+          "tenant_name",
+          "role"
+        ],
+        "title": "ActiveOut",
+        "type": "object"
+      },
+      "ApplicationCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "client_op_id": {
+            "description": "Client-generated id; the same id creates once",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Client Op Id",
+            "type": "string"
+          },
+          "form": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationFormV1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "program_id",
+          "client_op_id"
+        ],
+        "title": "ApplicationCreate",
+        "type": "object"
+      },
+      "ApplicationFormV1": {
+        "description": "Every field is optional while the form is a draft. Submission checks what the rules need.",
+        "properties": {
+          "district": {
+            "$ref": "#/components/schemas/FieldValue_str_"
+          },
+          "dob": {
+            "$ref": "#/components/schemas/FieldValue_str_",
+            "description": "ISO date"
+          },
+          "form_version": {
+            "default": "v1",
+            "title": "Form Version",
+            "type": "string"
+          },
+          "full_name": {
+            "$ref": "#/components/schemas/FieldValue_str_"
+          },
+          "gender": {
+            "$ref": "#/components/schemas/FieldValue_str_"
+          },
+          "has_disability": {
+            "$ref": "#/components/schemas/FieldValue_bool_"
+          },
+          "household_size": {
+            "$ref": "#/components/schemas/FieldValue_int_"
+          },
+          "income_band": {
+            "$ref": "#/components/schemas/FieldValue_Literal__under_15k____15k_30k____30k_50k____over_50k___"
+          },
+          "is_widow": {
+            "$ref": "#/components/schemas/FieldValue_bool_"
+          },
+          "language": {
+            "default": "ur",
+            "enum": [
+              "en",
+              "ur",
+              "sd"
+            ],
+            "title": "Language",
+            "type": "string"
+          },
+          "national_id": {
+            "$ref": "#/components/schemas/FieldValue_str_",
+            "description": "Mock ID, 00000-NNNNNNN-C"
+          },
+          "payout_account": {
+            "$ref": "#/components/schemas/FieldValue_str_",
+            "description": "Mock wallet or account"
+          },
+          "phone": {
+            "$ref": "#/components/schemas/FieldValue_str_",
+            "description": "Mock phone, 0999-NNNNNNN"
+          },
+          "receives_other_aid": {
+            "$ref": "#/components/schemas/FieldValue_bool_"
+          }
+        },
+        "title": "ApplicationFormV1",
+        "type": "object"
+      },
+      "ApplicationList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ApplicationList",
+        "type": "object"
+      },
+      "ApplicationOut": {
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionUserView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCitizenView"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "form": {
+            "$ref": "#/components/schemas/ApplicationFormV1"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "program_name": {
+            "title": "Program Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "submitted",
+              "needs_proof",
+              "in_review",
+              "approved",
+              "rejected",
+              "paid",
+              "on_hold_consent",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineItem"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Code"
+          },
+          "tracking_symbols": {
+            "description": "Three pictogram names for people who cannot read",
+            "items": {
+              "type": "string"
+            },
+            "title": "Tracking Symbols",
+            "type": "array"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "person_id",
+          "program_id",
+          "program_name",
+          "status",
+          "version",
+          "updated_at",
+          "form"
+        ],
+        "title": "ApplicationOut",
+        "type": "object"
+      },
+      "ApplicationPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version": {
+            "description": "The version this edit was made against (optimistic lock)",
+            "minimum": 1.0,
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "form_patch": {
+            "additionalProperties": true,
+            "description": "Field name to FieldValue; unknown names are rejected",
+            "title": "Form Patch",
+            "type": "object"
+          }
+        },
+        "required": [
+          "base_version",
+          "form_patch"
+        ],
+        "title": "ApplicationPatch",
+        "type": "object"
+      },
+      "ApplicationSummary": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "program_name": {
+            "title": "Program Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "submitted",
+              "needs_proof",
+              "in_review",
+              "approved",
+              "rejected",
+              "paid",
+              "on_hold_consent",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Code"
+          },
+          "tracking_symbols": {
+            "description": "Three pictogram names for people who cannot read",
+            "items": {
+              "type": "string"
+            },
+            "title": "Tracking Symbols",
+            "type": "array"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "person_id",
+          "program_id",
+          "program_name",
+          "status",
+          "version",
+          "updated_at"
+        ],
+        "title": "ApplicationSummary",
+        "type": "object"
+      },
+      "AuditEntry": {
+        "properties": {
+          "acting_for_person_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acting For Person Id"
+          },
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Id"
+          },
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          },
+          "actor_type": {
+            "title": "Actor Type",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "hash": {
+            "title": "Hash",
+            "type": "string"
+          },
+          "input_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Hash"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "object_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Id"
+          },
+          "object_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Type"
+          },
+          "prev_hash": {
+            "title": "Prev Hash",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "result": {
+            "title": "Result",
+            "type": "string"
+          },
+          "rule_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Version Id"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "ts": {
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "ts",
+          "actor_type",
+          "actor_id",
+          "actor_role",
+          "acting_for_person_id",
+          "action",
+          "object_type",
+          "object_id",
+          "result",
+          "reason",
+          "input_hash",
+          "model_version",
+          "rule_version_id",
+          "request_id",
+          "details",
+          "prev_hash",
+          "hash"
+        ],
+        "title": "AuditEntry",
+        "type": "object"
+      },
+      "AuditPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AuditPage",
+        "type": "object"
+      },
+      "AuthOut": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "active": {
+            "$ref": "#/components/schemas/ActiveOut"
+          },
+          "expires_in": {
+            "description": "Seconds until the access token expires",
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/MembershipOut"
+            },
+            "title": "Memberships",
+            "type": "array"
+          },
+          "token_type": {
+            "const": "bearer",
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "required": [
+          "user",
+          "active",
+          "memberships",
+          "access_token",
+          "expires_in"
+        ],
+        "title": "AuthOut",
+        "type": "object"
+      },
+      "Body_upload_document_v1_applications__application_id__documents_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "kind": {
+            "default": "rahat_id",
+            "enum": [
+              "rahat_id",
+              "income_proof",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_document_v1_applications__application_id__documents_post",
+        "type": "object"
+      },
+      "CaseActionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "approve",
+              "reject",
+              "request_proof",
+              "escalate"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "proof_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "rahat_id",
+                  "income_proof",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proof Kind"
+          },
+          "reason": {
+            "description": "Required for every action; stored in the audit log",
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ],
+        "title": "CaseActionIn",
+        "type": "object"
+      },
+      "CaseDetail": {
+        "properties": {
+          "age_minutes": {
+            "title": "Age Minutes",
+            "type": "integer"
+          },
+          "allowed_actions": {
+            "items": {
+              "enum": [
+                "approve",
+                "reject",
+                "request_proof",
+                "escalate"
+              ],
+              "type": "string"
+            },
+            "title": "Allowed Actions",
+            "type": "array"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionTrace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "document_checks": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCheck"
+            },
+            "title": "Document Checks",
+            "type": "array"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CaseEventOut"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "form": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationFormV1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "handoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HandoffPackage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "application_review",
+              "duplicate_review",
+              "document_review",
+              "complaint",
+              "appeal",
+              "correction",
+              "scam_review"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/CaseNoteOut"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "opened_reason": {
+            "title": "Opened Reason",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "sla_due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Due At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "assigned",
+              "in_review",
+              "waiting_proof",
+              "escalated",
+              "resolved",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subject_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Name"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "priority",
+          "opened_reason",
+          "age_minutes",
+          "created_at"
+        ],
+        "title": "CaseDetail",
+        "type": "object"
+      },
+      "CaseEventOut": {
+        "properties": {
+          "actor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Name"
+          },
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "event": {
+            "title": "Event",
+            "type": "string"
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Status"
+          },
+          "to_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Status"
+          }
+        },
+        "required": [
+          "event",
+          "at"
+        ],
+        "title": "CaseEventOut",
+        "type": "object"
+      },
+      "CaseList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CaseList",
+        "type": "object"
+      },
+      "CaseNoteIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "CaseNoteIn",
+        "type": "object"
+      },
+      "CaseNoteOut": {
+        "properties": {
+          "author_kind": {
+            "title": "Author Kind",
+            "type": "string"
+          },
+          "author_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Name"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author_kind",
+          "body",
+          "created_at"
+        ],
+        "title": "CaseNoteOut",
+        "type": "object"
+      },
+      "CaseSummary": {
+        "properties": {
+          "age_minutes": {
+            "title": "Age Minutes",
+            "type": "integer"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "application_review",
+              "duplicate_review",
+              "document_review",
+              "complaint",
+              "appeal",
+              "correction",
+              "scam_review"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "opened_reason": {
+            "title": "Opened Reason",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "sla_due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Due At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "assigned",
+              "in_review",
+              "waiting_proof",
+              "escalated",
+              "resolved",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subject_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Name"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "priority",
+          "opened_reason",
+          "age_minutes",
+          "created_at"
+        ],
+        "title": "CaseSummary",
+        "type": "object"
+      },
+      "ChainOut": {
+        "properties": {
+          "checked": {
+            "title": "Checked",
+            "type": "integer"
+          },
+          "first_broken_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Broken Seq"
+          },
+          "head_hash": {
+            "title": "Head Hash",
+            "type": "string"
+          },
+          "head_seq": {
+            "title": "Head Seq",
+            "type": "integer"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          }
+        },
+        "required": [
+          "ok",
+          "checked",
+          "head_seq",
+          "head_hash"
+        ],
+        "title": "ChainOut",
+        "type": "object"
+      },
+      "ConsentCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_days": {
+            "default": 180,
+            "maximum": 730.0,
+            "minimum": 1.0,
+            "title": "Expires In Days",
+            "type": "integer"
+          },
+          "field_scopes": {
+            "items": {
+              "enum": [
+                "identity",
+                "contact",
+                "household",
+                "income",
+                "documents"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Field Scopes",
+            "type": "array"
+          },
+          "person_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit for yourself; helpers name the person they act for",
+            "title": "Person Id"
+          },
+          "purpose": {
+            "default": "relief_application",
+            "maxLength": 64,
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field_scopes"
+        ],
+        "title": "ConsentCreate",
+        "type": "object"
+      },
+      "ConsentOut": {
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "field_scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Field Scopes",
+            "type": "array"
+          },
+          "granted_at": {
+            "title": "Granted At",
+            "type": "string"
+          },
+          "grantee_id": {
+            "format": "uuid",
+            "title": "Grantee Id",
+            "type": "string"
+          },
+          "grantee_name": {
+            "title": "Grantee Name",
+            "type": "string"
+          },
+          "grantee_type": {
+            "title": "Grantee Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "person_id": {
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "withdrawn_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withdrawn At"
+          }
+        },
+        "required": [
+          "id",
+          "person_id",
+          "grantee_type",
+          "grantee_id",
+          "grantee_name",
+          "purpose",
+          "field_scopes",
+          "status",
+          "version",
+          "granted_at"
+        ],
+        "title": "ConsentOut",
+        "type": "object"
+      },
+      "CostMatrix": {
+        "description": "Per-tenant costs in units (1 unit is about Rs 120). Admin-editable; thresholds derive from it.",
+        "properties": {
+          "ask_proof": {
+            "default": 1.0,
+            "minimum": 0.0,
+            "title": "Ask Proof",
+            "type": "number"
+          },
+          "delay_per_day": {
+            "default": 0.2,
+            "minimum": 0.0,
+            "title": "Delay Per Day",
+            "type": "number"
+          },
+          "human_review": {
+            "default": 3.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Human Review",
+            "type": "number"
+          },
+          "wrong_approve": {
+            "default": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Wrong Approve",
+            "type": "number"
+          },
+          "wrong_reject": {
+            "default": 30.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Wrong Reject",
+            "type": "number"
+          }
+        },
+        "title": "CostMatrix",
+        "type": "object"
+      },
+      "DecisionTrace": {
+        "description": "The auditor's view: everything needed to check and to replay the decision.",
+        "properties": {
+          "application_id": {
+            "title": "Application Id",
+            "type": "string"
+          },
+          "cost_matrix": {
+            "$ref": "#/components/schemas/CostMatrix"
+          },
+          "decided_at": {
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "expected_costs": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Expected Costs",
+            "type": "object"
+          },
+          "guardrails": {
+            "additionalProperties": true,
+            "title": "Guardrails",
+            "type": "object"
+          },
+          "guards": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Guards",
+            "type": "array"
+          },
+          "handoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HandoffPackage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "human_reviews": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Human Reviews",
+            "type": "array"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "input_snapshot": {
+            "additionalProperties": true,
+            "description": "Identifiers hashed or masked according to the viewer's access",
+            "title": "Input Snapshot",
+            "type": "object"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "approved",
+              "rejected",
+              "needs_proof",
+              "needs_human"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "p_ok": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Ok"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Probabilities",
+            "type": "object"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "result_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Hash"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "ask_more",
+              "human"
+            ],
+            "title": "Route",
+            "type": "string"
+          },
+          "rule_trace": {
+            "items": {
+              "$ref": "#/components/schemas/RuleTraceItem"
+            },
+            "title": "Rule Trace",
+            "type": "array"
+          },
+          "rule_version_id": {
+            "title": "Rule Version Id",
+            "type": "string"
+          },
+          "rule_version_no": {
+            "title": "Rule Version No",
+            "type": "integer"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Thresholds",
+            "type": "object"
+          }
+        },
+        "required": [
+          "decision_id",
+          "application_id",
+          "route",
+          "outcome",
+          "rule_version_id",
+          "rule_version_no",
+          "model_version",
+          "engine_version",
+          "input_hash",
+          "input_snapshot",
+          "rule_trace",
+          "probabilities",
+          "p_ok",
+          "cost_matrix",
+          "expected_costs",
+          "thresholds",
+          "reasons",
+          "guards",
+          "decided_at"
+        ],
+        "title": "DecisionTrace",
+        "type": "object"
+      },
+      "DecisionUserView": {
+        "description": "What the citizen sees. No scores, no thresholds, no detection details.",
+        "properties": {
+          "decided_at": {
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/Explanation"
+          },
+          "outcome": {
+            "enum": [
+              "approved",
+              "rejected",
+              "needs_proof",
+              "needs_human"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "ask_more",
+              "human"
+            ],
+            "title": "Route",
+            "type": "string"
+          },
+          "rule_version_no": {
+            "title": "Rule Version No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decision_id",
+          "outcome",
+          "route",
+          "explanation",
+          "rule_version_no",
+          "decided_at"
+        ],
+        "title": "DecisionUserView",
+        "type": "object"
+      },
+      "DemoAccountOut": {
+        "properties": {
+          "identifier": {
+            "title": "Identifier",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "secret": {
+            "title": "Secret",
+            "type": "string"
+          },
+          "tenant_name": {
+            "title": "Tenant Name",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "title": "Tenant Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "kind",
+          "role",
+          "tenant_slug",
+          "tenant_name",
+          "identifier",
+          "secret"
+        ],
+        "title": "DemoAccountOut",
+        "type": "object"
+      },
+      "DemoAccountsOut": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/DemoAccountOut"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "notice": {
+            "default": "Demo accounts with invented people. Prototype. Not an official service. All identity, payment and data services are simulated.",
+            "title": "Notice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accounts"
+        ],
+        "title": "DemoAccountsOut",
+        "type": "object"
+      },
+      "DocumentCheck": {
+        "properties": {
+          "authenticity": {
+            "$ref": "#/components/schemas/TypedDecision_Literal__genuine____suspect___"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "rahat_id",
+              "income_proof",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "ocr": {
+            "$ref": "#/components/schemas/OcrResult"
+          },
+          "qr": {
+            "$ref": "#/components/schemas/QrResult"
+          },
+          "quality": {
+            "enum": [
+              "ok",
+              "blurry",
+              "glare",
+              "cropped",
+              "not_a_card"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "retake_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reason code with audio; poor quality is never a rejection",
+            "title": "Retake Hint"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentSignal"
+            },
+            "title": "Signals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "document_id",
+          "kind",
+          "quality",
+          "authenticity",
+          "model_version"
+        ],
+        "title": "DocumentCheck",
+        "type": "object"
+      },
+      "DocumentCitizenView": {
+        "description": "What the citizen gets back after an upload. No detection details.",
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "rahat_id",
+              "income_proof",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message_key": {
+            "description": "i18n and audio key, e.g. doc_ok, doc_retake_blurry, doc_person_will_check",
+            "title": "Message Key",
+            "type": "string"
+          },
+          "quality": {
+            "enum": [
+              "ok",
+              "blurry",
+              "glare",
+              "cropped",
+              "not_a_card"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "retake_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retake Hint"
+          }
+        },
+        "required": [
+          "document_id",
+          "kind",
+          "accepted",
+          "quality",
+          "message_key"
+        ],
+        "title": "DocumentCitizenView",
+        "type": "object"
+      },
+      "DocumentOut": {
+        "properties": {
+          "application_version": {
+            "title": "Application Version",
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/components/schemas/DocumentCitizenView"
+          }
+        },
+        "required": [
+          "document",
+          "application_version"
+        ],
+        "title": "DocumentOut",
+        "type": "object"
+      },
+      "DocumentSignal": {
+        "description": "One independent piece of evidence. Staff and auditors see these; citizens do not.",
+        "properties": {
+          "code": {
+            "description": "e.g. qr_signature_invalid, ocr_qr_mismatch, ela_anomaly, metadata_editor, blur",
+            "title": "Code",
+            "type": "string"
+          },
+          "staff_detail": {
+            "title": "Staff Detail",
+            "type": "string"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "weight",
+          "staff_detail"
+        ],
+        "title": "DocumentSignal",
+        "type": "object"
+      },
+      "Explanation": {
+        "description": "The citizen's view: one to three short sentences from templates, keyed by reason code.",
+        "properties": {
+          "ask_a_person": {
+            "default": true,
+            "title": "Ask A Person",
+            "type": "boolean"
+          },
+          "audio_keys": {
+            "description": "Pre-generated audio files to play, in order",
+            "items": {
+              "type": "string"
+            },
+            "title": "Audio Keys",
+            "type": "array"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "next_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Step"
+          },
+          "pictogram": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pictogram"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "sentences": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "title": "Sentences",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reason_codes",
+          "lang",
+          "sentences"
+        ],
+        "title": "Explanation",
+        "type": "object"
+      },
+      "FieldValue_Literal__under_15k____15k_30k____30k_50k____over_50k___": {
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "provenance": {
+            "default": "tapped",
+            "enum": [
+              "tapped",
+              "typed",
+              "spoken",
+              "ocr",
+              "qr_signed",
+              "registry"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "enum": [
+                  "under_15k",
+                  "15k_30k",
+                  "30k_50k",
+                  "over_50k"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verified": {
+            "default": false,
+            "description": "Only a signed QR or the registry can make a field verified",
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "title": "FieldValue[Literal['under_15k', '15k_30k', '30k_50k', 'over_50k']]",
+        "type": "object"
+      },
+      "FieldValue_bool_": {
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "provenance": {
+            "default": "tapped",
+            "enum": [
+              "tapped",
+              "typed",
+              "spoken",
+              "ocr",
+              "qr_signed",
+              "registry"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verified": {
+            "default": false,
+            "description": "Only a signed QR or the registry can make a field verified",
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "title": "FieldValue[bool]",
+        "type": "object"
+      },
+      "FieldValue_int_": {
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "provenance": {
+            "default": "tapped",
+            "enum": [
+              "tapped",
+              "typed",
+              "spoken",
+              "ocr",
+              "qr_signed",
+              "registry"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verified": {
+            "default": false,
+            "description": "Only a signed QR or the registry can make a field verified",
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "title": "FieldValue[int]",
+        "type": "object"
+      },
+      "FieldValue_str_": {
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "provenance": {
+            "default": "tapped",
+            "enum": [
+              "tapped",
+              "typed",
+              "spoken",
+              "ocr",
+              "qr_signed",
+              "registry"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verified": {
+            "default": false,
+            "description": "Only a signed QR or the registry can make a field verified",
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "title": "FieldValue[str]",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HandoffPackage": {
+        "description": "What a human needs to pick the case up without starting again.",
+        "properties": {
+          "evidence": {
+            "additionalProperties": true,
+            "description": "OCR text, transcript, document ids",
+            "title": "Evidence",
+            "type": "object"
+          },
+          "expected_costs": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Expected Costs",
+            "type": "object"
+          },
+          "guards": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Guards",
+            "type": "array"
+          },
+          "hypotheses": {
+            "description": "Top two, with probabilities",
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "question": {
+            "description": "What the system was asked to decide",
+            "title": "Question",
+            "type": "string"
+          },
+          "resolving_proof": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The single proof that would lower expected cost the most",
+            "title": "Resolving Proof"
+          },
+          "rule_fired": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Fired"
+          },
+          "suggested_question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Question"
+          },
+          "uncertain_fields": {
+            "items": {
+              "$ref": "#/components/schemas/UncertainField"
+            },
+            "title": "Uncertain Fields",
+            "type": "array"
+          },
+          "understanding": {
+            "description": "What the system believes so far, in plain words",
+            "title": "Understanding",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "understanding"
+        ],
+        "title": "HandoffPackage",
+        "type": "object"
+      },
+      "Hypothesis": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "probability": {
+            "title": "Probability",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "probability"
+        ],
+        "title": "Hypothesis",
+        "type": "object"
+      },
+      "InfoOut": {
+        "properties": {
+          "ai_profile": {
+            "title": "Ai Profile",
+            "type": "string"
+          },
+          "app": {
+            "default": "rahat",
+            "title": "App",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "env": {
+            "title": "Env",
+            "type": "string"
+          },
+          "features": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Features",
+            "type": "object"
+          },
+          "languages": {
+            "default": [
+              "ur",
+              "en",
+              "sd"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "prototype_label": {
+            "default": "Prototype. Not an official service. All identity, payment and data services are simulated.",
+            "title": "Prototype Label",
+            "type": "string"
+          },
+          "prototype_label_ur": {
+            "default": "یہ آزمائشی نمونہ ہے، سرکاری سروس نہیں۔ شناخت، ادائیگی اور ڈیٹا کی سب سروسز فرضی ہیں۔",
+            "title": "Prototype Label Ur",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "env",
+          "version",
+          "features",
+          "demo_mode",
+          "ai_profile"
+        ],
+        "title": "InfoOut",
+        "type": "object"
+      },
+      "LoginIn": {
+        "additionalProperties": false,
+        "properties": {
+          "identifier": {
+            "description": "Staff: email. Citizen or helper: mock phone 0999-NNNNNNN.",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Identifier",
+            "type": "string"
+          },
+          "secret": {
+            "description": "Staff: password. Citizen or helper: PIN.",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Secret",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pick a department when the account has several",
+            "title": "Tenant Slug"
+          }
+        },
+        "required": [
+          "identifier",
+          "secret"
+        ],
+        "title": "LoginIn",
+        "type": "object"
+      },
+      "MeOut": {
+        "properties": {
+          "active": {
+            "$ref": "#/components/schemas/ActiveOut"
+          },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/MembershipOut"
+            },
+            "title": "Memberships",
+            "type": "array"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "required": [
+          "user",
+          "active",
+          "memberships"
+        ],
+        "title": "MeOut",
+        "type": "object"
+      },
+      "MembershipOut": {
+        "properties": {
+          "role": {
+            "enum": [
+              "citizen",
+              "helper",
+              "officer",
+              "admin",
+              "auditor"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "tenant_name": {
+            "title": "Tenant Name",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "title": "Tenant Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "tenant_slug",
+          "tenant_name",
+          "role"
+        ],
+        "title": "MembershipOut",
+        "type": "object"
+      },
+      "NotificationList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "NotificationList",
+        "type": "object"
+      },
+      "NotificationOut": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "template": {
+            "title": "Template",
+            "type": "string"
+          },
+          "verify_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Anyone can check this code in the scam checker",
+            "title": "Verify Code"
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "template",
+          "lang",
+          "body",
+          "status",
+          "created_at"
+        ],
+        "title": "NotificationOut",
+        "type": "object"
+      },
+      "OcrResult": {
+        "properties": {
+          "available": {
+            "default": true,
+            "description": "False when the OCR engine is not installed on this host",
+            "title": "Available",
+            "type": "boolean"
+          },
+          "field_confidence": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Field Confidence",
+            "type": "object"
+          },
+          "fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "mean_confidence": {
+            "default": 0.0,
+            "title": "Mean Confidence",
+            "type": "number"
+          },
+          "raw_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Treated as data, never as instructions",
+            "title": "Raw Text"
+          }
+        },
+        "title": "OcrResult",
+        "type": "object"
+      },
+      "PersonOut": {
+        "properties": {
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "full_name_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name Ur"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lang": {
+            "default": "ur",
+            "title": "Lang",
+            "type": "string"
+          },
+          "national_id_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only the last three characters are shown",
+            "title": "National Id Masked"
+          },
+          "phone_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Masked"
+          }
+        },
+        "required": [
+          "id",
+          "full_name"
+        ],
+        "title": "PersonOut",
+        "type": "object"
+      },
+      "ProgramOut": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ur"
+          },
+          "rule_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleVersionBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ],
+        "title": "ProgramOut",
+        "type": "object"
+      },
+      "QrResult": {
+        "properties": {
+          "found": {
+            "default": false,
+            "title": "Found",
+            "type": "boolean"
+          },
+          "issuer_key_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer Key Id"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "signature_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when no QR was found",
+            "title": "Signature Valid"
+          }
+        },
+        "title": "QrResult",
+        "type": "object"
+      },
+      "RuleTraceItem": {
+        "properties": {
+          "hard": {
+            "title": "Hard",
+            "type": "boolean"
+          },
+          "label_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label En"
+          },
+          "label_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Ur"
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "unknown"
+            ],
+            "title": "Result",
+            "type": "string"
+          },
+          "rule_id": {
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "values_used": {
+            "additionalProperties": true,
+            "title": "Values Used",
+            "type": "object"
+          },
+          "verified_inputs": {
+            "default": false,
+            "description": "True when every value came from a signed QR or the registry",
+            "title": "Verified Inputs",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rule_id",
+          "hard",
+          "result"
+        ],
+        "title": "RuleTraceItem",
+        "type": "object"
+      },
+      "RuleVersionBrief": {
+        "properties": {
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "description_ur": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ur"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "payment_pkr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Pkr"
+          },
+          "required_docs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Docs",
+            "type": "array"
+          },
+          "version_no": {
+            "title": "Version No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version_no"
+        ],
+        "title": "RuleVersionBrief",
+        "type": "object"
+      },
+      "SessionOut": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "device_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Label"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen At"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "role",
+          "created_at",
+          "expires_at",
+          "current"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
+      "SubmitOut": {
+        "properties": {
+          "application": {
+            "$ref": "#/components/schemas/ApplicationOut"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionUserView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None while documents are still being checked"
+          }
+        },
+        "required": [
+          "application"
+        ],
+        "title": "SubmitOut",
+        "type": "object"
+      },
+      "SwitchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "citizen",
+                  "helper",
+                  "officer",
+                  "admin",
+                  "auditor"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ],
+        "title": "SwitchIn",
+        "type": "object"
+      },
+      "TimelineItem": {
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "label_key": {
+            "description": "i18n and audio key",
+            "title": "Label Key",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "status",
+          "label_key"
+        ],
+        "title": "TimelineItem",
+        "type": "object"
+      },
+      "TypedDecision_Literal__genuine____suspect___": {
+        "properties": {
+          "abstained": {
+            "default": false,
+            "title": "Abstained",
+            "type": "boolean"
+          },
+          "choice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "genuine",
+                  "suspect"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the component abstained",
+            "title": "Choice"
+          },
+          "confidence": {
+            "description": "Calibrated probability of the chosen class",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Probabilities",
+            "type": "object"
+          },
+          "reasons": {
+            "description": "Reason codes, never free text",
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "ask_more",
+              "human"
+            ],
+            "title": "Route",
+            "type": "string"
+          }
+        },
+        "required": [
+          "choice",
+          "confidence",
+          "route",
+          "model_version"
+        ],
+        "title": "TypedDecision[Literal['genuine', 'suspect']]",
+        "type": "object"
+      },
+      "UncertainField": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "why": {
+            "description": "Reason code, e.g. ocr_low_confidence, declared_not_verified, missing",
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "confidence",
+          "why"
+        ],
+        "title": "UncertainField",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "lang"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "description": "Access token from POST /v1/auth/login",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "**Prototype. Not an official service. All identity, payment and data services are simulated.**\n\nRahat is a multi-tenant, AI-assisted public-service platform built for the Coder's Cup '26 hackathon.\nEvery person, case, message and document is synthetic.\n\n* Sign in with `POST /v1/auth/login`, then press **Authorize** and paste the access token.\n* Errors are RFC 7807 problem documents with a `code` and a `request_id`.\n* Every endpoint declares who may call it; `GET /v1/system/policies` lists the whole registry.\n",
+    "title": "Rahat API (Prototype)",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness: the process is up (does not touch the database)",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Readyz Readyz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness: the database answers",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/v1/applications": {
+      "get": {
+        "operationId": "applications_v1_applications_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] My applications",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      },
+      "post": {
+        "operationId": "create_application_v1_applications_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Start an application",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/applications/{application_id}": {
+      "get": {
+        "operationId": "get_application_v1_applications__application_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] One application with its timeline",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_application_v1_applications__application_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Save answers",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/applications/{application_id}/documents": {
+      "post": {
+        "operationId": "upload_document_v1_applications__application_id__documents_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_document_v1_applications__application_id__documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Upload an ID or proof",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/applications/{application_id}/submit": {
+      "post": {
+        "operationId": "submit_application_v1_applications__application_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Submit and get the decision",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/audit": {
+      "get": {
+        "operationId": "list_audit_v1_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Return entries with seq below this",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Return entries with seq below this",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Exact action, or a prefix ending in '.'",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact action, or a prefix ending in '.'",
+              "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "result",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(ok|denied|failed)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Result"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "object_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Object Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Audit trail, newest first",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/v1/audit/verify": {
+      "get": {
+        "operationId": "verify_v1_audit_verify_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Recompute the hash chain and report the first broken row",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "login_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sign in with email + password or mock phone + PIN",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "logout_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "End this session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/logout-all": {
+      "post": {
+        "operationId": "logout_all_v1_auth_logout_all_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Logout All V1 Auth Logout All Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sign out every device",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "me_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Who am I, and which departments do I belong to",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "refresh_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Exchange the refresh cookie for a new access token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sessions": {
+      "get": {
+        "operationId": "sessions_v1_auth_sessions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionOut"
+                  },
+                  "title": "Response Sessions V1 Auth Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My signed-in devices",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sessions/{session_id}": {
+      "delete": {
+        "operationId": "revoke_session_v1_auth_sessions__session_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sign out one device",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/switch": {
+      "post": {
+        "operationId": "switch_v1_auth_switch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Switch to another department you belong to",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/cases": {
+      "get": {
+        "operationId": "cases_v1_cases_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Officer review queue",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] One case with its handoff package",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}/actions": {
+      "post": {
+        "operationId": "act_on_case_v1_cases__case_id__actions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseActionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Approve, reject, request proof or escalate",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/cases/{case_id}/notes": {
+      "post": {
+        "operationId": "add_note_v1_cases__case_id__notes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseNoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Add a note",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/consents": {
+      "get": {
+        "operationId": "consents_v1_consents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentOut"
+                  },
+                  "title": "Response Consents V1 Consents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Who has my data",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      },
+      "post": {
+        "operationId": "grant_consent_v1_consents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Share my data for a purpose",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/consents/{consent_id}/withdraw": {
+      "post": {
+        "operationId": "withdraw_consent_v1_consents__consent_id__withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "consent_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Consent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Take my data back",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/decisions/{decision_id}": {
+      "get": {
+        "operationId": "get_decision_v1_decisions__decision_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "decision_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Decision Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/DecisionUserView"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DecisionTrace"
+                      }
+                    ]
+                  },
+                  "title": "Response Get Decision V1 Decisions  Decision Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] A decision: the citizen's reason and the auditor's trace",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/demo/accounts": {
+      "get": {
+        "operationId": "demo_accounts_v1_demo_accounts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccountsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Demo sign-ins (not available in prod)",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/v1/me/person": {
+      "get": {
+        "operationId": "my_person_v1_me_person_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] My person record",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/notifications": {
+      "get": {
+        "operationId": "notifications_v1_notifications_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] My messages",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/programs": {
+      "get": {
+        "operationId": "programs_v1_programs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProgramOut"
+                  },
+                  "title": "Response Programs V1 Programs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "[stub] Programs in this department",
+        "tags": [
+          "stubs (dev only)"
+        ]
+      }
+    },
+    "/v1/system/health": {
+      "get": {
+        "operationId": "health_v1_system_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health V1 System Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Which parts are running right now",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/v1/system/info": {
+      "get": {
+        "operationId": "info_v1_system_info_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "What this deployment is",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/v1/system/policies": {
+      "get": {
+        "operationId": "policies_v1_system_policies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Policies V1 System Policies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Endpoint-to-role registry (every route and who may call it)",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}
