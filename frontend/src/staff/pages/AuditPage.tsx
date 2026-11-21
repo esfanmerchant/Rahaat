@@ -13,7 +13,7 @@ import { Card, Info } from './pg';
 
 const PAGE = 25;
 /** How many of the newest blocks are drawn; the verification itself always covers the whole chain. */
-const SHOWN = 12;
+const shownBlocks = (): number => Math.max(6, Math.min(12, Math.floor(((typeof window === 'undefined' ? 1440 : window.innerWidth) - 400) / 140)));
 
 interface Filters {
   action: string;
@@ -122,7 +122,7 @@ export function AuditPage() {
                   {state}
                   {loaded.state === 'ok' && items.length === 0 ? <ScreenState kind="empty" density="staff" heading="h2" title="No audit rows" body="Nothing matches. Clear the filters." /> : null}
                   {chain.length > 0 ? (
-                    <ChainStrip rows={chain.slice(-SHOWN)} states={verify.states.slice(-SHOWN)} hidden={Math.max(0, chain.length - SHOWN)} onPick={setOpen} openSeq={open?.seq} />
+                    <ChainStrip rows={chain.slice(-shownBlocks())} states={verify.states.slice(-shownBlocks())} hidden={Math.max(0, chain.length - shownBlocks())} onPick={setOpen} openSeq={open?.seq} />
                   ) : null}
                   <div aria-live="polite" class="flex min-h-16 flex-wrap items-center gap-4">
                     <VerifySeal verify={verify} />

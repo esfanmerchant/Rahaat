@@ -110,8 +110,8 @@ function Body({ d, minutes, setMinutes }: { d: Impact; minutes: number; setMinut
                 <ul class="pg-tiles" aria-label="Headline numbers">
                   <Tile i={0} id="decisions" label="Decisions" tone="info" value={h.decisions} hint={`${d.measured_from['payments'] ?? 0} payments, ${d.measured_from['cases'] ?? 0} cases behind it`} />
                   <Tile i={1} id="handoff" label="Handoff" tone="warn" value={h.handoff_rate === null ? null : Math.round(h.handoff_rate * 100)} suffix="%" hint="Share of decisions sent to a person." />
-                  <Tile i={2} id="auto-time" label="Auto median" tone="ok" value={t.automatic.median_seconds} format={(n) => fmtSeconds(n)} hint={`Submission to decision, ${t.automatic.n} timed.`} />
-                  <Tile i={3} id="human-time" label="Person median" tone="info" value={t.human_case.median_seconds} format={(n) => fmtSeconds(n)} hint={`Case opened to resolved, ${t.human_case.n} cases.`} />
+                  <Tile i={2} id="auto-time" label="Auto median" tone="ok" value={t.automatic.median_seconds === null ? null : Math.round(t.automatic.median_seconds * 10)} format={(n) => fmtSeconds(n / 10)} hint={`Submission to decision, ${t.automatic.n} timed.`} />
+                  <Tile i={3} id="human-time" label="Person median" tone="info" value={t.human_case.median_seconds === null ? null : Math.round(t.human_case.median_seconds * 10)} format={(n) => fmtSeconds(n / 10)} hint={`Case opened to resolved, ${t.human_case.n} cases.`} />
                   <Tile i={4} id="cost" label="Cost / claim" tone="ok" value={c.per_claim_units === null ? null : Math.round(c.per_claim_units * 100)} format={(n) => (n / 100).toFixed(2)} suffix="units" hint={c.all_to_a_person_per_claim_units === null ? 'Expected, from the cost matrix.' : `Expected, from the cost matrix. All to a person: ${num(c.all_to_a_person_per_claim_units)}.`} />
                   <Tile i={5} id="fraud" label="Fraud flagged" tone="bad" value={fraudTotal} hint="Forged, duplicate, scam, identity and anomaly flags. Flagged, not proven." />
                 </ul>
@@ -153,7 +153,7 @@ function Body({ d, minutes, setMinutes }: { d: Impact; minutes: number; setMinut
                             </Badge>
                           ))}
                         </div>
-                        <span class="st-chip ok" title="Settled amount">settled Rs {d.payments.settled_pkr.toLocaleString('en-US')}</span>
+                        <span class="st-chip ok self-start" title="Settled amount">settled Rs {d.payments.settled_pkr.toLocaleString('en-US')}</span>
                       </div>
                     )}
                   </Card>
@@ -196,9 +196,9 @@ function Body({ d, minutes, setMinutes }: { d: Impact; minutes: number; setMinut
                     <thead>
                       <tr>
                         <Th>Path</Th>
-                        <Th>n</Th>
-                        <Th>Median</Th>
-                        <Th>90th</Th>
+                        <Th><span class="block text-end">n</span></Th>
+                        <Th><span class="block text-end">Median</span></Th>
+                        <Th><span class="block text-end">90th</span></Th>
                       </tr>
                     </thead>
                     <tbody>
