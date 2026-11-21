@@ -783,7 +783,7 @@ setTransport({
       case 'appeal':
       case 'complaint':
         // Appeals and complaints are written in a lazy chunk, loaded only when one is sent.
-        return import('../report/send').then((m) => m.sendReport(op)).catch(() => ({ type: 'wait', why: 'offline' }) as const);
+        return import('../report/ReportPages').then((m) => m.sendReport(op)).catch(() => ({ type: 'wait', why: 'offline' }) as const);
     }
   },
 });

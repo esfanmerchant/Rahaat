@@ -12,12 +12,12 @@ import { PaperStar, SectionTitle } from '../JourneyPath';
 import { PhotoButtons, PhotoPreview } from '../apply/PhotoParts';
 import { usePhotoUpload } from '../apply/usePhotoUpload';
 import { CitizenShell } from '../CitizenShell';
-import { formatDate, statusIcon, statusKey, useApplication, type Loaded } from './data';
+import { appealNow, formatDate, statusIcon, statusKey, useApplication, type Loaded } from './data';
 import { ExplanationText, proofKindFor } from './ResultScreen';
 import { TrackingCode } from './TrackingCode';
 
 /** Loading, error and empty states shared by the screens that show one application. */
-function WithApplication({ loaded, reload, children }: { loaded: Loaded; reload: () => void; children: (app: ApplicationOut) => ComponentChildren }) {
+export function WithApplication({ loaded, reload, children }: { loaded: Loaded; reload: () => void; children: (app: ApplicationOut) => ComponentChildren }) {
   const { route } = useLocation();
   if (loaded.state === 'ready') return <>{children(loaded.app)}</>;
   return (
@@ -96,7 +96,7 @@ function Tracker({ app }: { app: ApplicationOut }) {
               return (
                 <li key={`${item.at}-${index}`} class="flex gap-4" aria-current={last ? 'step' : undefined}>
                   <div class="flex flex-col items-center">
-                    <PaperStar now={last}>
+                    <PaperStar now={last && !appealNow.value}>
                       <Pictogram name={statusIcon(item.status)} size={26} />
                     </PaperStar>
                     {last ? null : <span class="min-h-4 w-1 flex-1 rounded-full bg-primary/40" aria-hidden="true" />}

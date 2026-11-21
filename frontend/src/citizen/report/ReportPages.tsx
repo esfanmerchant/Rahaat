@@ -5,21 +5,52 @@ import { api } from '../../shared/api/client';
 import { call, type ApiFailure, type Result } from '../../shared/api/problem';
 import type { AppealOut, ApplicationOut, ComplaintOut } from '../../shared/api/types';
 import { unlockAudio } from '../../shared/audio';
-import { AudioPrompt, type Speech } from '../../shared/components/AudioPrompt';
+import { AudioPrompt } from '../../shared/components/AudioPrompt';
 import { Button } from '../../shared/components/Button';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
-import { Spinner } from '../../shared/components/Spinner';
 import { lang, t, type Key } from '../../shared/i18n';
 import '../../shared/i18n/more';
 import { go } from '../../shared/routing';
 import { useSpeechInput } from '../../shared/speechInput';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { AnswerButton, AnswerGroup, NextButton, Notice, sayKey } from '../apply/parts';
-import { enqueueReport, opPhase, opResults, ops, runOutbox } from '../apply/outbox';
+import { enqueueReport, opPhase, opResults, ops, runOutbox, type AppealOp, type ComplaintOp, type Outcome } from '../apply/outbox';
 import { CitizenShell } from '../CitizenShell';
 import { PaperStar, SectionTitle } from '../JourneyPath';
-import { formatDate, useApplication } from '../result/data';
+import { appealNow, formatDate, useApplication } from '../result/data';
+import { WithApplication } from '../result/TrackerScreen';
+
+// ---- the outbox sender -------------------------------------------------------------------------
+
+/** A refusal that will not change on a retry (a closed window, no consent) leaves the queue; a weak network does not. */
+function outcomeFor(failure: ApiFailure): Outcome {
+  switch (failure.kind) {
+    case 'offline':
+      return { type: 'wait', why: 'offline' };
+    case 'unauthenticated':
+      return { type: 'wait', why: 'session' };
+    case 'network':
+    case 'server':
+    case 'rate_limited':
+      return { type: 'retry', failure };
+    default:
+      return { type: 'drop', failure };
+  }
+}
+
+/** The outbox transport for the two new op kinds. The same Idempotency-Key goes with every try, so a lost answer never files twice. */
+export async function sendReport(op: AppealOp | ComplaintOp): Promise<Outcome> {
+  const headers = { 'Idempotency-Key': op.key };
+  const result =
+    op.kind === 'appeal'
+      ? op.app
+        ? await call(api.POST('/v1/appeals', { body: { application_id: op.app, reason: op.text }, headers }))
+        : null
+      : await call(api.POST('/v1/complaints', { body: { category: op.category, ...(op.text ? { details: op.text } : {}) }, headers }));
+  if (!result) return { type: 'wait', why: 'create' };
+  return result.ok ? { type: 'done', result: result.data } : outcomeFor(result.failure);
+}
 
 // ---- small shared pieces -----------------------------------------------------------------------
 
@@ -60,11 +91,11 @@ function Dots({ at, total }: { at: number; total: number }) {
   );
 }
 
-function Heading({ icon, title, tone = 'text-primary' }: { icon: PictogramName; title: Key; tone?: string }) {
+function Heading({ icon, title }: { icon: PictogramName; title: Key }) {
   const ref = useFocusOnMount<HTMLHeadingElement>();
   return (
     <div class="flex items-center gap-4">
-      <Pictogram name={icon} size={56} class={tone} />
+      <Pictogram name={icon} size={56} class="text-primary" />
       <h1 ref={ref} tabIndex={-1} class="text-2xl font-bold">
         {t(title)}
       </h1>
@@ -72,28 +103,16 @@ function Heading({ icon, title, tone = 'text-primary' }: { icon: PictogramName; 
   );
 }
 
-const speechOf = (keys: readonly Key[], id: string): Speech => ({
-  id: `${id}:${lang.value}`,
-  items: keys.map((key) => ({ key, text: t(key) })),
-  lang: lang.value,
-});
-
 // ---- the optional note: spoken (read back and confirmed) or typed -----------------------------
 
 const NOTE_MAX = 500;
 
-function NoteStep({ note, onNote, onBusy }: { note: string; onNote: (text: string) => void; onBusy: (busy: boolean) => void }) {
+function NoteStep({ note, onNote, onNext }: { note: string; onNote: (text: string) => void; onNext: () => void }) {
   const speech = useSpeechInput(lang.value);
   const [typing, setTyping] = useState(false);
   const heard = speech.input.state === 'heard' ? speech.input.text.slice(0, NOTE_MAX) : null;
   const failed = speech.input.state === 'failed' ? speech.input.why : null;
   const blocked = failed === 'denied' || failed === 'unavailable';
-  // While the phone listens or waits for the yes icon, the screen has no other button to press.
-  const busy = speech.input.state === 'listening' || heard !== null;
-  useEffect(() => {
-    onBusy(busy);
-    return () => onBusy(false);
-  }, [busy]);
   useEffect(() => {
     if (failed) sayKey(blocked ? 'rp_mic_off' : 'voice_nothing');
   }, [failed]);
@@ -132,6 +151,7 @@ function NoteStep({ note, onNote, onBusy }: { note: string; onNote: (text: strin
           block
           onClick={() => {
             onNote(heard);
+            setTyping(true);
             speech.reset();
           }}
         >
@@ -143,24 +163,17 @@ function NoteStep({ note, onNote, onBusy }: { note: string; onNote: (text: strin
       </section>
     );
   }
-  if (note && !typing) {
-    return (
-      <div class="flex flex-col gap-3">
-        <p class="rounded-lg border-2 border-line-strong bg-surface p-3 text-lg" dir="auto">
-          {note}
-        </p>
-        <Button size="md" variant="neutral" icon="delete" block onClick={() => onNote('')}>
-          {t('rp_note_remove')}
-        </Button>
-      </div>
-    );
-  }
+  const next = (
+    <Button size="lg" icon="forward" block onClick={onNext} class="mt-4">
+      {t('next')}
+    </Button>
+  );
   return (
     <div class="flex flex-col gap-3">
       {failed ? <Notice tone="warn" icon="microphone" text={t(blocked ? 'rp_mic_off' : 'voice_nothing')} /> : null}
-      {typing ? (
+      {typing || note ? (
         <label class="flex flex-col gap-2 text-lg font-semibold">
-          {t('rp_note_label')}
+          {t('rp_write')}
           <textarea
             dir="auto"
             rows={4}
@@ -174,7 +187,7 @@ function NoteStep({ note, onNote, onBusy }: { note: string; onNote: (text: strin
         <>
           {blocked ? null : (
             <Button size="lg" variant="secondary" icon="microphone" block onClick={listen}>
-              {t(failed ? 'voice_again' : 'rp_say')}
+              {t(failed ? 'voice_again' : 'voice_say')}
             </Button>
           )}
           <Button size="lg" variant="secondary" icon="edit" block onClick={() => setTyping(true)}>
@@ -182,50 +195,34 @@ function NoteStep({ note, onNote, onBusy }: { note: string; onNote: (text: strin
           </Button>
         </>
       )}
+      {next}
     </div>
   );
 }
 
 // ---- the three steps and what follows ----------------------------------------------------------
 
-interface FlowSpec {
+interface Spec {
   icon: PictogramName;
   ask: Key;
-  confirm: Key;
-  doneTitle: Key;
-  doneBody: Key;
+  /** What the person is told after sending. */
+  done: Key;
   options: readonly Option[];
   back: string;
-  /** Put the request in the outbox (it goes out at once when there is a connection). */
+  /** Put the request in the outbox; it goes out at once when there is a connection. */
   queue: (choice: Option, note: string, key: string) => string;
-  /** The label of the status the server returned. */
+  /** The server's status word: the key of its label. */
   status: (data: never) => Key;
   after?: (choice: Option | null) => ComponentChildren;
 }
 
 const WHY: Readonly<Record<string, Key>> = {
   appeal_window_closed: 'ap_e_window',
-  appeal_already_open: 'ap_e_open',
-  appeal_already_decided: 'ap_e_decided',
+  appeal_already_open: 'ap_s_being_checked',
+  appeal_already_decided: 'ap_s_first_answer_stays',
   appeal_not_applicable: 'ap_e_na',
-  consent_required: 'rp_e_consent',
+  consent_required: 'apply_need_consent',
 };
-
-/** A refusal the person can understand and cannot fix by trying again: a keyed message, never the server's text. */
-function Refused({ failure, code }: { failure: ApiFailure; code: string }) {
-  const days = (failure.problem as { window_days?: number } | undefined)?.window_days ?? 30;
-  const key = WHY[code] as Key;
-  const text = t(key, { days });
-  useEffect(() => sayKey(key), [key]);
-  return (
-    <>
-      <Notice tone="warn" icon="warning" text={text}>
-        <AudioPrompt speech={{ id: `refused:${key}:${lang.value}`, items: [{ key, text }], lang: lang.value }} />
-      </Notice>
-      {code === 'consent_required' ? <GoTo path="/my-data" icon="lock" label="home_my_data" /> : null}
-    </>
-  );
-}
 
 function GoTo({ path, icon, label }: { path: string; icon: PictogramName; label: Key }) {
   const { route } = useLocation();
@@ -236,66 +233,58 @@ function GoTo({ path, icon, label }: { path: string; icon: PictogramName; label:
   );
 }
 
-/** After Send: sending, saved on the phone (no network), sent, or refused. */
-function Sent({ id, spec, choice, again }: { id: string; spec: FlowSpec; choice: Option | null; again: () => void }) {
+/** After Send: sending, saved on the phone, sent, or refused with a keyed message (never the server's text). */
+function Sent({ id, spec, choice, again }: { id: string; spec: Spec; choice: Option | null; again: () => void }) {
   const { route } = useLocation();
   const result = opResults.value.get(id);
   const queued = ops.value.find((op) => op.id === id);
-  const home = (
-    <Button size="md" variant="quiet" icon="home" block onClick={() => route('/')} class="mt-auto">
-      {t('go_home')}
-    </Button>
-  );
-  if (result?.state === 'done') {
-    const data = result.result as AppealOut | ComplaintOut;
-    const message = data.message?.[lang.value];
-    return (
-      <CitizenShell onBack={() => route('/')} speech={speechOf([spec.doneTitle, spec.doneBody], 'sent')}>
-        <Heading icon="yes" title={spec.doneTitle} />
-        <p class="text-lg text-ink">{t(spec.doneBody)}</p>
-        <div role="status" class="flex flex-col gap-2 rounded-lg border-2 border-line-strong bg-surface p-3">
-          <p class="flex items-center gap-2 text-lg font-bold">
-            <Pictogram name="clock" size={32} class="text-primary" />
-            {t('rp_status')}: {t(spec.status(data as never))}
-          </p>
-          {message ? <p class="text-base text-ink">{message.replace(/-/g, '‑')}</p> : null}
-        </div>
-        {spec.after?.(choice)}
-        {home}
-      </CitizenShell>
-    );
-  }
-  if (result?.state === 'failed') {
-    const code = result.failure.problem?.code ?? '';
-    return (
-      <CitizenShell onBack={again}>
-        {WHY[code] ? <Refused failure={result.failure} code={code} /> : <FailureState failure={result.failure} onRetry={again} />}
-        {home}
-      </CitizenShell>
-    );
-  }
   const phase = queued ? opPhase(queued) : 'sending';
-  const saved: Key = queued && queued.tries > 0 ? 'rp_retrying' : 'outbox_stored';
+  const failure = result?.state === 'failed' ? result.failure : null;
+  const why = failure?.problem?.code ? WHY[failure.problem.code] : undefined;
+  const waiting = !result && phase !== 'sending';
+  const key: Key = why ?? (queued && queued.tries > 0 ? 'rp_retrying' : 'outbox_stored');
+  const text = t(key, { days: (failure?.problem as { window_days?: number } | undefined)?.window_days ?? 30 });
+  const data = result?.state === 'done' ? (result.result as AppealOut | ComplaintOut) : null;
   return (
-    <CitizenShell onBack={() => route('/')} prompt={phase === 'sending' ? undefined : saved}>
-      {phase === 'sending' ? (
-        <ScreenState kind="loading" body={t('outbox_sending')} />
+    <CitizenShell
+      onBack={failure ? again : () => route('/')}
+      prompt={data ? spec.done : undefined}
+      speech={why || waiting ? { id: `${key}:${lang.value}`, items: [{ key, text }], lang: lang.value } : undefined}
+    >
+      {data ? (
+        <>
+          <Heading icon="yes" title="outbox_sent" />
+          <p class="text-lg text-ink">{t(spec.done)}</p>
+          <div role="status" class="flex flex-col gap-2 rounded-lg border-2 border-line-strong bg-surface p-3">
+            <p class="text-lg font-bold">{t(spec.status(data as never))}</p>
+            <p class="text-base text-ink">{data.message[lang.value].replace(/-/g, '‑')}</p>
+          </div>
+          {spec.after?.(choice)}
+        </>
+      ) : failure && !why ? (
+        <FailureState failure={failure} onRetry={again} />
+      ) : why || waiting ? (
+        <>
+          <Notice tone="warn" icon={why ? 'warning' : 'phone-saved'} text={text} />
+          {why === WHY['consent_required'] ? <GoTo path="/my-data" icon="lock" label="home_my_data" /> : null}
+        </>
       ) : (
-        <Notice tone="warn" icon="phone-saved" text={t(saved)}>
-          <AudioPrompt prompt={saved} autoPlay />
-        </Notice>
+        <ScreenState kind="loading" body={t('outbox_sending')} />
       )}
-      {phase === 'sending' ? null : home}
+      {phase === 'sending' && !result ? null : (
+        <Button size="md" variant="quiet" icon="home" block onClick={() => route('/')} class="mt-auto">
+          {t('go_home')}
+        </Button>
+      )}
     </CitizenShell>
   );
 }
 
-function ReportFlow({ spec }: { spec: FlowSpec }) {
+function ReportFlow({ spec }: { spec: Spec }) {
   const { route } = useLocation();
   const [step, setStep] = useState(0);
   const [choice, setChoice] = useState<Option | null>(null);
   const [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
   if (sent) {
     return (
@@ -311,71 +300,62 @@ function ReportFlow({ spec }: { spec: FlowSpec }) {
     );
   }
   const back = step === 0 ? () => route(spec.back) : () => setStep(step - 1);
-  const progress = <Dots at={step} total={3} />;
-  if (step === 0) {
-    return (
-      <CitizenShell onBack={back} prompt={spec.ask} progress={progress}>
-        <Heading icon={spec.icon} title={spec.ask} />
-        <AnswerGroup>
-          {spec.options.map((option) => (
-            <AnswerButton
-              key={option.id}
-              icon={option.icon}
-              label={t(option.label)}
-              selected={choice?.id === option.id}
-              onSelect={() => {
-                setChoice(option);
-                sayKey(option.label);
-              }}
-            />
-          ))}
-        </AnswerGroup>
-        <NextButton enabled={choice !== null} onNext={() => setStep(1)} />
-      </CitizenShell>
-    );
-  }
-  if (step === 1) {
-    return (
-      <CitizenShell onBack={back} prompt="rp_note_title" progress={progress}>
-        <Heading icon="message" title="rp_note_title" />
-        <p class="text-lg text-ink-muted">{t('rp_note_prompt')}</p>
-        <NoteStep note={note} onNote={setNote} onBusy={setBusy} />
-        {busy ? null : (
-          <Button size="lg" icon="forward" block onClick={() => setStep(2)} class="mt-auto">
-            {t(note ? 'next' : 'rp_skip')}
-          </Button>
-        )}
-      </CitizenShell>
-    );
-  }
-  const send = (): void => {
-    if (!choice) return;
-    // One key for this request: every try is the same request, so it can never be filed twice.
-    setSent(spec.queue(choice, note.trim(), crypto.randomUUID()));
-    void runOutbox();
-  };
+  const prompt: Key = step === 0 ? spec.ask : step === 1 ? 'rp_note_title' : 'rp_confirm';
   return (
-    <CitizenShell onBack={back} speech={speechOf([spec.confirm, choice?.label ?? 'rp_change'], `confirm:${choice?.id}`)} progress={progress}>
-      <Heading icon={spec.icon} title={spec.confirm} />
-      {choice ? (
-        <div class="flex items-center gap-3 rounded-lg border-2 border-line-strong bg-surface p-3">
-          <Pictogram name={choice.icon} size={56} class="text-primary" />
-          <p class="text-xl font-semibold">{t(choice.label)}</p>
-        </div>
-      ) : null}
-      {note ? (
-        <p class="rounded-lg border-2 border-line bg-paper p-3 text-lg" dir="auto">
-          {note}
-        </p>
-      ) : null}
-      <div class="mt-auto flex flex-col gap-3">
-        <Button size="lg" icon="yes" block onClick={send}>
-          {t('rp_send_yes')}
-        </Button>
-        <Button size="lg" variant="neutral" icon="no" block onClick={() => setStep(0)}>
-          {t('rp_change')}
-        </Button>
-      </div>
+    <CitizenShell onBack={back} prompt={prompt} progress={<Dots at={step} total={3} />}>
+      <Heading icon={step === 1 ? 'message' : spec.icon} title={prompt} />
+      {step === 0 ? (
+        <>
+          <AnswerGroup>
+            {spec.options.map((option) => (
+              <AnswerButton
+                key={option.id}
+                icon={option.icon}
+                label={t(option.label)}
+                selected={choice?.id === option.id}
+                onSelect={() => {
+                  setChoice(option);
+                  sayKey(option.label);
+                }}
+              />
+            ))}
+          </AnswerGroup>
+          <NextButton enabled={choice !== null} onNext={() => setStep(1)} />
+        </>
+      ) : step === 1 ? (
+        <NoteStep note={note} onNote={setNote} onNext={() => setStep(2)} />
+      ) : (
+        <>
+          {choice ? (
+            <div class="flex items-center gap-3 rounded-lg border-2 border-line-strong bg-surface p-3">
+              <Pictogram name={choice.icon} size={56} class="text-primary" />
+              <p class="text-xl font-semibold">{t(choice.label)}</p>
+            </div>
+          ) : null}
+          {note ? (
+            <p class="rounded-lg border-2 border-line bg-paper p-3 text-lg" dir="auto">
+              {note}
+            </p>
+          ) : null}
+          <div class="mt-auto flex flex-col gap-3">
+            <Button
+              size="lg"
+              icon="yes"
+              block
+              onClick={() => {
+                // One key for this request: every try is the same request, so it can never be filed twice.
+                if (choice) setSent(spec.queue(choice, note.trim(), crypto.randomUUID()));
+                void runOutbox();
+              }}
+            >
+              {t('answer_yes')}
+            </Button>
+            <Button size="lg" variant="neutral" icon="no" block onClick={() => setStep(0)}>
+              {t('answer_no')}
+            </Button>
+          </div>
+        </>
+      )}
     </CitizenShell>
   );
 }
@@ -386,34 +366,30 @@ const REASONS: readonly Option[] = [
   { id: 'income', icon: 'payment', label: 'ap_why_income' },
   { id: 'papers', icon: 'document', label: 'ap_why_papers' },
   { id: 'details', icon: 'edit', label: 'ap_why_details' },
-  { id: 'other', icon: 'unknown', label: 'ap_why_other' },
+  { id: 'other', icon: 'unknown', label: 'cp_cat_other' },
 ];
 
-const APPEAL_LABEL: Record<AppealOut['status_key'], Key> = {
-  being_checked: 'ap_s_being_checked',
-  first_answer_stays: 'ap_s_first_answer_stays',
-  approved_after_appeal: 'ap_s_approved_after_appeal',
-  withdrawn: 'ap_s_withdrawn',
-};
-const APPEAL_ICON: Record<AppealOut['status_key'], PictogramName> = {
+type StatusKey = AppealOut['status_key'];
+const APPEAL_ICON: Record<StatusKey, PictogramName> = {
   being_checked: 'person-help',
   first_answer_stays: 'document',
   approved_after_appeal: 'yes',
   withdrawn: 'no',
 };
+const appealLabel = (key: StatusKey): Key => (key === 'withdrawn' ? 'status_withdrawn' : (`ap_s_${key}` as Key));
 
-const APPEAL_SPEC = (app: ApplicationOut): FlowSpec => ({
+const appealSpec = (app: ApplicationOut): Spec => ({
   icon: 'person-help',
   ask: 'ap_why_title',
-  confirm: 'ap_confirm_prompt',
-  doneTitle: 'ap_done_title',
-  doneBody: 'ap_done_body',
+  done: 'ap_done_body',
   options: REASONS,
   back: '/track',
   // The reason staff read is always English, whatever language the person uses; their own note follows it.
-  queue: (choice, note, key) =>
-    enqueueReport({ kind: 'appeal', key, text: note ? `${t(choice.label as Key, undefined, 'en')}: ${note}` : t(choice.label as Key, undefined, 'en') }, app.id).id,
-  status: (data: AppealOut) => APPEAL_LABEL[data.status_key],
+  queue: (choice, note, key) => {
+    const why = t(choice.label, undefined, 'en');
+    return enqueueReport({ kind: 'appeal', key, text: note ? `${why}: ${note}` : why }, app.id).id;
+  },
+  status: (data: AppealOut) => appealLabel(data.status_key),
   after: () => <GoTo path="/track" icon="clock" label="home_see_application" />,
 });
 
@@ -428,7 +404,7 @@ function AppealStar({ appeal }: { appeal: AppealOut }) {
         <Pictogram name={APPEAL_ICON[key]} size={26} />
       </PaperStar>
       <div class="flex flex-col gap-1 pb-2 pt-2">
-        <p class="text-lg font-semibold">{t(APPEAL_LABEL[key])}</p>
+        <p class="text-lg font-semibold">{t(appealLabel(key))}</p>
         <time dateTime={appeal.created_at} class="text-sm text-ink-muted">
           {formatDate(appeal.created_at, lang.value)}
         </time>
@@ -439,50 +415,44 @@ function AppealStar({ appeal }: { appeal: AppealOut }) {
 }
 
 function AppealScreen() {
-  const { route } = useLocation();
   const { loaded, reload } = useApplication(true);
-  const [appeals, reloadAppeals] = useLoad(readAppeals);
-  const shell = (children: ComponentChildren) => (
-    <CitizenShell onBack={() => route(loaded.state === 'ready' ? '/track' : '/')}>{children}</CitizenShell>
+  return (
+    <WithApplication loaded={loaded} reload={reload}>
+      {(app) => <AppealFor app={app} />}
+    </WithApplication>
   );
-  if (loaded.state === 'failed') return shell(<FailureState failure={loaded.failure} onRetry={reload} />);
-  if (appeals.state === 'failed') return shell(<FailureState failure={appeals.failure} onRetry={reloadAppeals} />);
-  if (loaded.state === 'loading' || appeals.state === 'loading') return shell(<ScreenState kind="loading" />);
-  if (loaded.state === 'empty') {
-    return shell(
-      <ScreenState kind="empty" title={t('track_empty_title')} body={t('track_empty_body')}>
-        <GoTo path="/apply" icon="document" label="home_apply" />
-      </ScreenState>,
-    );
-  }
-  const app = loaded.app;
-  const mine = appeals.data.items.filter((item) => item.application_id === app.id);
-  const latest = mine[0];
-  // Already asked, or nothing to ask about: show where it stands instead of the form.
-  if ((latest && latest.status !== 'withdrawn') || app.status !== 'rejected') {
-    return shell(
-      <>
-        <Heading icon="person-help" title="ap_track_title" />
-        {latest ? <AppealStar appeal={latest} /> : <Notice tone="check" icon="document" text={t('ap_e_na')} />}
-        <GoTo path="/track" icon="clock" label="home_see_application" />
-      </>,
-    );
-  }
-  return <ReportFlow spec={APPEAL_SPEC(app)} />;
 }
 
-/** In the tracker: the appeal's status as the last star, or the way to ask again when the application was rejected. */
+function AppealFor({ app }: { app: ApplicationOut }) {
+  const { route } = useLocation();
+  const [appeals, reload] = useLoad(readAppeals);
+  if (appeals.state !== 'ready') {
+    return (
+      <CitizenShell onBack={() => route('/track')}>
+        {appeals.state === 'failed' ? <FailureState failure={appeals.failure} onRetry={reload} /> : <ScreenState kind="loading" />}
+      </CitizenShell>
+    );
+  }
+  const latest = appeals.data.items.find((item) => item.application_id === app.id);
+  // Already asked, or nothing to ask about: show where it stands instead of the form.
+  if ((latest && latest.status !== 'withdrawn') || app.status !== 'rejected') {
+    return (
+      <CitizenShell onBack={() => route('/track')}>
+        <Heading icon="person-help" title="appeal_ask" />
+        {latest ? <AppealStar appeal={latest} /> : <Notice tone="check" icon="document" text={t('ap_e_na')} />}
+        <GoTo path="/track" icon="clock" label="home_see_application" />
+      </CitizenShell>
+    );
+  }
+  return <ReportFlow spec={appealSpec(app)} />;
+}
+
+/** In the tracker: the appeal's status as a star, or the way to ask when the application was rejected. */
 export function TrackAppeal({ app }: { app: ApplicationOut }) {
   const { route } = useLocation();
   const [appeals, reload] = useLoad(readAppeals);
-  if (appeals.state === 'loading') {
-    return (
-      <p role="status" class="flex items-center gap-2 text-base text-ink-muted">
-        <Spinner size={24} />
-        {t('state_loading')}
-      </p>
-    );
-  }
+  useEffect(() => () => void (appealNow.value = false), []);
+  if (appeals.state === 'loading') return null;
   if (appeals.state === 'failed') {
     return (
       <Notice tone="warn" icon="offline" text={t(appeals.failure.kind === 'offline' ? 'state_offline_body' : 'state_error_body')}>
@@ -493,10 +463,11 @@ export function TrackAppeal({ app }: { app: ApplicationOut }) {
     );
   }
   const latest = appeals.data.items.find((item) => item.application_id === app.id);
+  appealNow.value = latest?.status_key === 'being_checked' || latest?.status_key === 'approved_after_appeal';
   if (latest) {
     return (
       <section aria-labelledby="track-appeal" class="flex flex-col gap-3">
-        <SectionTitle id="track-appeal">{t('ap_track_title')}</SectionTitle>
+        <SectionTitle id="track-appeal">{t('appeal_ask')}</SectionTitle>
         <AppealStar appeal={latest} />
       </section>
     );
@@ -510,52 +481,27 @@ export function TrackAppeal({ app }: { app: ApplicationOut }) {
 
 // ---- complaints --------------------------------------------------------------------------------
 
-const CATEGORIES: readonly Option[] = [
-  { id: 'service', icon: 'warning', label: 'cp_cat_service' },
-  { id: 'staff', icon: 'person', label: 'cp_cat_staff' },
-  { id: 'scam_attempt', icon: 'msg-scam', label: 'cp_cat_scam' },
-  { id: 'other', icon: 'message', label: 'cp_cat_other' },
-];
-
-const CATEGORY_LABEL: Record<ComplaintOut['category'], Key> = {
-  service: 'cp_cat_service',
-  staff: 'cp_cat_staff',
-  scam_attempt: 'cp_cat_scam',
-  payment: 'cp_cat_payment',
-  other: 'cp_cat_other',
+type Category = ComplaintOut['category'];
+const CAT: Record<Category, Option> = {
+  service: { id: 'service', icon: 'warning', label: 'cp_cat_service' },
+  staff: { id: 'staff', icon: 'person', label: 'cp_cat_staff' },
+  scam_attempt: { id: 'scam_attempt', icon: 'msg-scam', label: 'cp_cat_scam' },
+  payment: { id: 'payment', icon: 'payment', label: 'cp_cat_other' },
+  other: { id: 'other', icon: 'message', label: 'cp_cat_other' },
 };
-const CATEGORY_ICON: Record<ComplaintOut['category'], PictogramName> = {
-  service: 'warning',
-  staff: 'person',
-  scam_attempt: 'msg-scam',
-  payment: 'payment',
-  other: 'message',
-};
-const COMPLAINT_LABEL: Record<ComplaintOut['status'], Key> = {
-  received: 'cp_s_received',
-  being_checked: 'cp_s_being_checked',
-  resolved: 'cp_s_resolved',
-};
+const complaintLabel = (status: ComplaintOut['status']): Key => `cp_s_${status}` as Key;
 
-/** For a scam attempt: a gentle way to check the message itself. */
-function ScamLink() {
-  return <GoTo path="/scam" icon="shield" label="cp_scam_link" />;
-}
-
-const COMPLAINT_SPEC: FlowSpec = {
+const complaintSpec: Spec = {
   icon: 'warning',
   ask: 'cp_what_title',
-  confirm: 'cp_confirm_prompt',
-  doneTitle: 'cp_done_title',
-  doneBody: 'cp_done_body',
-  options: CATEGORIES,
+  done: 'cp_done_body',
+  options: [CAT.service, CAT.staff, CAT.scam_attempt, CAT.other],
   back: '/',
-  queue: (choice, note, key) =>
-    enqueueReport({ kind: 'complaint', key, category: choice.id as ComplaintOut['category'], text: note }, null).id,
-  status: (data: ComplaintOut) => COMPLAINT_LABEL[data.status],
+  queue: (choice, note, key) => enqueueReport({ kind: 'complaint', key, category: choice.id as Category, text: note }, null).id,
+  status: (data: ComplaintOut) => complaintLabel(data.status),
   after: (choice) => (
     <>
-      {choice?.id === 'scam_attempt' ? <ScamLink /> : null}
+      {choice?.id === 'scam_attempt' ? <GoTo path="/scam" icon="shield" label="home_scam" /> : null}
       <GoTo path="/my-data/complaints" icon="message" label="cp_list_title" />
     </>
   ),
@@ -573,19 +519,18 @@ function MyComplaints() {
     <CitizenShell onBack={back} prompt="cp_list_title">
       <Heading icon="message" title="cp_list_title" />
       {items.length === 0 ? (
-        <ScreenState kind="empty" heading="h2" title={t('cp_list_empty_title')} body={t('cp_list_empty_body')} />
+        <ScreenState kind="empty" heading="h2" />
       ) : (
         <ul class="flex flex-col gap-3">
           {items.map((item) => (
             <li key={item.id} class="flex items-start gap-3 rounded-lg border-2 border-line-strong bg-paper p-3">
-              <Pictogram name={CATEGORY_ICON[item.category]} size={48} class="text-primary" />
+              <Pictogram name={CAT[item.category].icon} size={48} class="text-primary" />
               <div class="flex flex-1 flex-col gap-1">
-                <p class="text-lg font-semibold">{t(CATEGORY_LABEL[item.category])}</p>
-                <p class="text-base font-semibold text-primary-strong">{t(COMPLAINT_LABEL[item.status])}</p>
+                <p class="text-lg font-semibold">{t(CAT[item.category].label)}</p>
+                <p class="text-base font-semibold text-primary-strong">{t(complaintLabel(item.status))}</p>
                 <time dateTime={item.created_at} class="text-sm text-ink-muted">
                   {formatDate(item.created_at, lang.value)}
                 </time>
-                <p class="text-base text-ink">{item.message[lang.value]}</p>
               </div>
             </li>
           ))}
@@ -602,5 +547,5 @@ function MyComplaints() {
 export default function ReportPages({ view }: { view: 'appeal' | 'report' | 'complaints' }) {
   if (view === 'appeal') return <AppealScreen />;
   if (view === 'complaints') return <MyComplaints />;
-  return <ReportFlow spec={COMPLAINT_SPEC} />;
+  return <ReportFlow spec={complaintSpec} />;
 }

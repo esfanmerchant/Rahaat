@@ -50,7 +50,6 @@ export const en = {
   login_checking: 'Checking. Please wait.',
   login_wrong: 'The phone number or PIN is not right. Please try again.',
   login_locked: 'Too many wrong tries. Wait a little and try again, or ask a helper.',
-  login_change_phone: 'Change number',
   keypad_delete: 'Delete',
   keypad_done: 'Done',
   keypad_label: 'Number buttons',
@@ -358,8 +357,6 @@ export const en = {
   outbox_start: 'Starting the application',
   outbox_submit: 'Sending the application',
   outbox_photo_saved: 'The photo is saved on this phone. It will be sent when the internet is back. You can go on.',
-  outbox_appeal: 'Asking a person to look again',
-  outbox_complaint: 'Your report',
   outbox_submit_saved: 'Your application is saved on this phone. It will be sent when the internet is back.',
 
   unlock_title: 'Type your PIN',

@@ -48,7 +48,6 @@ export const ur: Dict = {
   login_checking: 'جانچ ہو رہی ہے۔ تھوڑا انتظار کریں۔',
   login_wrong: 'فون نمبر یا پن کوڈ درست نہیں ہے۔ دوبارہ کوشش کریں۔',
   login_locked: 'بہت بار غلط ہو گیا۔ تھوڑی دیر بعد کوشش کریں، یا کسی مددگار سے پوچھیں۔',
-  login_change_phone: 'نمبر بدلیں',
   keypad_delete: 'مٹائیں',
   keypad_done: 'ٹھیک ہے',
   keypad_label: 'نمبر والے بٹن',
@@ -356,8 +355,6 @@ export const ur: Dict = {
   outbox_start: 'درخواست شروع کرنا',
   outbox_submit: 'درخواست بھیجنا',
   outbox_photo_saved: 'تصویر اس فون میں محفوظ ہے۔ انٹرنیٹ آتے ہی بھیج دی جائے گی۔ آپ آگے جا سکتے ہیں۔',
-  outbox_appeal: 'دوبارہ دیکھنے کی درخواست',
-  outbox_complaint: 'آپ کی شکایت',
   outbox_submit_saved: 'آپ کی درخواست اس فون میں محفوظ ہے۔ انٹرنیٹ آتے ہی بھیج دی جائے گی۔',
 
   unlock_title: 'اپنا پن کوڈ لکھیں',
