@@ -15,8 +15,12 @@ regexes = [
   '''Rahat-Demo-2026!''',
   '''dev-only-secret-key-not-for-demo-or-prod-0000000000''',
   '''rahat_app_dev_password''',
+  # a type name in the mock issuer (backend/app/modules/docs_ai/issuer.py), not a key
+  '''^Ed25519PrivateKey$''',
 ]
 paths = [
+  # content hashes of the voice prompts, used to regenerate only changed recordings
+  '''frontend/public/audio/[a-z]{2}/index\.json''',
   '''backend/tests/.*''',
   '''backend/conftest\.py''',
 ]
