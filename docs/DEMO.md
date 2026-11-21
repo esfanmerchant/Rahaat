@@ -40,6 +40,8 @@ Specimen cards for the camera step are in `data/demo_cards/<person>/` (`clean.jp
 
 ## Challenge Lab cards (staff console, `Challenge Lab`)
 
+**Order matters (checked in Gate 2, Sat 21 Nov).** Cards 2, 5 and 6 read real decisions and applications, and card 4 compares the seeded draft rule v2 with v1. Right after a reset there are no decisions yet, so those cards answer "info". Run the citizen part first (Aslam and Zainab), then the Lab. All eight cards and the three security cards passed on the live URL in that order. Card 6 withdraws and re-grants Zainab's consent; it leaves her consent active.
+
 Cards in the console include: cost of being wrong (three seeded cases: clear, borderline, fraud signal), I am not sure (queue and handoff package), bad data (Mohammad against Muhammed goes to "possible duplicate", garbage input returns a repairable 422), rules that change, explain and audit, consent take-back, scams and fakes, and a security strip. Check on the day which are live on the deployed build (the page marks unbuilt ones); do not run a card you have not run beforehand. The consent take-back card needs a seeded citizen with a live consent; the security card's live probes pass on both hosts (migration 0006 fixed finding 2), but rehearse it first like every card.
 
 ## If the network fails
