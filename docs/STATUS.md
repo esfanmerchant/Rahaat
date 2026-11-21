@@ -78,7 +78,7 @@ Track D2
 - [x] D1.5 Offline outbox: encrypted with a key from the PIN, ordered queue with idempotency, conflict re-read, idle lock  - [ ] D1.6 Voice answers  - [x] D1.7 Consent centre: who has my data, share less, take back, share again (access log screen still to wire)  - [x] D1.8 Scam checker: paste or speak, pictogram answers read aloud, links never clickable, confirmed-real messages, ask a person  - [ ] D1.9 Helper Mode
 - [x] D2.4 Rule editor (two admins, four-eyes publish shown)  - [ ] D2.5 Cost of being wrong  - [ ] D2.6 Challenge Lab  - [x] D2.7 Audit explorer
 
-**Gate 2**: all eight Challenge Lab cards pass on the live URL.
+**Gate 2 passed** (Sat 21 Nov, 23:30, live https://rahat-zeta.vercel.app, run by an independent verifier in the real UI): all eight Challenge Lab cards and the three security cards pass; also checked live: the cost what-if moves the thresholds, replay matches, the audit chain verifies, an API key's 3-a-minute limit answers 429, Helper Mode switches with a PIN, the scam checker in English, Urdu and Roman Urdu, a real verify code, and `*786#` on `/ussd`. The run found that a burst of sign-ins exhausted Supabase's session pooler (`EMAXCONNSESSION`, 500s for minutes); fixed with the transaction pooler (`DB_POOLER_MODE=transaction`), then 90 concurrent sign-ins and 360 reads gave no 5xx. Cards 2, 4, 5 and 6 need the citizen part run first after a reset (`docs/DEMO.md`).
 
 ## Phase 3: bonus features and the rest (T2)
 
@@ -96,6 +96,8 @@ Track D2
 - [x] C9 RAG: 7 policy documents in English and Urdu, answers copied with citations, refusal below a cost-chosen threshold; 0 wrong answers on dev and test  - [ ] C10 Agent  - [ ] C11 Guardrails: input and output guards done, 67-attack red team passes with 0 false alarms; action guard still to come with the agent  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
 - [ ] D1.10 Sync conflicts, local encryption  - [x] D1.11 USSD simulator at `/ussd` (own lazy chunk `ussd`, 7 KB gzip, outside the citizen budget and the PWA precache; the status names the tracking symbols)  - [ ] D1.11b links to `/ussd` from `/demo` and `/live` (WP-E)  - [ ] D1.12 Budgets in CI
 - [ ] D2.8 Digital Twin view  - [ ] D2.9 Scam Map  - [ ] D2.10 Dashboards  - [ ] D2.11 Admin screens
+
+**Phase 3 done** (Sun 22 Nov, 00:20, commit df139f7; plan in `docs/PLAN_PHASE2_3.md`): WP-A webhooks, plans and usage, appeals and complaints; WP-B agent with an approval gate; WP-C USSD and SMS with `/ussd`; WP-D anomaly detection and the impact report; WP-E their staff screens; WP-F citizen appeal and complaint. `npm run verify`: 1654 passed, citizen JS 100.0 KB (budget 100). Live smoke on Vercel: every page 200, anchor flow passes, no 5xx under a burst. Cut on purpose: memory and override learning (C12, B16). Staff placeholder pages are hidden in every production build.
 
 **Gate 3**: every item passes its check or is `HIDDEN`.
 
