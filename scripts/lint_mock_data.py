@@ -18,7 +18,7 @@ PHONE_INTL = re.compile(r"\+92 ?3\d{2}[- ]?\d{7}")  # mock-lint: allow
 MARKER = "mock-lint: allow"
 
 SKIP_DIRS = {".git", "node_modules", ".venv", "dist", ".devdb", "__pycache__",
-             ".mypy_cache", ".ruff_cache", ".pytest_cache", "var", "htmlcov", "worktrees"}
+             ".mypy_cache", ".ruff_cache", ".pytest_cache", "var", "htmlcov", "worktrees", ".wt"}
 SKIP_NAMES = {"package-lock.json", "uv.lock", "yarn.lock", "pnpm-lock.yaml", "poetry.lock"}
 SKIP_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".mp3", ".ogg",
              ".opus", ".wav", ".m4a", ".woff", ".woff2", ".onnx", ".pkl", ".zip", ".gz",

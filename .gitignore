@@ -40,3 +40,6 @@ desktop.ini
 
 # the organisers' documents stay local; they are not ours to publish
 AI_Hackathon_*.pdf
+
+# local git worktrees used by parallel track agents
+.wt/
