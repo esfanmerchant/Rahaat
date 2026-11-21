@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 13:00 PKT, by the lead session.
+Last updated: Sat 21 Nov 2026, 13:40 PKT, by the lead session. Phase 1 is in progress: six track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -16,10 +16,10 @@ Last updated: Sat 21 Nov 2026, 13:00 PKT, by the lead session.
 - [x] F8 Seed: two departments, eleven demo accounts in all five roles, Rahat program, rule version 1; idempotent, with `--reset` and `--if-empty`
 - [x] F9 Frontend scaffold: Vite + Preact + Tailwind PWA, citizen and staff shells, `/demo`, i18n (en, ur; Sindhi falls back to Urdu), typed client generated from OpenAPI, working sign-in for all roles; citizen JS 28.4 KB gzipped (budget 100)
 - [x] F10 Root npm scripts
-- [x] F11 CI workflow written (`.github/workflows/ci.yml`); **not yet run** (needs the first push)
-- [ ] F12 Dockerfile and start script written. The start script was run natively in demo mode with generated secrets (migrate, seed, serve: all passed). **The Docker image has never been built** (no Docker locally; the CI `image` job is the first real build). **Not deployed** (needs a host account).
+- [x] F11 CI on GitHub Actions is green: backend tests on Linux against a Postgres service, frontend build and budget, mock-data lint, secret scan, Docker image build
+- [ ] F12 The Docker image builds in CI, and the start script was run natively in demo mode with generated secrets (migrate, seed, serve: all passed). **Not deployed** (needs a host account). The built image has not been run.
 
-**Gate 0** is not passed yet. Still needed: a live URL where all five roles can sign in, the first CI run, and the first commit (git `user.name` is not set on this machine).
+**Gate 0** is not passed yet. The one thing still needed is a live URL where all five roles can sign in. Code is on https://github.com/esfanmerchant/Rahaat and CI is green.
 
 Verified locally on Sat 21 Nov, 12:57:
 - `npm run verify` green: ruff, mypy, frontend type check, 71 backend tests, frontend build, bundle budget, mock-data lint.
@@ -28,7 +28,9 @@ Verified locally on Sat 21 Nov, 12:57:
 - Demo-mode rehearsal through `deploy/start.sh` with generated secrets: 18 routes, 0 stubs, 0 undeclared; refresh cookie is HttpOnly, Secure, SameSite=Lax; real-looking phone numbers refused.
 - Frontend flows in headless Chrome at phone width under the strict CSP (run by the frontend agent): citizen and staff sign-in, wrong-password errors, session restore after reload, sign-out, tenant switch, role-denied page, `/demo` one-click sign-in.
 
-Not verified: Docker build, CI, any deployed host, password authentication of the runtime database role (the embedded database trusts local connections), a real phone, slow or offline network, the service worker in a browser, screen readers, and the Urdu wording by a native speaker. Tesseract is not installed on this machine, so OCR cannot run here yet.
+Verified in CI on Sat 21 Nov, 13:30: all five jobs green on three pushes, including the first real Docker build and the 71 backend tests against a Postgres that requires a password for the runtime role.
+
+Not verified: any deployed host, running the built image, a real phone, slow or offline network, the service worker in a browser, screen readers, and the Urdu wording by a native speaker. Tesseract is not installed on this machine, so OCR cannot run here yet (CI installs it).
 
 ## Phase 1: the spine (T0)
 
