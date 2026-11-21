@@ -9,11 +9,11 @@
  * warning-ink). On night one value cannot do both, so the variable keeps the background value and the text
  * and stroke utilities are re-pointed below to the text-safe variables (--st-ok, --st-bad, --st-info, --st-warn).
  *
- * Contrast (WCAG 2.x, measured by scripts in the task report; AA needs 4.5:1 for text, 3:1 for UI):
- *   night: ink on paper 17.1, ink-muted on paper 11.9, ink-subtle on surface 7.2, --st-ok on primary-soft 9.6,
- *          --st-bad on danger-soft 6.6, --st-info on info-soft 6.4, --st-warn on warning-soft 8.8,
- *          white on primary (button) 6.6, white on danger (button) 7.4, focus ring on paper 14.
- *   day:   the shared paper palette, unchanged (see tokens.css).
+ * Contrast (WCAG 2.x, computed from these values; AA needs 4.5:1 for text, 3:1 for UI):
+ *   night: ink on paper 16.6, muted on paper 12.0, subtle on surface 7.1, --st-ok on primary-soft 9.0,
+ *          --st-bad on danger-soft 6.6, --st-info on info-soft 6.4, --st-warn on warning-soft 7.9,
+ *          white on primary button 6.6, white on danger button 7.4, input border 5.2, focus ring 13.3.
+ *   day:   the shared paper palette, unchanged (see tokens.css); --st-noor-text on paper 8.7.
  */
 
 html[data-theme="night"],
@@ -46,6 +46,7 @@ html[data-theme="night"],
   --st-info: #8ea2ff;
   --st-warn: #f5b13a;
   --st-noor: #ffd36e;
+  --st-noor-text: #ffd36e;
   --st-grid: #26306a;
   --st-glow-ok: rgb(78 230 166 / 0.55);
   --st-glow-bad: rgb(255 107 129 / 0.55);
@@ -65,6 +66,7 @@ html[data-theme="day"],
   --st-info: #1a2f78;
   --st-warn: #6a4100;
   --st-noor: #b8860b;
+  --st-noor-text: #6a4100;
   --st-grid: #e2d9c8;
   --st-glow-ok: rgb(11 106 70 / 0.35);
   --st-glow-bad: rgb(163 32 58 / 0.3);
@@ -146,6 +148,10 @@ html[data-theme="day"],
 [data-theme="night"] ::selection {
   background: #3b4a9a;
   color: #fff;
+}
+
+.st-noor-text {
+  color: var(--st-noor-text);
 }
 
 /* ---------- Shell ---------- */
@@ -325,7 +331,7 @@ html[data-theme="day"],
   position: relative;
   height: 14px;
   border-radius: 7px;
-  background: linear-gradient(90deg, rgb(255 107 129 / 0.35) 0 var(--rej, 20%), rgb(245 177 58 / 0.28) var(--rej, 20%) var(--app, 80%), rgb(78 230 166 / 0.35) var(--app, 80%) 100%);
+  background: linear-gradient(90deg, rgb(255 107 129 / 0.45) 0 var(--rej, 20%), rgb(142 162 255 / 0.2) var(--rej, 20%) var(--app, 80%), rgb(78 230 166 / 0.5) var(--app, 80%) 100%);
   border: 1px solid var(--st-edge);
 }
 [data-theme="day"] .st-prob {
@@ -524,4 +530,10 @@ kbd.st-kbd {
   .st-chart .st-line {
     stroke-dashoffset: 0;
   }
+}
+
+/* The top bar is night in both themes, so its key caps use night colours. */
+.st-bar kbd.st-kbd {
+  color: #a7aed6;
+  border-color: #2a3570;
 }

@@ -48,7 +48,7 @@ export function ProbabilityBar({ trace }: { trace: DecisionTrace }) {
         {p === null ? (
           <span class="text-ink-subtle">No p_ok was stored for this decision.</span>
         ) : (
-          <span class="rh-num font-mono text-lg font-black text-noor">
+          <span class="rh-num font-mono text-lg font-black st-noor-text">
             {pctText(p)} <span class="text-xs font-normal text-ink-muted">{zone}</span>
           </span>
         )}

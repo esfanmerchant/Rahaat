@@ -52,7 +52,7 @@ export function HandoffView({ handoff }: { handoff: HandoffPackage | null | unde
         </div>
         <div class="flex flex-col gap-4">
           <div class="st-lit rounded-xl border border-line-strong p-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-noor">Proof that would settle it</p>
+            <p class="text-xs font-semibold uppercase tracking-wide st-noor-text">Proof that would settle it</p>
             <p class="text-base font-bold">{handoff.resolving_proof ? humanize(handoff.resolving_proof) : <span class="font-normal text-ink-subtle">none named</span>}</p>
             {handoff.suggested_question ? <p class="mt-1 text-ink-muted">Suggested question: {handoff.suggested_question}</p> : null}
           </div>
