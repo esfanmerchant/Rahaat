@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 14:40 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
+Last updated: Sat 21 Nov 2026, 14:50 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -53,8 +53,8 @@ Track B
 - [x] B6 Calibrated evidence model (logistic regression with isotonic calibration; ECE 0.028 on p_ok, held-out families)
 
 Track C
-- [ ] C1 Mock issuer, specimen card generator and variants
-- [ ] C2 `check_document()`: quality, QR signature, OCR, cross-check
+- [x] C1 Mock issuer (Ed25519), specimen cards with SPECIMEN marks, 9 photo variants per demo citizen with expected outcomes
+- [x] C2 `check_document()`: quality gate with spoken retake hints, signed QR, OCR-free print check, ELA and metadata signals; held-out: 99.2% of forgeries flagged, 2.1% false alarms on genuine cards, median 0.35 s
 - [ ] C3 Scam corpus, classifier, URL and sender analysis
 
 Track D1
@@ -68,7 +68,7 @@ Track D2
 - [x] D2.2 Officer queue and case review with the handoff package first (urgent cases first)
 - [x] D2.3 Auditor decision viewer and audit explorer with chain verification
 
-**Gate 1**: the anchor flow completes on the live URL.
+**Gate 1 passed in tests** (Sat 21 Nov, 14:45): `backend/tests/integration/test_anchor_flow.py` runs the anchor flow through the HTTP API with every track's real code. Aslam is approved and paid by the system alone and his verify code checks out; Zainab, with no income record, is asked for proof, handed to an officer with notes, approved with a reason and paid; the auditor sees both views and an intact chain. Still to confirm: the same on the live URL.
 
 ## Phase 2: the eight challenges (T1)
 

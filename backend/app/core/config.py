@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import os
 from functools import lru_cache
 from typing import Literal
 
@@ -124,6 +125,9 @@ class Settings(BaseSettings):
             problems.append("MASTER_KEY")
         if self.app_db_password == DEV_APP_DB_PASSWORD and not self.database_url:
             problems.append("APP_DB_PASSWORD")
+        # The demo keeps the public development issuer key so the committed specimen cards verify. Prod must not.
+        if self.app_env == "prod" and not os.environ.get("MOCK_ISSUER_SEED"):
+            problems.append("MOCK_ISSUER_SEED")
         if problems:
             raise RuntimeError(
                 f"APP_ENV={self.app_env} refuses to start with default or weak secrets: {', '.join(problems)}"

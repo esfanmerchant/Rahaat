@@ -107,8 +107,8 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
     form = form_of(application)
     mismatch = unbound = False
     merged: list[str] = []
-    if signed_qr_valid(check):
-        assert check is not None
+    # A valid signature is not enough: another person's QR stuck on a card is validly signed too.
+    if signed_qr_valid(check) and check is not None and check.authenticity.choice == "genuine":
         values = signed_fields(check.qr.payload)
         signed_id = values.get("national_id")
         if not person.national_id_hash:

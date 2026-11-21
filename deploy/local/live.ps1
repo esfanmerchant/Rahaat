@@ -332,7 +332,7 @@ switch ($Command) {
         Update-Release
         Start-Database
         Invoke-Step 'migrate' $Backend 'uv' @('run', '--frozen', 'alembic', 'upgrade', 'head')
-        Invoke-Step 'seed' $Backend 'uv' @('run', '--frozen', 'python', '-m', 'app.seed', '--if-empty')
+        Invoke-Step 'seed' $Backend 'uv' @('run', '--frozen', 'python', '-m', 'app.seed')
         Start-App
         $state = Get-State
         if ($Tunnel -eq 'cloudflare' -and (Test-Alive $state['tunnel_pid']) -and $state['url']) {
@@ -357,7 +357,7 @@ switch ($Command) {
         Update-Release
         Start-Database
         Invoke-Step 'migrate' $Backend 'uv' @('run', '--frozen', 'alembic', 'upgrade', 'head')
-        Invoke-Step 'seed' $Backend 'uv' @('run', '--frozen', 'python', '-m', 'app.seed', '--if-empty')
+        Invoke-Step 'seed' $Backend 'uv' @('run', '--frozen', 'python', '-m', 'app.seed')
         Start-App
         $state = Get-State
         if ($state['tunnel'] -ne 'tailscale' -and -not (Test-Alive $state['tunnel_pid'])) {

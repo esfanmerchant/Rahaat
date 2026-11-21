@@ -59,6 +59,17 @@ def _database_ok() -> bool:
         return False
 
 
+def _providers() -> dict[str, str]:
+    providers = {"ocr_tesseract": "available" if shutil.which("tesseract") else "missing"}
+    try:
+        from app.modules.docs_ai.service import providers as document_providers
+
+        providers.update(document_providers())
+    except Exception:  # noqa: BLE001
+        log.exception("could not read the document-AI providers")
+    return providers
+
+
 @router.get("/healthz", summary="Liveness: the process is up (does not touch the database)")
 def healthz(_: None = Depends(Public("liveness probe"))) -> dict[str, str]:
     return {"status": "ok"}
@@ -92,9 +103,7 @@ def health(_: Principal = Depends(Policy("system:health", STAFF_ROLES))) -> dict
         "database": "ok" if _database_ok() else "down",
         "env": settings.app_env,
         "ai_profile": settings.ai_profile,
-        "providers": {
-            "ocr_tesseract": "available" if shutil.which("tesseract") else "missing",
-        },
+        "providers": _providers(),
         "contract_stubs": settings.stubs_effective,
     }
 
