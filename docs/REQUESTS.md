@@ -118,3 +118,17 @@ From: Track D1   To: Track A (cases, payments)   Status: open
 What: `ApplicationOut` (and `ApplicationSummary`) would carry, once paid, `payment: { amount_pkr, paid_at, verify_code }` (null before). Today the citizen app reads `GET /v1/notifications`, takes the `payment_sent` message, finds its `verify_code` and reads the amount as the first number in the message text.
 Why: parsing a sentence is fragile (a changed template breaks the "Paid" card on home) and the citizen cannot call `/v1/payments`.
 Until then: the Paid card shows the amount only when that number is found, never a guessed one.
+
+## Citizen JS budget: the appeal and complaint screens need about 3.5 KB more room (WP-F)
+From: Track D1   To: Lead (frontend root files, `scripts/check-bundle.mjs`)   Status: open
+What: the citizen total was 97.1 KB; with the appeal and complaint screens it is 103.6 KB (initial 66.4, lazy 37.2) against the 100 KB budget. The new code is one lazy chunk (`citizen/report`, 4.0 KB gzip), a 0.4 KB sender, and about 1.4 KB of strings in each of the two languages. Nothing in `citizen` or `shared` can be cut without losing a feature or a state. Two changes outside my directories would fix it; either one alone is not quite enough, together they leave about 97 KB:
+1. `src/main.tsx` imports `registerSW` from `virtual:pwa-register`, which bundles `workbox-window` (2.4 KB gzip). Registering the generated worker directly (`navigator.serviceWorker.register('/sw.js')`) measured 100.8 KB in a scratch build. The cost is that the page no longer reloads itself onto a new deploy (`autoUpdate`); `skipWaiting` and `clientsClaim` still make the new worker take over, so a reload picks up the new shell.
+2. The dictionaries are 12.5 KB gzip (Urdu and English) in the entry plus 8.1 KB in the lazy `more` chunk, and a citizen only ever reads one language. Splitting them per language (one chunk per language, loaded in `initLang` before the first render) would cut about 5.4 to 6.4 KB from the first load and about 9 KB from what one person downloads, but `check:bundle` counts every lazy chunk, so it would still report the same total. If the lead wants this, `check:bundle` should count the heavier single language path, and I can do the split in `shared/i18n` (staff only uses `useTemporaryLang('en')`).
+Why: the budget is the hard rule; I will not cut accessibility or states to meet it.
+Until then: the branch builds and works; `npm run check:bundle` fails by 3.6 KB.
+
+## Say whether an appeal is possible on the application
+From: Track D1   To: Track A (applications, appeals)   Status: open
+What: `ApplicationOut` could carry `appeal: { possible: boolean, reason: "appeal_window_closed" | "appeal_already_open" | "appeal_already_decided" | "appeal_not_applicable" | null, days_left: number | null }`, computed with `appeals.rules.ineligible_reason` and `days_left`.
+Why: the citizen app shows "Ask a person to look again" on every rejected application and learns about a closed window only from the 409 after the person has gone through the screens. It reads `GET /v1/me/appeals` to hide the button for an open or decided appeal, but it cannot know the 30 days are over.
+Until then: the 409 codes `appeal_window_closed` (with `window_days`), `appeal_already_open`, `appeal_already_decided`, `appeal_not_applicable` and `consent_required` are shown as keyed messages.

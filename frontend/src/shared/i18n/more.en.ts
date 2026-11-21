@@ -199,6 +199,7 @@ export const enMore = {
   rp_send_yes: 'Yes, send it',
   rp_change: 'No, change it',
   rp_status: 'Status',
+  rp_retrying: 'We could not send it yet. It is saved on this phone. We will try again.',
   rp_e_consent: 'We need your permission first. Open My information and say yes.',
   ap_why_title: 'Why do you want a person to look again?',
   ap_why_income: 'My income is lower now',

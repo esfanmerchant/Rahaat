@@ -194,7 +194,7 @@ interface FlowSpec {
   queue: (choice: Option, note: string, key: string) => string;
   /** The label of the status the server returned. */
   status: (data: never) => Key;
-  after?: ComponentChildren;
+  after?: (choice: Option | null) => ComponentChildren;
 }
 
 const WHY: Readonly<Record<string, Key>> = {
@@ -231,7 +231,7 @@ function GoTo({ path, icon, label }: { path: string; icon: PictogramName; label:
 }
 
 /** After Send: sending, saved on the phone (no network), sent, or refused. */
-function Sent({ id, spec, again }: { id: string; spec: FlowSpec; again: () => void }) {
+function Sent({ id, spec, choice, again }: { id: string; spec: FlowSpec; choice: Option | null; again: () => void }) {
   const { route } = useLocation();
   const result = opResults.value.get(id);
   const queued = ops.value.find((op) => op.id === id);
@@ -252,9 +252,9 @@ function Sent({ id, spec, again }: { id: string; spec: FlowSpec; again: () => vo
             <Pictogram name="clock" size={32} class="text-primary" />
             {t('rp_status')}: {t(spec.status(data as never))}
           </p>
-          {message ? <p class="text-base text-ink">{message}</p> : null}
+          {message ? <p class="text-base text-ink">{message.replace(/-/g, '‑')}</p> : null}
         </div>
-        {spec.after}
+        {spec.after?.(choice)}
         {home}
       </CitizenShell>
     );
@@ -269,13 +269,14 @@ function Sent({ id, spec, again }: { id: string; spec: FlowSpec; again: () => vo
     );
   }
   const phase = queued ? opPhase(queued) : 'sending';
+  const saved: Key = queued && queued.tries > 0 ? 'rp_retrying' : 'outbox_stored';
   return (
-    <CitizenShell onBack={() => route('/')} prompt={phase === 'sending' ? undefined : 'outbox_stored'}>
+    <CitizenShell onBack={() => route('/')} prompt={phase === 'sending' ? undefined : saved}>
       {phase === 'sending' ? (
         <ScreenState kind="loading" body={t('outbox_sending')} />
       ) : (
-        <Notice tone="warn" icon="phone-saved" text={t('outbox_stored')}>
-          <AudioPrompt prompt="outbox_stored" autoPlay />
+        <Notice tone="warn" icon="phone-saved" text={t(saved)}>
+          <AudioPrompt prompt={saved} autoPlay />
         </Notice>
       )}
       {phase === 'sending' ? null : home}
@@ -294,6 +295,7 @@ function ReportFlow({ spec }: { spec: FlowSpec }) {
       <Sent
         id={sent}
         spec={spec}
+        choice={choice}
         again={() => {
           setSent(null);
           setStep(2);
@@ -345,7 +347,7 @@ function ReportFlow({ spec }: { spec: FlowSpec }) {
   };
   return (
     <CitizenShell onBack={back} speech={speechOf([spec.confirm, choice?.label ?? 'rp_change'], `confirm:${choice?.id}`)} progress={progress}>
-      <Heading icon="yes" title={spec.confirm} />
+      <Heading icon={spec.icon} title={spec.confirm} />
       {choice ? (
         <div class="flex items-center gap-3 rounded-lg border-2 border-line-strong bg-surface p-3">
           <Pictogram name={choice.icon} size={56} class="text-primary" />
@@ -372,7 +374,7 @@ function ReportFlow({ spec }: { spec: FlowSpec }) {
 // ---- appeals -----------------------------------------------------------------------------------
 
 const REASONS: readonly Option[] = [
-  { id: 'income', icon: 'income-1', label: 'ap_why_income' },
+  { id: 'income', icon: 'payment', label: 'ap_why_income' },
   { id: 'papers', icon: 'document', label: 'ap_why_papers' },
   { id: 'details', icon: 'edit', label: 'ap_why_details' },
   { id: 'other', icon: 'unknown', label: 'ap_why_other' },
@@ -403,6 +405,7 @@ const APPEAL_SPEC = (app: ApplicationOut): FlowSpec => ({
   queue: (choice, note, key) =>
     enqueueReport({ kind: 'appeal', key, text: note ? `${t(choice.label as Key, undefined, 'en')}: ${note}` : t(choice.label as Key, undefined, 'en') }, app.id).id,
   status: (data: AppealOut) => APPEAL_LABEL[data.status_key],
+  after: () => <GoTo path="/track" icon="clock" label="home_see_application" />,
 });
 
 /** One appeal as a star: its status, the date, and the server's keyed message (as text). */
@@ -412,7 +415,7 @@ function AppealStar({ appeal }: { appeal: AppealOut }) {
   const message = key === 'approved_after_appeal' ? null : appeal.message[lang.value];
   return (
     <div class="flex gap-4" aria-current="step">
-      <PaperStar now>
+      <PaperStar now={key === 'being_checked' || key === 'approved_after_appeal'}>
         <Pictogram name={APPEAL_ICON[key]} size={26} />
       </PaperStar>
       <div class="flex flex-col gap-1 pb-2 pt-2">
@@ -541,7 +544,12 @@ const COMPLAINT_SPEC: FlowSpec = {
   queue: (choice, note, key) =>
     enqueueReport({ kind: 'complaint', key, category: choice.id as ComplaintOut['category'], text: note }, null).id,
   status: (data: ComplaintOut) => COMPLAINT_LABEL[data.status],
-  after: <ScamLink />,
+  after: (choice) => (
+    <>
+      {choice?.id === 'scam_attempt' ? <ScamLink /> : null}
+      <GoTo path="/my-data/complaints" icon="message" label="cp_list_title" />
+    </>
+  ),
 };
 
 function MyComplaints() {
