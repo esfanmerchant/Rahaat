@@ -17,7 +17,7 @@ One multi-tenant SaaS platform, not a chatbot. It helps a low-literacy widow, a 
 
 ## Non-negotiables
 
-- **Mock data only.** Mock IDs are `00000-NNNNNNN-C`, mock phones are `0999-NNNNNNN`. Never add anything that looks like a real CNIC, phone number or person, and never process a real ID image. Real personal data disqualifies the team.
+- **Mock data only.** Mock IDs are `00000-NNNNNNN-C`, mock phones are `0999-NNNNNNN`, shown in Pakistan's format `+92 XXXXXXXXXX` as `+92 999NNNNNNN`. Never add anything that looks like a real CNIC, phone number or person, and never process a real ID image. Real personal data disqualifies the team.
 - **Security is enforced on the server**: the policy registry plus Postgres Row Level Security. Hiding a button is never the control. Never weaken a security or consent check to make a demo easier.
 - **No silent guessing.** Every AI component returns a `TypedDecision` and can abstain. Unknown stays unknown. Low confidence goes to ask-more or to a human with a handoff package.
 - **Wrong approvals cost more than slow ones.** Routing comes from the cost matrix in PLAN 6.1, not from ad hoc thresholds. Auto-reject only on a hard rule failing on verified input.

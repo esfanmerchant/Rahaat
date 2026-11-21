@@ -165,9 +165,9 @@ def test_the_app_role_keeps_a_pooler_project_suffix() -> None:
 
 
 def test_a_mock_phone_may_be_written_in_the_international_form() -> None:
-    for written in ("+92 999 1234567", "+92-999-1234567", "+929991234567", "0092 999 1234567", "92 999 1234567", "0999 1234567"):
+    for written in ("+92 9991234567", "+92 999 1234567", "+92-999-1234567", "+929991234567", "0092 999 1234567", "92 999 1234567", "0999 1234567"):
         assert mockdata.normalise_mock_phone(written) == "0999-1234567", written
-        assert mockdata.international_mock_phone(written) == "+92 999 1234567", written
+        assert mockdata.international_mock_phone(written) == "+92 9991234567", written
     for refused in ("+92 300 1234567", "+92 999 123456", "+92 999 12345678", "+44 999 1234567"):  # mock-lint: allow
         assert mockdata.normalise_mock_phone(refused) is None, refused
 

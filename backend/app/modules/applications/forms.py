@@ -82,7 +82,7 @@ def _value_errors(name: str, value: Any) -> list[FieldError]:
         if not mock_id_valid(value):
             return [FieldError(where, "The last digit of the ID does not match. Check the number.", "mock_id_check_digit")]
     if name == "phone" and (not isinstance(value, str) or normalise_mock_phone(value) is None):
-        return [FieldError(where, "Use the mock phone format 0999-NNNNNNN (or +92 999 NNNNNNN).", "mock_phone_format")]
+        return [FieldError(where, "Use a mock phone number: +92 999XXXXXXX (or 0999-XXXXXXX).", "mock_phone_format")]
     if name == "dob":
         try:
             born = date.fromisoformat(str(value))

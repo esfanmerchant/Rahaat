@@ -67,6 +67,7 @@ def mask_identifier(value: str) -> str:
 
 
 def international_mock_phone(value: str) -> str | None:
-    """The +92 form for display, `+92 999 NNNNNNN`, or None when the value is not a mock phone number."""
+    """Pakistan's international form for display, `+92 XXXXXXXXXX` (country code, a space, ten digits): for a mock
+    number that is `+92 999NNNNNNN`. None when the value is not a mock phone number."""
     canonical = normalise_mock_phone(value)
-    return f"+92 999 {canonical[-7:]}" if canonical else None
+    return f"+92 999{canonical[-7:]}" if canonical else None
