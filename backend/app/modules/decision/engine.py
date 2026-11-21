@@ -313,7 +313,7 @@ def decide(inp: DecisionInput, rules: RuleSetSnapshot, costs: CostMatrix, model:
             handoff = explain.build_handoff(inp=inp, facts=scored.facts, evals=scored.evals, floor=floor, p_eligible=p_e, p_genuine=p_g,
                                             proof=ask_ or proof, guards=guards, expected_costs=expected)  # fmt: skip
         return DecisionResult(
-            route=route_, outcome=outcome_, p_eligible=p_e, p_genuine=p_g, p_ok=p_ok,  # type: ignore[arg-type]
+            route=route_, outcome=outcome_, p_eligible=p_e, p_genuine=p_g, p_ok=p_ok,
             probabilities={"p_eligible": p_e, "p_genuine": p_g, "p_ok": p_ok, "p_ineligible": p_inel, **ask_detail},
             expected_costs=expected, thresholds=thresholds, facts=scored.facts, rule_trace=[e.trace for e in scored.evals],
             reasons=reasons_, guards=guards, ask_proof=ask_, handoff=handoff, explanation=explain.explanation_for(code, inp.lang),

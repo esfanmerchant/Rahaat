@@ -177,7 +177,7 @@ def _authenticity(choice: Authenticity | None, p_genuine: float, route: str, rea
     p = round(p_genuine, 3)
     return TypedDecision[Authenticity](
         choice=choice, probabilities={"genuine": p, "suspect": round(1 - p, 3)},
-        confidence=round(max(p, 1 - p), 3), route=route, reasons=reasons,  # type: ignore[arg-type]
+        confidence=round(max(p, 1 - p), 3), route=route, reasons=reasons,
         model_version="synth-docs-1", abstained=choice is None,
     )  # fmt: skip
 
@@ -252,7 +252,7 @@ def _income_proof(doc_id: str, income: int) -> DocumentCheck:
 def _field(value: Any, rng: random.Random, provenance: str = "tapped", low: float = 0.75) -> FieldValue[Any]:
     if value is None:
         return FieldValue()
-    return FieldValue(value=value, confidence=round(rng.uniform(low, 1.0), 2), provenance=provenance)  # type: ignore[arg-type]
+    return FieldValue(value=value, confidence=round(rng.uniform(low, 1.0), 2), provenance=provenance)
 
 
 def _application(rng: random.Random, index: int, *, applicant: SynthPerson, claimed: SynthPerson, record: RegistryRecord | None,
@@ -371,7 +371,7 @@ def _application(rng: random.Random, index: int, *, applicant: SynthPerson, clai
         tags.append("clean")
     inp = DecisionInput(
         application_id=f"synth-{case_id}", program_slug="rahat", lang=form.language, form=form, documents=documents,
-        identity=identity, registry_status=registry_status, registry=record if registry_status == "found" else None,  # type: ignore[arg-type]
+        identity=identity, registry_status=registry_status, registry=record if registry_status == "found" else None,
         duplicate=duplicate, anomaly=anomaly, consent_ok=consent_ok, queue_days=1.0,
         decided_at=(BASE_TIME + timedelta(minutes=7 * index)).isoformat(),
     )  # fmt: skip

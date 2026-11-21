@@ -322,7 +322,7 @@ def _number(value: Any) -> float | int:
 
 def _truth(value: Any) -> bool | _Unknown:
     if value is UNKNOWN or isinstance(value, bool):
-        return value  # type: ignore[no-any-return]
+        return value
     raise _EvalError(f"expected true or false, got {type(value).__name__}")
 
 

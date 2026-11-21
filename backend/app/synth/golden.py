@@ -24,7 +24,7 @@ DECIDED_AT: Final = "2026-11-21T10:00:00+00:00"
 
 def _auth(choice: Authenticity | None, p: float, route: str = "auto") -> TypedDecision[Authenticity]:
     return TypedDecision[Authenticity](choice=choice, probabilities={"genuine": p, "suspect": round(1 - p, 3)}, confidence=max(p, 1 - p),
-                                       route=route, abstained=choice is None, model_version="golden")  # type: ignore[arg-type]  # fmt: skip
+                                       route=route, abstained=choice is None, model_version="golden")  # fmt: skip
 
 
 def card(*, signed: bool | None = True, quality: str = "ok", national_id: str = MOCK_ID, name: str = "Zainab Bibi",
@@ -39,7 +39,7 @@ def card(*, signed: bool | None = True, quality: str = "ok", national_id: str = 
         auth = _auth("genuine", 0.98) if signed else _auth("suspect", 0.05, "human")
     signals = [DocumentSignal(code="qr_signature_valid" if signed else "qr_signature_invalid", weight=-2.0 if signed else 3.0,
                               staff_detail="signature check")] if signed is not None else []  # fmt: skip
-    return DocumentCheck(document_id=doc_id, kind="rahat_id", quality=quality, qr=qr,  # type: ignore[arg-type]
+    return DocumentCheck(document_id=doc_id, kind="rahat_id", quality=quality, qr=qr,
                          ocr=OcrResult(fields={"name": name.upper()}, mean_confidence=0.92, raw_text=f"RAHAT CARD SPECIMEN {name.upper()}"),
                          authenticity=auth, signals=signals, model_version="golden")  # fmt: skip
 

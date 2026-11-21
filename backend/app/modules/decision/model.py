@@ -77,9 +77,9 @@ class CalibratedLogit:
                 "knots_x": list(self.knots_x), "knots_y": list(self.knots_y), "clip": list(self.clip)}  # fmt: skip
 
 
-@dataclass(frozen=True)
+@dataclass
 class EvidenceModelV1:
-    """Implements `app.contracts.engine.EvidenceModel`."""
+    """Implements `app.contracts.engine.EvidenceModel`. Treat it as read-only; it is shared by the whole process."""
 
     version: str
     feature_names: tuple[str, ...]
