@@ -185,6 +185,7 @@ function SceneLayer({ pulse, onFail, setHover }: { pulse: Pulse | null; onFail: 
 
 function failureText(kind: string): { title: string; body: string } {
   if (kind === 'offline') return { title: 'You are offline', body: 'The live numbers need a connection. This page tries again by itself.' };
+  if (kind === 'network') return { title: 'Cannot reach the server', body: 'The request did not get through. This page tries again by itself every 15 seconds.' };
   if (kind === 'rate_limited') return { title: 'Too many requests', body: 'The public pulse is rate limited per network. Wait a minute and try again.' };
   if (kind === 'forbidden' || kind === 'unauthenticated') return { title: 'Not allowed', body: 'The server refused this request.' };
   return { title: 'The live engine did not answer', body: 'The server returned an error. Nothing is shown rather than a made-up number.' };
@@ -251,7 +252,7 @@ export default function LivePage() {
         {pulse ? summary(pulse) : 'Loading.'}
       </p>
 
-      <header class="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-x-2 gap-y-1 p-3 md:p-5">
+      <header class="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-x-2 gap-y-1 p-3 md:grid md:grid-cols-[1fr_auto] md:p-5">
         <div class="pointer-events-auto flex items-center gap-3">
           <Emblem size={full ? 60 : narrow ? 34 : 44} tone="night" animate />
           <h1 class={`m-0 flex items-baseline gap-3 font-black tracking-tight ${full ? 'text-4xl' : 'text-xl md:text-3xl'}`}>
@@ -279,7 +280,7 @@ export default function LivePage() {
             {full ? 'Exit projector' : 'Projector'}
           </button>
         </div>
-        <p class="m-0 basis-full text-[11px] leading-snug text-night-muted md:max-w-xl md:basis-auto md:pl-[56px] md:text-sm">
+        <p class="m-0 basis-full text-[11px] leading-snug text-night-muted md:col-start-1 md:max-w-xl md:basis-auto md:pl-[56px] md:text-sm">
           {pulse?.replay.available
             ? `Replay: the ${pulse.replay.replay_source} (${pulse.replay.cases_scored.toLocaleString('en-US')} synthetic cases, rule version ${pulse.replay.rule_version_no}) scored by the live engine. No real people.`
             : 'Replay of the synthetic labelled eval set, scored by the live engine. No real people.'}
@@ -313,11 +314,11 @@ export default function LivePage() {
       ) : null}
 
       {pulse ? (
-        <div class="absolute inset-x-0 bottom-0 z-10 flex max-h-[58dvh] flex-col gap-2 overflow-y-auto p-3 pb-14 md:max-h-none md:overflow-visible md:p-5 md:pb-10">
+        <div class="absolute inset-x-0 bottom-0 z-10 flex max-h-[58dvh] flex-col gap-2 overflow-y-auto p-3 pb-[4.75rem] md:max-h-none md:overflow-visible md:p-5 md:pb-10">
           {showEval && head ? (
             <section
               aria-label="Evaluation headline"
-              class="w-full rounded-xl border border-night-line bg-night/80 p-3 md:fixed md:right-5 md:top-[76px] md:w-[44rem]"
+              class="w-full rounded-xl border border-night-line bg-night/80 p-3 md:fixed md:right-5 md:top-[76px] md:w-[34rem] 2xl:w-[44rem]"
             >
               <h2 class="m-0 mb-2 text-xs font-bold uppercase tracking-wider text-noor">Measured on the synthetic labelled cases</h2>
               <dl class="m-0 grid grid-cols-3 gap-3">

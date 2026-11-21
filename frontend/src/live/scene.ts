@@ -300,10 +300,10 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   })();
 
   // ---- the dark horizon: where the light comes from ------------------------------------------------------------------
-  const horizon = pointSet(34, scale, false);
+  const horizon = pointSet(9, scale, false); // few and large: big sprites cost fill rate, so the glow is kept sparse
   for (let i = 0; i < horizon.n; i++) {
     const z = -52 + (i / (horizon.n - 1)) * 104;
-    setPoint(horizon, i, -104, 1.5, z, RGB.noor, 0.035, 60 + (i % 3) * 14);
+    setPoint(horizon, i, -104, 1.5, z, RGB.noor, 0.06, 80 + (i % 3) * 20);
   }
   scene.add(horizon.points);
   disposables.push(horizon.geom, horizon.mat);
@@ -506,7 +506,7 @@ export function createScene(canvas: HTMLCanvasElement, host: HTMLElement, hooks:
   let aspect = 16 / 9;
 
   function placeCamera(now: number): void {
-    const fit = Math.max(1, 0.9 / aspect);
+    const fit = Math.max(1, 0.78 / aspect);
     const azE = az + drift * 0.2 * Math.sin(now * 0.05);
     const distE = dist * fit * (1 + drift * 0.035 * Math.sin(now * 0.037));
     const polE = pol + drift * 0.03 * Math.sin(now * 0.041);

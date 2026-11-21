@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.db import system_session
 from app.db import models
 from app.demo_accounts import DEMO_TENANTS
+from app.modules.decision import facts as F
 from app.modules.decision.engine import route_for
 from app.modules.decision.model import get_model
 from app.modules.evals import decision_eval as E
@@ -66,7 +67,7 @@ def replay(db: Session, tenant_ids: list[Any]) -> dict[str, Any]:
         scores = E.cached_scores(rules.dsl, model)
         report = E.analyse(scores, costs)
         params = rules.dsl.get("params") if isinstance(rules.dsl, dict) else None
-        floor = float((params or {}).get("confidence_floor", 0.0))
+        floor = float(F.param(params or {}, "confidence_floor", F.DEFAULT_CONFIDENCE_FLOOR))
         approve_at = float(report["thresholds"]["approve"])
         rows = []
         for s in S.sample(scores):
