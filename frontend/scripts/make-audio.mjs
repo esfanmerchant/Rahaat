@@ -58,7 +58,9 @@ const args = process.argv.slice(2);
 const force = args.includes('--force');
 const langs = args.filter((arg) => !arg.startsWith('--'));
 const targets = langs.length > 0 ? langs : Object.keys(VOICES);
-const CONCURRENCY = 4;
+const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY) || 4;
+// --adopt: a file that exists for a key the index does not know yet is kept (an earlier run was stopped before it wrote the index).
+const adopt = args.includes('--adopt');
 
 async function dictionary(code) {
   const module = await import(pathToFileURL(join(i18n, `${code}.ts`)).href);
@@ -123,7 +125,7 @@ async function run(code) {
   for (const [key, text] of Object.entries(texts)) {
     const digest = hash(voice, text);
     const file = join(dir, `${key}.mp3`);
-    if (!force && previous[key] === digest && existsSync(file) && statSync(file).size > 0) {
+    if (!force && (previous[key] === digest || (adopt && previous[key] === undefined)) && existsSync(file) && statSync(file).size > 0) {
       files[key] = digest;
     } else {
       todo.push({ key, text, digest, file });
