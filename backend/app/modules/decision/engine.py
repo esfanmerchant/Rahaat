@@ -252,6 +252,116 @@ def _reasons(action: str, guards: Sequence[str], evals: Sequence[RuleEvaluation]
     return list(dict.fromkeys(out))
 
 
+@dataclass(frozen=True, slots=True)
+class Pricing:
+    """What routing needs to know about one case, apart from the costs. Small, so evals can cache thousands.
+
+    `price()` and `route_for()` turn it into expected costs and an action for any cost matrix. `decide()`
+    uses the same two functions, so a "what if the costs were different" answer is exactly what the engine
+    would have done with those costs.
+    """
+
+    p_ok: float
+    p_inel: float
+    approve_allowed: bool
+    reject_allowed: bool
+    proof: str | None
+    cf_p_ok: float | None
+    cf_approvable: bool
+    q: float
+    guards: tuple[str, ...]
+    queue_days: float
+    proof_days: float
+
+
+def price(pricing: Pricing, costs: CostMatrix) -> dict[str, float]:
+    """Expected cost of every allowed action (PLAN 6.1), rounded to the engine's precision."""
+    human = _r(costs.human_cost(pricing.queue_days))
+    expected: dict[str, float] = {"human": human}
+    if pricing.approve_allowed:
+        expected["approve"] = _r((1 - pricing.p_ok) * costs.wrong_approve)
+    if pricing.reject_allowed:
+        expected["reject"] = _r((1 - pricing.p_inel) * costs.wrong_reject)
+    if pricing.proof is not None and pricing.cf_p_ok is not None:
+        after = min(_r((1 - pricing.cf_p_ok) * costs.wrong_approve), human) if pricing.cf_approvable else human
+        q = pricing.q
+        expected["ask_proof"] = _r(costs.ask_proof + costs.delay_per_day * pricing.proof_days + q * after + (1 - q) * human)
+    return expected
+
+
+def thresholds_for(costs: CostMatrix, queue_days: float, floor: float) -> dict[str, float]:
+    return {
+        "approve": _r(costs.approve_threshold(queue_days)),
+        "reject": _r(costs.reject_threshold(queue_days)),
+        "confidence_floor": floor,
+    }
+
+
+def cheapest(expected: Mapping[str, float]) -> str:
+    """The action with the lowest expected cost; a tie goes to the safer action."""
+    return min(expected, key=lambda a: (expected[a], TIE_ORDER.index(a)))
+
+
+def route_for(pricing: Pricing, costs: CostMatrix) -> tuple[str, dict[str, float]]:
+    """The action `decide()` takes for this case under these costs, and the expected costs it compared.
+
+    Guards force a person. The two threshold checks of the silent-guess invariant that depend on the costs
+    are repeated here, so the answer matches `decide()` even at the rounding edge.
+    """
+    expected = price(pricing, costs)
+    action = "human" if pricing.guards else cheapest(expected)
+    tolerance = 0.5 * 10**-PRECISION
+    if action == "approve" and pricing.p_ok < _r(costs.approve_threshold(pricing.queue_days)) - tolerance:
+        action = "human"
+    if action == "reject" and _r(pricing.p_inel) < _r(costs.reject_threshold(pricing.queue_days)) - tolerance:
+        action = "human"
+    return action, expected
+
+
+@dataclass(frozen=True, slots=True)
+class Assessment:
+    """Everything `decide()` works out about a case before it looks at the cost matrix."""
+
+    scored: _Scored
+    floor: float
+    pricing: Pricing
+    failing: tuple[RuleEvaluation, ...]
+    ask_detail: dict[str, float]
+
+
+def assess(inp: DecisionInput, dsl: Mapping[str, Any], model: EvidenceModel) -> Assessment:
+    """Facts, rules, probabilities, which actions are allowed and what asking for a proof would bring.
+
+    Needs a validated rule version. Pure; independent of the costs, so it can be computed once and priced
+    under many cost matrices.
+    """
+    params: Mapping[str, Any] = dsl.get("params", {}) or {}
+    floor = _r(F.param(params, "confidence_floor", F.DEFAULT_CONFIDENCE_FLOOR))
+    proof_days = F.param(params, "proof_days", DEFAULT_PROOF_DAYS)
+    scored = _score(inp, dsl, model)
+    p_ok = scored.p_ok
+    hard = [e for e in scored.evals if e.trace.hard]
+    approve_allowed = _approvable(scored, floor)
+    failing = tuple(e for e in hard if e.settled("fail", floor))
+    reject_allowed = bool(failing) and identity_confirmed(scored.facts)
+    proof = None if failing or approve_allowed else _blocking_proof(inp, scored, floor)
+    cf_p_ok: float | None = None
+    cf_approvable = False
+    q = 0.0
+    ask_detail: dict[str, float] = {}
+    if proof is not None:
+        cf = _score(counterfactual(inp, proof, params), dsl, model)
+        cf_p_ok, cf_approvable = cf.p_ok, _approvable(cf, floor)
+        q = _r(min(1.0, p_ok / cf.p_ok)) if cf.p_ok > 0 else 0.0
+        ask_detail = {"p_ok_if_confirmed": cf.p_ok, "q_confirms": q}
+    pricing = Pricing(
+        p_ok=p_ok, p_inel=_r(1 - scored.p_eligible), approve_allowed=approve_allowed, reject_allowed=reject_allowed, proof=proof,
+        cf_p_ok=cf_p_ok, cf_approvable=cf_approvable, q=q, guards=tuple(guards_for(inp)), queue_days=inp.queue_days,
+        proof_days=proof_days,
+    )  # fmt: skip
+    return Assessment(scored=scored, floor=floor, pricing=pricing, failing=failing, ask_detail=ask_detail)
+
+
 def _finish(result: DecisionResult, costs: CostMatrix) -> DecisionResult:
     material = result.model_dump(mode="json", exclude={"result_hash"})
     material["cost_matrix"] = costs.model_dump(mode="json")
@@ -277,43 +387,17 @@ def decide(inp: DecisionInput, rules: RuleSetSnapshot, costs: CostMatrix, model:
     dsl = rules.dsl
     if validate(dsl):
         return _invalid_rules(inp, rules, costs, model, input_hash)
-    params: Mapping[str, Any] = dsl.get("params", {}) or {}
-    floor = _r(F.param(params, "confidence_floor", F.DEFAULT_CONFIDENCE_FLOOR))
-    proof_days = F.param(params, "proof_days", DEFAULT_PROOF_DAYS)
-
-    scored = _score(inp, dsl, model)
-    p_e, p_g, p_ok = scored.p_eligible, scored.p_genuine, scored.p_ok
-    p_inel = _r(1 - p_e)
-    human = _r(costs.human_cost(inp.queue_days))
-    thresholds = {
-        "approve": _r(costs.approve_threshold(inp.queue_days)),
-        "reject": _r(costs.reject_threshold(inp.queue_days)),
-        "confidence_floor": floor,
-    }
-
+    assessed = assess(inp, dsl, model)
+    scored, floor, pricing, failing = assessed.scored, assessed.floor, assessed.pricing, list(assessed.failing)
+    p_e, p_g, p_ok, p_inel = scored.p_eligible, scored.p_genuine, scored.p_ok, pricing.p_inel
+    approve_allowed, reject_allowed, proof = pricing.approve_allowed, pricing.reject_allowed, pricing.proof
+    thresholds = thresholds_for(costs, inp.queue_days, floor)
     hard = [e for e in scored.evals if e.trace.hard]
-    approve_allowed = _approvable(scored, floor)
-    failing = [e for e in hard if e.settled("fail", floor)]
-    reject_allowed = bool(failing) and identity_confirmed(scored.facts)
+    expected = price(pricing, costs)
+    ask_detail = assessed.ask_detail
 
-    expected: dict[str, float] = {"human": human}
-    if approve_allowed:
-        expected["approve"] = _r((1 - p_ok) * costs.wrong_approve)
-    if reject_allowed:
-        expected["reject"] = _r((1 - p_inel) * costs.wrong_reject)
-    proof = None if failing or approve_allowed else _blocking_proof(inp, scored, floor)
-    ask_detail: dict[str, float] = {}
-    if proof is not None:
-        cf = _score(counterfactual(inp, proof, params), dsl, model)
-        after = min(_r((1 - cf.p_ok) * costs.wrong_approve), human) if _approvable(cf, floor) else human
-        q = _r(min(1.0, p_ok / cf.p_ok)) if cf.p_ok > 0 else 0.0
-        expected["ask_proof"] = _r(costs.ask_proof + costs.delay_per_day * proof_days + q * after + (1 - q) * human)
-        ask_detail = {"p_ok_if_confirmed": cf.p_ok, "q_confirms": q}
-
-    action = min(expected, key=lambda a: (expected[a], TIE_ORDER.index(a)))
-    guards = guards_for(inp)
-    if guards:
-        action = "human"
+    guards = list(pricing.guards)
+    action = "human" if guards else cheapest(expected)
     route, outcome = ROUTES[action]
     ask_proof = proof if action == "ask_proof" else None
     reasons = _reasons(
