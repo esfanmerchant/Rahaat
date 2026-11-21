@@ -64,7 +64,7 @@ ignore = ["B008", "S101", "S105", "S106", "S311", "UP046"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["app/core", "app/contracts", "app/mocks", "app/modules/cases", "app/modules/payments", "app/modules/notifications", "app/modules/jobs", "app/modules/integrations", "app/modules/rules", "app/modules/decision", "app/modules/evals", "app/modules/docs_ai", "app/modules/scam"]
+files = ["app/core", "app/contracts", "app/mocks", "app/modules/cases", "app/modules/payments", "app/modules/notifications", "app/modules/jobs", "app/modules/integrations", "app/modules/rules", "app/modules/decision", "app/modules/evals", "app/modules/docs_ai", "app/modules/scam", "app/modules/matching", "app/modules/twin"]
 plugins = ["pydantic.mypy"]
 # Strict typing is for the application code; tests are checked by running them.
 exclude = ["/tests/"]

@@ -73,7 +73,7 @@ Track D2
 ## Phase 2: the eight challenges (T1)
 
 - [ ] A9 API keys  - [ ] A10 Rate limiting  - [ ] A11 Consent centre API  - [ ] A12 Helper delegations  - [ ] A13 Sync endpoint  - [ ] A14 Security test suite
-- [ ] B7 Threshold analysis  - [ ] B8 Name matching and dedupe  - [ ] B9 Handoff package and cheapest question  - [ ] B10 Golden tests  - [ ] B11 Replay
+- [x] B7 Cost of being wrong: curves, ROC/PR, confusion, reliability (ECE 0.033) on 1,223 held-out cases; what-if in ~45 ms; admin cost matrix  - [x] B8 Name matching and dedupe: 456 messy pairs, 0 wrong links; Mohammad/Muhammed with another phone goes to a person  - [x] B9 Handoff package and cheapest question  - [x] B10 Golden tests (silent guesses 0, measured from stored decisions)  - [x] B11 Replay and decision list
 - [ ] C4 Voice  - [ ] C5 Audio assets  - [ ] C6 Forgery depth and metrics  - [x] C7 Scam reports (redacted), campaigns by MinHash, Scam Map data with k-anonymity (k=5), public warnings, disputes open a case  - [ ] C8 Scam checker by screenshot and voice
 - [ ] D1.5 PWA offline  - [ ] D1.6 Voice answers  - [ ] D1.7 Consent centre  - [ ] D1.8 Scam checker  - [ ] D1.9 Helper Mode
 - [x] D2.4 Rule editor (two admins, four-eyes publish shown)  - [ ] D2.5 Cost of being wrong  - [ ] D2.6 Challenge Lab  - [x] D2.7 Audit explorer
@@ -83,7 +83,7 @@ Track D2
 ## Phase 3: bonus features and the rest (T2)
 
 - [ ] A15 Webhooks  - [ ] A16 Plans and usage  - [ ] A17 USSD/SMS and verify code  - [ ] A18 Appeals, complaints, admin users, reports
-- [ ] B12 Digital Twin  - [ ] B13 Eval dashboard API  - [ ] B14 Analytics  - [ ] B15 Anomaly detection  - [ ] B16 Override feedback
+- [x] B12 Digital Twin: draft rules replayed over live and labelled cases, fairness slices, no side effects  - [x] B13 Evaluation summary API  - [ ] B14 Analytics  - [ ] B15 Anomaly detection  - [ ] B16 Override feedback
 - [ ] C9 RAG  - [ ] C10 Agent  - [ ] C11 Guardrails and red team  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
 - [ ] D1.10 Sync conflicts, local encryption  - [ ] D1.11 USSD simulator, symbols  - [ ] D1.12 Budgets in CI
 - [ ] D2.8 Digital Twin view  - [ ] D2.9 Scam Map  - [ ] D2.10 Dashboards  - [ ] D2.11 Admin screens

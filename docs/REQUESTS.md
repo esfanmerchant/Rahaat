@@ -27,7 +27,7 @@ Why: the queue filters in the browser today and cannot page.
 Until then: client-side filtering over one page.
 
 ## Decision list and replay
-From: Track D2   To: Track B   Status: open (Phase 2, item B11)
+From: Track D2   To: Track B   Status: done (B2: GET /v1/decisions, POST /v1/decisions/{id}/replay)
 What: `GET /v1/decisions` (auditor, paged) and `POST /v1/decisions/{id}/replay` returning `ReplayResult`; a named response model for `GET /v1/decisions/{id}` instead of a map.
 Why: the decision viewer needs a list and a replay button.
 Until then: the viewer opens a decision by id and says replay is not available.

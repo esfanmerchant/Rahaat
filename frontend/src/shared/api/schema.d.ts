@@ -553,6 +553,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/cost-matrix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The department's costs and the thresholds they give */
+        get: operations["get_cost_matrix_v1_cost_matrix_get"];
+        /** Change the costs (audited); the next decision uses them */
+        put: operations["put_cost_matrix_v1_cost_matrix_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Decisions, newest first, filtered; no personal data */
+        get: operations["list_decisions_v1_decisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/decisions/{decision_id}": {
         parameters: {
             query?: never;
@@ -564,6 +599,23 @@ export interface paths {
         get: operations["get_decision_v1_decisions__decision_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/decisions/{decision_id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recompute from the stored snapshot and pinned versions */
+        post: operations["replay_v1_decisions__decision_id__replay_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -598,6 +650,210 @@ export interface paths {
         get: operations["document_content_v1_documents__document_id__content_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Possible and linked duplicates, newest first */
+        get: operations["list_duplicates_v1_duplicates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/duplicates/{candidate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One pair and what agreed */
+        get: operations["get_duplicate_v1_duplicates__candidate_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/duplicates/{candidate_id}/distinct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two different people */
+        post: operations["distinct_duplicate_v1_duplicates__candidate_id__distinct_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/duplicates/{candidate_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The same person: link the two records (reversible) */
+        post: operations["link_duplicate_v1_duplicates__candidate_id__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/duplicates/{candidate_id}/unlink": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a link */
+        post: operations["unlink_duplicate_v1_duplicates__candidate_id__unlink_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evals/decisions/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Threshold analysis on 1,000+ held-out labelled cases */
+        get: operations["latest_v1_evals_decisions_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evals/decisions/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run the analysis and store it */
+        post: operations["run_v1_evals_decisions_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evals/decisions/what-if": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** What these costs would do; nothing is saved */
+        post: operations["what_if_v1_evals_decisions_what_if_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evals/names": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dedupe bands measured on 200+ labelled messy record pairs */
+        get: operations["names_v1_evals_names_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evals/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stored evaluation runs, newest first */
+        get: operations["list_runs_v1_evals_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evals/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accuracy, mistakes, abstention, silent guesses, latency, cost */
+        get: operations["eval_summary_v1_evals_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/matching/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare two mock records; nothing is stored */
+        post: operations["compare_records_v1_matching_compare_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1185,6 +1441,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/twin/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Digital Twin runs, newest first */
+        get: operations["list_runs_v1_twin_runs_get"];
+        put?: never;
+        /** Run a draft over past and labelled cases; nothing is sent or paid */
+        post: operations["run_v1_twin_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/twin/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One Digital Twin run */
+        get: operations["get_run_v1_twin_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/twin/runs/{run_id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record that the draft does not go ahead */
+        post: operations["discard_v1_twin_runs__run_id__discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/twin/runs/{run_id}/request-publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send the draft for a second admin to publish */
+        post: operations["request_publish_v1_twin_runs__run_id__request_publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1478,6 +1803,13 @@ export interface components {
             token_type: "bearer";
             user: components["schemas"]["UserOut"];
         };
+        /** BestThresholdOut */
+        BestThresholdOut: {
+            /** Cost Per Case */
+            cost_per_case: number;
+            /** Threshold */
+            threshold: number;
+        };
         /** Body_upload_document_v1_applications__application_id__documents_post */
         Body_upload_document_v1_applications__application_id__documents_post: {
             /**
@@ -1665,6 +1997,19 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** CaseSide */
+        CaseSide: {
+            /** Expected Cost */
+            expected_cost: number;
+            /** Outcome */
+            outcome: string;
+            /** P Ok */
+            p_ok: number;
+            /** Reasons */
+            reasons: string[];
+            /** Route */
+            route: string;
+        };
         /** CaseSummary */
         CaseSummary: {
             /** Age Minutes */
@@ -1715,6 +2060,82 @@ export interface components {
             ok: boolean;
             /** Problem */
             problem?: string | null;
+        };
+        /** ChangedCaseOut */
+        ChangedCaseOut: {
+            after: components["schemas"]["CaseSide"];
+            before: components["schemas"]["CaseSide"];
+            /** Dataset */
+            dataset: string;
+            /**
+             * Ref
+             * @description A synthetic case id, or a stored decision id (no names)
+             */
+            ref: string;
+            /** Slices */
+            slices: {
+                [key: string]: string | null;
+            };
+        };
+        /** CompareIn */
+        CompareIn: {
+            a: components["schemas"]["RecordIn"];
+            b: components["schemas"]["RecordIn"];
+        };
+        /** CompareOut */
+        CompareOut: {
+            /**
+             * Band
+             * @description same | possible | distinct
+             */
+            band: string;
+            /**
+             * Blocked Together
+             * @description Whether blocking would even compare these two records
+             */
+            blocked_together: boolean;
+            /** Conflicts */
+            conflicts: string[];
+            /** Corroborated */
+            corroborated: boolean;
+            /** Fields */
+            fields: {
+                [key: string]: string;
+            };
+            /** Name Score */
+            name_score: number;
+            /**
+             * Note
+             * @default Nothing was stored. Same needs an agreeing identifier and nothing contradicting; a name alone is never enough.
+             */
+            note: string;
+            /** Reasons */
+            reasons: string[];
+            /** Score */
+            score: number;
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
+        };
+        /** ConfusionOut */
+        ConfusionOut: {
+            /**
+             * Columns
+             * @description Outcome: approved | rejected | needs_proof | needs_human
+             */
+            columns: string[];
+            /** Counts */
+            counts: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            /**
+             * Rows
+             * @description Truth: eligible_and_genuine | not_eligible | not_genuine
+             */
+            rows: string[];
         };
         /** ConsentCreate */
         ConsentCreate: {
@@ -1777,6 +2198,17 @@ export interface components {
             /** Withdrawn At */
             withdrawn_at?: string | null;
         };
+        /** CostCurvePoint */
+        CostCurvePoint: {
+            /** Approvals */
+            approvals: number;
+            /** Cost Per Case */
+            cost_per_case: number;
+            /** False Approvals */
+            false_approvals: number;
+            /** Threshold */
+            threshold: number;
+        };
         /**
          * CostMatrix
          * @description Per-tenant costs in units (1 unit is about Rs 120). Admin-editable; thresholds derive from it.
@@ -1807,6 +2239,223 @@ export interface components {
              * @default 30
              */
             wrong_reject: number;
+        };
+        /**
+         * CostMatrixIn
+         * @description Costs in units (1 unit is about Rs 120). The thresholds follow from these; none is set by hand.
+         */
+        CostMatrixIn: {
+            /**
+             * Ask Proof
+             * @description One more step for the citizen
+             * @default 1
+             */
+            ask_proof: number;
+            /**
+             * Delay Per Day
+             * @description Each day of waiting
+             * @default 0.2
+             */
+            delay_per_day: number;
+            /**
+             * Human Review
+             * @description One officer review
+             * @default 3
+             */
+            human_review: number;
+            /**
+             * Wrong Approve
+             * @description A payment to someone not eligible or not genuine
+             * @default 100
+             */
+            wrong_approve: number;
+            /**
+             * Wrong Reject
+             * @description An eligible family denied
+             * @default 30
+             */
+            wrong_reject: number;
+        };
+        /** CostMatrixOut */
+        CostMatrixOut: {
+            costs: components["schemas"]["CostMatrix"];
+            /**
+             * Eval Run Id
+             * @description The analysis stored for this matrix, when one was made
+             */
+            eval_run_id?: string | null;
+            thresholds: components["schemas"]["ThresholdsOut"];
+        };
+        /** CostMatrixSave */
+        CostMatrixSave: {
+            /**
+             * Ask Proof
+             * @description One more step for the citizen
+             * @default 1
+             */
+            ask_proof: number;
+            /**
+             * Delay Per Day
+             * @description Each day of waiting
+             * @default 0.2
+             */
+            delay_per_day: number;
+            /**
+             * Human Review
+             * @description One officer review
+             * @default 3
+             */
+            human_review: number;
+            /**
+             * Reason
+             * @description Stored in the audit log
+             */
+            reason: string;
+            /**
+             * Wrong Approve
+             * @description A payment to someone not eligible or not genuine
+             * @default 100
+             */
+            wrong_approve: number;
+            /**
+             * Wrong Reject
+             * @description An eligible family denied
+             * @default 30
+             */
+            wrong_reject: number;
+        };
+        /** DatasetOut */
+        DatasetOut: {
+            /** Cases */
+            cases: number;
+            /** Eligible And Genuine */
+            eligible_and_genuine: number;
+            /** Families */
+            families: number;
+            /** Held Out */
+            held_out: boolean;
+            /** Name */
+            name: string;
+            /** Not Genuine */
+            not_genuine: number;
+            /** Note */
+            note: string;
+            /** Persons */
+            persons: number;
+            /** Seed */
+            seed: number;
+        };
+        /** DatasetSummaryOut */
+        DatasetSummaryOut: {
+            /**
+             * Base Differs From Stored
+             * @description Live only: decisions the base version would now decide differently
+             */
+            base_differs_from_stored?: number | null;
+            /**
+             * Change
+             * @description After minus before, per outcome
+             */
+            change: {
+                [key: string]: number;
+            };
+            /** Changed */
+            changed: number;
+            /** Expected Cost After */
+            expected_cost_after: number;
+            /** Expected Cost Before */
+            expected_cost_before: number;
+            /** Expected Cost Change */
+            expected_cost_change: number;
+            /** Expected Cost Change Per Case */
+            expected_cost_change_per_case: number;
+            /** Flagged Slices */
+            flagged_slices: string[];
+            /** @description Synthetic cases only: realised cost and mistakes against the truth */
+            labelled?: components["schemas"]["LabelledOut"] | null;
+            /** N */
+            n: number;
+            /** Outcomes After */
+            outcomes_after: {
+                [key: string]: number;
+            };
+            /** Outcomes Before */
+            outcomes_before: {
+                [key: string]: number;
+            };
+            /** Payout After Pkr */
+            payout_after_pkr: number;
+            /** Payout Before Pkr */
+            payout_before_pkr: number;
+            /**
+             * Skipped
+             * @description Stored decisions whose snapshot could not be read
+             * @default 0
+             */
+            skipped: number;
+            /** Slices */
+            slices: {
+                [key: string]: components["schemas"]["SliceRow"][];
+            };
+            /**
+             * Transitions
+             * @description transitions[before][after] = number of cases
+             */
+            transitions: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+        };
+        /**
+         * DecisionAnalysisOut
+         * @description Everything the cost page shows: thresholds, the operating point, curves and calibration.
+         */
+        DecisionAnalysisOut: {
+            /** Approvable Cases */
+            approvable_cases: number;
+            /** Average Precision */
+            average_precision?: number | null;
+            best_threshold: components["schemas"]["BestThresholdOut"];
+            confusion: components["schemas"]["ConfusionOut"];
+            /** Cost Curve */
+            cost_curve: components["schemas"]["CostCurvePoint"][];
+            costs: components["schemas"]["CostMatrix"];
+            /** Created At */
+            created_at?: string | null;
+            dataset: components["schemas"]["DatasetOut"];
+            /** Elapsed Ms */
+            elapsed_ms?: number | null;
+            /**
+             * Explanation
+             * @description Why the chosen operating point wins, from the numbers
+             */
+            explanation: string;
+            /** Model Version */
+            model_version: string;
+            operating_point: components["schemas"]["OperatingPointOut"];
+            /** Pr */
+            pr: components["schemas"]["PrPoint"][];
+            reliability: components["schemas"]["ReliabilityOut"];
+            /**
+             * Roc
+             * @description p_ok as the approve signal, over cases the rules let it approve
+             */
+            roc: components["schemas"]["RocPoint"][];
+            /** Roc Auc */
+            roc_auc?: number | null;
+            /** Rule Version Id */
+            rule_version_id?: string | null;
+            /** Rule Version No */
+            rule_version_no?: number | null;
+            /**
+             * Run Id
+             * @description Set when this analysis is a stored eval run
+             */
+            run_id?: string | null;
+            /** Stored */
+            stored: boolean;
+            thresholds: components["schemas"]["ThresholdsOut"];
         };
         /**
          * DecisionInput
@@ -1858,6 +2507,13 @@ export interface components {
              * @default 1
              */
             schema_version: string;
+        };
+        /** DecisionList */
+        DecisionList: {
+            /** Items */
+            items: components["schemas"]["DecisionSummary"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
         };
         /** DecisionResult */
         DecisionResult: {
@@ -1935,6 +2591,64 @@ export interface components {
             thresholds: {
                 [key: string]: number;
             };
+        };
+        /**
+         * DecisionSummary
+         * @description A row of the decision list. No names, identifiers or snapshot.
+         */
+        DecisionSummary: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Ask Proof */
+            ask_proof?: string | null;
+            /** Case Id */
+            case_id?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Decided At */
+            decided_at: string;
+            /** Engine Version */
+            engine_version: string;
+            /**
+             * Expected Cost
+             * @description Expected cost of the action taken, in cost units
+             */
+            expected_cost?: number | null;
+            /** Guards */
+            guards?: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /** Main Reason */
+            main_reason?: string | null;
+            /** Model Version */
+            model_version: string;
+            /**
+             * Outcome
+             * @description approved | rejected | needs_proof | needs_human
+             */
+            outcome: string;
+            /** P Ok */
+            p_ok?: number | null;
+            /**
+             * Route
+             * @description auto | ask_more | human
+             */
+            route: string;
+            /**
+             * Rule Version Id
+             * Format: uuid
+             */
+            rule_version_id: string;
+            /** Rule Version No */
+            rule_version_no?: number | null;
         };
         /**
          * DecisionTrace
@@ -2034,8 +2748,18 @@ export interface components {
             /** Rule Version No */
             rule_version_no: number;
         };
-        /** DecisionView */
+        /**
+         * DecisionView
+         * @description One decision: what the citizen was told, and the full trace (masked for auditors).
+         */
         DecisionView: {
+            /** Case Id */
+            case_id?: string | null;
+            /**
+             * Replay Available
+             * @description The pinned model version is loaded, so POST .../replay can recompute it exactly
+             */
+            replay_available: boolean;
             trace: components["schemas"]["DecisionTrace"];
             user_view: components["schemas"]["DecisionUserView"];
         };
@@ -2278,6 +3002,53 @@ export interface components {
             other_person_ref?: string | null;
             /** Score */
             score: number;
+        };
+        /** EvalRunList */
+        EvalRunList: {
+            /** Items */
+            items: components["schemas"]["EvalRunSummary"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** EvalRunSummary */
+        EvalRunSummary: {
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Model Version */
+            model_version?: string | null;
+            /** Rule Version Id */
+            rule_version_id?: string | null;
+        };
+        /** EvalSummaryOut */
+        EvalSummaryOut: {
+            /** Generated At */
+            generated_at: string;
+            /** @description The analysis for the active rules and costs (stored run, or fresh) */
+            labelled: components["schemas"]["LabelledStats"] | null;
+            /**
+             * Labelled By Rule Version
+             * @description The latest stored run of each rule version
+             */
+            labelled_by_rule_version: components["schemas"]["LabelledStats"][];
+            /** Live By Rule Version */
+            live_by_rule_version: components["schemas"]["LiveStats"][];
+            live_overall: components["schemas"]["LiveStats"];
+            names: components["schemas"]["NamesStats"];
+            /** Notes */
+            notes: string[];
+            /** Silent Guesses Total */
+            silent_guesses_total: number;
         };
         /**
          * Explanation
@@ -2591,6 +3362,120 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** LabelledOut */
+        LabelledOut: {
+            after: components["schemas"]["MistakeCounts"];
+            before: components["schemas"]["MistakeCounts"];
+            /** Eligible After */
+            eligible_after: number;
+            /** Eligible Before */
+            eligible_before: number;
+            /** Realised Cost After */
+            realised_cost_after: number;
+            /** Realised Cost Before */
+            realised_cost_before: number;
+            /** Realised Cost Change */
+            realised_cost_change: number;
+        };
+        /** LabelledStats */
+        LabelledStats: {
+            /** Abstention Rate */
+            abstention_rate: number;
+            /**
+             * Accuracy Of Automatic
+             * @description Right automatic answers / automatic answers
+             */
+            accuracy_of_automatic?: number | null;
+            /** All Human Cost Per Case */
+            all_human_cost_per_case: number;
+            /** Cases */
+            cases: number;
+            /** Cost Per Case */
+            cost_per_case: number;
+            /** Created At */
+            created_at?: string | null;
+            /** Ece */
+            ece?: number | null;
+            /** False Approvals */
+            false_approvals: number;
+            /** False Approve Rate */
+            false_approve_rate: number;
+            /** False Reject Rate */
+            false_reject_rate: number;
+            /** False Rejections */
+            false_rejections: number;
+            /** Model Version */
+            model_version?: string | null;
+            /** Not Automatic Although Ok */
+            not_automatic_although_ok: number;
+            /** Roc Auc */
+            roc_auc?: number | null;
+            /** Rule Version Id */
+            rule_version_id?: string | null;
+            /** Rule Version No */
+            rule_version_no?: number | null;
+            /** Run Id */
+            run_id?: string | null;
+            /**
+             * Silent Guesses
+             * @default 0
+             */
+            silent_guesses: number;
+            /** Stored */
+            stored: boolean;
+            /** Unnecessary Handoffs */
+            unnecessary_handoffs: number;
+        };
+        /** LiveStats */
+        LiveStats: {
+            /**
+             * Abstention Rate
+             * @description Share not decided automatically (asked for proof or sent to a person)
+             */
+            abstention_rate: number;
+            /** Auto Rate */
+            auto_rate: number;
+            /** Decisions */
+            decisions: number;
+            /**
+             * Engine Fallbacks
+             * @description Decisions where the engine refused to guess (invariant fallback or invalid rules)
+             */
+            engine_fallbacks: number;
+            /** Expected Cost Per Decision */
+            expected_cost_per_decision?: number | null;
+            /** Guards */
+            guards: {
+                [key: string]: number;
+            };
+            /** Latency Ms P50 */
+            latency_ms_p50?: number | null;
+            /** Latency Ms P95 */
+            latency_ms_p95?: number | null;
+            /** Officer Overrides */
+            officer_overrides: number;
+            /** Officer Reviews */
+            officer_reviews: number;
+            /** Outcomes */
+            outcomes: {
+                [key: string]: number;
+            };
+            /** Override Rate */
+            override_rate?: number | null;
+            /** Routes */
+            routes: {
+                [key: string]: number;
+            };
+            /** Rule Version Id */
+            rule_version_id?: string | null;
+            /** Rule Version No */
+            rule_version_no?: number | null;
+            /**
+             * Silent Guesses
+             * @description Automatic decisions that break the invariant, rechecked from the stored rows; must be 0
+             */
+            silent_guesses: number;
+        };
         /** LoginIn */
         LoginIn: {
             /**
@@ -2677,6 +3562,15 @@ export interface components {
             /** Tenant Slug */
             tenant_slug: string;
         };
+        /** MistakeCounts */
+        MistakeCounts: {
+            /** False Approvals */
+            false_approvals: number;
+            /** False Rejections */
+            false_rejections: number;
+            /** Not Automatic Although Ok */
+            not_automatic_although_ok: number;
+        };
         /** MockControlIn */
         MockControlIn: {
             /** Down */
@@ -2740,6 +3634,23 @@ export interface components {
             label: string | null;
             review: components["schemas"]["ReviewOut"];
         };
+        /** NamesStats */
+        NamesStats: {
+            /** Bands */
+            bands: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            };
+            /** Duplicates Caught Recall */
+            duplicates_caught_recall: number | null;
+            /** Fixtures */
+            fixtures: number;
+            /** Kinds */
+            kinds: number;
+            /** Wrong Links */
+            wrong_links: number;
+        };
         /** NotificationList */
         NotificationList: {
             /** Items */
@@ -2798,6 +3709,63 @@ export interface components {
              * @description Treated as data, never as instructions
              */
             raw_text?: string | null;
+        };
+        /** OperatingPointOut */
+        OperatingPointOut: {
+            /** All Human Cost Per Case */
+            all_human_cost_per_case: number;
+            /** Approved */
+            approved: number;
+            /** Auto Rate */
+            auto_rate: number;
+            /** Cost Of False Approvals */
+            cost_of_false_approvals: number;
+            /** Cost Of False Rejections */
+            cost_of_false_rejections: number;
+            /** Cost Of Unnecessary Handoffs */
+            cost_of_unnecessary_handoffs: number;
+            /** Cost Per Case */
+            cost_per_case: number;
+            /** False Approvals */
+            false_approvals: number;
+            /** False Approve Rate */
+            false_approve_rate: number;
+            /** False Approve Share Of Approvals */
+            false_approve_share_of_approvals: number;
+            /** False Reject Rate */
+            false_reject_rate: number;
+            /** False Rejections */
+            false_rejections: number;
+            /** N */
+            n: number;
+            /** Needs Human */
+            needs_human: number;
+            /** Needs Proof */
+            needs_proof: number;
+            /** Not Automatic Although Ok */
+            not_automatic_although_ok: number;
+            /** Not Automatic Although Ok Rate */
+            not_automatic_although_ok_rate: number;
+            /** Rejected */
+            rejected: number;
+            /** Saving Per Case */
+            saving_per_case: number;
+            /** Silent Guesses */
+            silent_guesses: number;
+            /** Unnecessary Handoff Rate */
+            unnecessary_handoff_rate: number;
+            /**
+             * Unnecessary Handoffs
+             * @description Eligible and genuine cases sent to a person
+             */
+            unnecessary_handoffs: number;
+            /** Unnecessary Proof Request Rate */
+            unnecessary_proof_request_rate: number;
+            /**
+             * Unnecessary Proof Requests
+             * @description Eligible and genuine cases asked for one more proof
+             */
+            unnecessary_proof_requests: number;
         };
         /** OutboxItem */
         OutboxItem: {
@@ -2910,6 +3878,15 @@ export interface components {
             /** Phone Masked */
             phone_masked?: string | null;
         };
+        /** PrPoint */
+        PrPoint: {
+            /** Precision */
+            precision: number;
+            /** Recall */
+            recall: number;
+            /** Threshold */
+            threshold: number;
+        };
         /** ProgramOut */
         ProgramOut: {
             /**
@@ -2963,6 +3940,27 @@ export interface components {
             code: string;
             /** Text */
             text: string;
+        };
+        /**
+         * RecordIn
+         * @description A person as typed. Mock formats only: IDs 00000-NNNNNNN-C (a wrong check digit is allowed here, to show
+         *     typos), phones 0999-NNNNNNN.
+         */
+        RecordIn: {
+            /** District */
+            district?: string | null;
+            /** Dob */
+            dob?: string | null;
+            /** Full Name */
+            full_name?: string | null;
+            /** Full Name Ur */
+            full_name_ur?: string | null;
+            /** Gender */
+            gender?: string | null;
+            /** National Id */
+            national_id?: string | null;
+            /** Phone */
+            phone?: string | null;
         };
         /** RegisterCompleteIn */
         RegisterCompleteIn: {
@@ -3077,6 +4075,47 @@ export interface components {
              */
             verified_income_pkr?: number | null;
         };
+        /** ReliabilityBin */
+        ReliabilityBin: {
+            /** Bin */
+            bin: number;
+            /** Count */
+            count: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Mean Predicted */
+            mean_predicted?: number | null;
+            /** Observed Rate */
+            observed_rate?: number | null;
+        };
+        /** ReliabilityOut */
+        ReliabilityOut: {
+            /** Auc */
+            auc?: number | null;
+            /** Bins */
+            bins: components["schemas"]["ReliabilityBin"][];
+            /** Brier */
+            brier: number;
+            /** Ece */
+            ece: number;
+            /** N */
+            n: number;
+        };
+        /** ReplayResult */
+        ReplayResult: {
+            /** Decision Id */
+            decision_id: string;
+            /** Differences */
+            differences?: string[];
+            /** Match */
+            match: boolean;
+            /** Replayed Result Hash */
+            replayed_result_hash: string;
+            /** Stored Result Hash */
+            stored_result_hash: string | null;
+        };
         /** ReviewOut */
         ReviewOut: {
             /** Case Id */
@@ -3088,6 +4127,15 @@ export interface components {
              * @enum {string}
              */
             status: "none" | "waiting" | "done";
+        };
+        /** RocPoint */
+        RocPoint: {
+            /** Fpr */
+            fpr: number;
+            /** Threshold */
+            threshold: number;
+            /** Tpr */
+            tpr: number;
         };
         /** RuleSetOut */
         RuleSetOut: {
@@ -3208,6 +4256,11 @@ export interface components {
             valid: boolean;
             /** Version No */
             version_no: number;
+        };
+        /** RunIn */
+        RunIn: {
+            /** Note */
+            note?: string | null;
         };
         /** ScamCheckIn */
         ScamCheckIn: {
@@ -3376,6 +4429,32 @@ export interface components {
              */
             weight: number;
         };
+        /** SliceRow */
+        SliceRow: {
+            /** Approve Change */
+            approve_change: number;
+            /** Approve Rate After */
+            approve_rate_after: number;
+            /** Approve Rate Before */
+            approve_rate_before: number;
+            /** Flagged */
+            flagged: boolean;
+            /** Human Change */
+            human_change: number;
+            /** Human Rate After */
+            human_rate_after: number;
+            /** Human Rate Before */
+            human_rate_before: number;
+            /** N */
+            n: number;
+            /**
+             * Noise
+             * @description Two standard errors of a slice this size changing at the overall rate
+             */
+            noise: number;
+            /** Value */
+            value: string;
+        };
         /** SmsOutboxItem */
         SmsOutboxItem: {
             /** At */
@@ -3463,6 +4542,22 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** ThresholdsOut */
+        ThresholdsOut: {
+            /** Approve */
+            approve: number;
+            /** Approve Formula */
+            approve_formula?: string | null;
+            /**
+             * Queue Days
+             * @default 1
+             */
+            queue_days: number;
+            /** Reject */
+            reject: number;
+            /** Reject Formula */
+            reject_formula?: string | null;
+        };
         /** TimelineItem */
         TimelineItem: {
             /** At */
@@ -3504,6 +4599,110 @@ export interface components {
             series: components["schemas"]["TrendSeries"][];
             /** Total */
             total: components["schemas"]["TrendPoint"][];
+        };
+        /** TwinRunIn */
+        TwinRunIn: {
+            /**
+             * Base Version Id
+             * @description Compare against this version; defaults to the active one
+             */
+            base_version_id?: string | null;
+            /**
+             * Draft Version Id
+             * Format: uuid
+             * @description The rule version to try (usually a draft)
+             */
+            draft_version_id: string;
+            /**
+             * Include Live
+             * @description Replay the department's stored decisions
+             * @default true
+             */
+            include_live: boolean;
+            /**
+             * Include Synthetic
+             * @description Replay the labelled synthetic cases
+             * @default true
+             */
+            include_synthetic: boolean;
+        };
+        /** TwinRunList */
+        TwinRunList: {
+            /** Items */
+            items: components["schemas"]["TwinRunSummary"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** TwinRunOut */
+        TwinRunOut: {
+            /** Base Version Id */
+            base_version_id: string | null;
+            /** Base Version No */
+            base_version_no: number | null;
+            costs: components["schemas"]["CostMatrix"];
+            /** Created At */
+            created_at: string;
+            /** Decided Reason */
+            decided_reason?: string | null;
+            /** Draft Status */
+            draft_status: string;
+            /**
+             * Draft Version Id
+             * Format: uuid
+             */
+            draft_version_id: string;
+            /** Draft Version No */
+            draft_version_no: number;
+            /** Flagged Slices */
+            flagged_slices: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            live: components["schemas"]["DatasetSummaryOut"] | null;
+            /** Model Version */
+            model_version: string;
+            /** Rule Changes */
+            rule_changes: components["schemas"]["DiffChange"][];
+            /** Sample */
+            sample: components["schemas"]["ChangedCaseOut"][];
+            /**
+             * Side Effects
+             * @default None. Nothing was sent, paid, opened or decided; this run wrote only its own twin_runs row.
+             */
+            side_effects: string;
+            /**
+             * Status
+             * @description done | publishing | discarded
+             */
+            status: string;
+            synthetic: components["schemas"]["DatasetSummaryOut"] | null;
+        };
+        /** TwinRunSummary */
+        TwinRunSummary: {
+            /** Base Version Id */
+            base_version_id: string | null;
+            /** Changed Live */
+            changed_live?: number | null;
+            /** Changed Synthetic */
+            changed_synthetic?: number | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * Draft Version Id
+             * Format: uuid
+             */
+            draft_version_id: string;
+            /** Flagged Slices */
+            flagged_slices?: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
         };
         /** TypedDecision[Literal['genuine', 'suspect']] */
         TypedDecision_Literal__genuine____suspect___: {
@@ -4838,6 +6037,100 @@ export interface operations {
             };
         };
     };
+    get_cost_matrix_v1_cost_matrix_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostMatrixOut"];
+                };
+            };
+        };
+    };
+    put_cost_matrix_v1_cost_matrix_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostMatrixSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostMatrixOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_decisions_v1_decisions_get: {
+        parameters: {
+            query?: {
+                route?: ("auto" | "ask_more" | "human") | null;
+                outcome?: ("approved" | "rejected" | "needs_proof" | "needs_human") | null;
+                rule_version_id?: string | null;
+                rule_version_no?: number | null;
+                /** @description First day, inclusive (UTC) */
+                decided_from?: string | null;
+                /** @description Last day, inclusive (UTC) */
+                decided_to?: string | null;
+                application_id?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_decision_v1_decisions__decision_id__get: {
         parameters: {
             query?: never;
@@ -4856,6 +6149,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replay_v1_decisions__decision_id__replay_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decision_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplayResult"];
                 };
             };
             /** @description Validation Error */
@@ -4910,6 +6234,380 @@ export interface operations {
                     "image/jpeg": unknown;
                     "image/png": unknown;
                     "image/webp": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_duplicates_v1_duplicates_get: {
+        parameters: {
+            query?: {
+                status?: "open" | "linked" | "rejected" | "reversed" | "all";
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_duplicate_v1_duplicates__candidate_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    distinct_duplicate_v1_duplicates__candidate_id__distinct_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_duplicate_v1_duplicates__candidate_id__link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_duplicate_v1_duplicates__candidate_id__unlink_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    latest_v1_evals_decisions_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAnalysisOut"];
+                };
+            };
+        };
+    };
+    run_v1_evals_decisions_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RunIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    what_if_v1_evals_decisions_what_if_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostMatrixIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    names_v1_evals_names_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_runs_v1_evals_runs_get: {
+        parameters: {
+            query?: {
+                /** @description decision | names | ... */
+                kind?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalRunList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    eval_summary_v1_evals_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalSummaryOut"];
+                };
+            };
+        };
+    };
+    compare_records_v1_matching_compare_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareOut"];
                 };
             };
             /** @description Validation Error */
@@ -6095,6 +7793,172 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+        };
+    };
+    list_runs_v1_twin_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwinRunList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_v1_twin_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwinRunIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwinRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_v1_twin_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwinRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_v1_twin_runs__run_id__discard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwinRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_publish_v1_twin_runs__run_id__request_publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwinRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
