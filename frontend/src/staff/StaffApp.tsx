@@ -21,6 +21,8 @@ import { KeysPage } from './pages/KeysPage';
 import { LabPage } from './pages/LabPage';
 import { JobsPage, MocksPage } from './pages/AdminPages';
 import { HealthPage } from './pages/HealthPage';
+import { ImpactPage } from './pages/ImpactPage';
+import { AnomaliesPage } from './pages/AnomaliesPage';
 import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
 import { OutboxPage } from './pages/OutboxPage';
 import { OverviewPage } from './pages/OverviewPage';
@@ -194,6 +196,10 @@ function SectionPage({ item }: { item: NavItem }) {
       return <SettingsPage />;
     case 'health':
       return <HealthPage />;
+    case 'impact':
+      return <ImpactPage />;
+    case 'anomalies':
+      return <AnomaliesPage />;
     default:
       return <PlaceholderPage item={item} />;
   }

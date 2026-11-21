@@ -118,3 +118,13 @@ From: Track D1   To: Track A (cases, payments)   Status: open
 What: `ApplicationOut` (and `ApplicationSummary`) would carry, once paid, `payment: { amount_pkr, paid_at, verify_code }` (null before). Today the citizen app reads `GET /v1/notifications`, takes the `payment_sent` message, finds its `verify_code` and reads the amount as the first number in the message text.
 Why: parsing a sentence is fragile (a changed template breaks the "Paid" card on home) and the citizen cannot call `/v1/payments`.
 Until then: the Paid card shows the amount only when that number is found, never a guessed one.
+
+## Anomaly guard in the submit pipeline, a scan trigger and a case SLA
+From: Track B (WP-D)   To: Track A (applications pipeline, cases)   Status: open
+What: (1) In `applications/pipeline.py`, before `decide`, set `inp.anomaly = anomaly.service.anomaly_evidence_for(db, tenant_id, application.id)` so an application named in an open anomaly case is held for a person by the engine's existing `anomaly_flag` guard (it returns `None` when nothing is flagged). (2) After an application is submitted, call `anomaly.service.enqueue_scan(db, tenant_id, trigger="event")`; it reuses a waiting job, so a burst of submissions makes one scan. Until then the scan runs when an admin or officer presses "Run detection now". (3) Add `"anomaly_review": 24` to `SLA_HOURS` in `cases/rules.py` (it defaults to 48 hours today).
+Why: the detectors only help a decision if the guard sees them, and a ring is easiest to stop before the second payment.
+Until then: anomaly cases are reviewed on their own; no decision is held because of them.
+
+## Regenerate the API client after WP-D merges
+From: Track B (WP-D)   To: Lead   Status: open
+What: run `npm run gen:api` once the branch is merged. `CaseKind` gained `anomaly_review` and three routes were added (`/v1/anomalies`, `/v1/anomalies/run`, `/v1/admin/impact`). The WP-D pages use the types in `frontend/src/staff/pages/wpdApi.ts` so that `schema.d.ts` (shared, generated) was not edited on this branch.
