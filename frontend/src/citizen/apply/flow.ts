@@ -1,4 +1,5 @@
 import { effect, signal } from '@preact/signals';
+import { actingScope } from '../../shared/acting';
 import { onSessionEnd, session } from '../../shared/api/auth';
 import { api } from '../../shared/api/client';
 import { call, type ApiFailure, type Result } from '../../shared/api/problem';
@@ -127,7 +128,10 @@ export const MAX_CARD_TRIES = 3;
 
 function currentUser(): string | null {
   const now = session.peek();
-  return now.status === 'signed-in' ? now.user.id : null;
+  if (now.status !== 'signed-in') return null;
+  // A helper's draft belongs to the family in front of them, not to the helper.
+  const family = actingScope();
+  return family ? `${now.user.id}:${family}` : now.user.id;
 }
 
 function freshDraft(): Draft {
@@ -170,6 +174,7 @@ export function resetFlow(): void {
   saveFailure.value = null;
   lastSubmit.value = null;
   fieldOutcomes.value = {};
+  versions.clear();
 }
 
 onSessionEnd(resetFlow);
@@ -404,6 +409,22 @@ export function answer<F extends AnswerField>(field: F, value: NonNullable<Answe
   draft.value = { ...d, answers: { ...d.answers, [field]: value } };
   setOutcome([field], null);
   enqueuePatch(d.applicationId, { [field]: tapped(value) });
+  void runOutbox();
+}
+
+/**
+ * An answer the person said aloud and then confirmed with an icon. It goes
+ * through the same outbox as a tapped one, with provenance `spoken` and the
+ * confidence the server gave it.
+ */
+export function answerSpoken<F extends AnswerField>(field: F, value: NonNullable<Answers[F]> | null, confidence: number): void {
+  const d = draft.peek();
+  if (!d) return;
+  draft.value = { ...d, answers: { ...d.answers, [field]: value } };
+  setOutcome([field], null);
+  enqueuePatch(d.applicationId, {
+    [field]: value === null ? { value: null, confidence: 0, provenance: 'spoken' } : { value, confidence, provenance: 'spoken' },
+  });
   void runOutbox();
 }
 

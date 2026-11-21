@@ -18,7 +18,12 @@ const PYTHON = `
 import json, sys
 from app.modules.scam.explain import audio_manifest
 from app.modules.decision.explain import CITIZEN_TEMPLATES, NEXT_STEPS
+from app.modules.voice.phrases import VOICE_KEYS
+from app.modules.rag.answer import MESSAGES
 out = dict(audio_manifest())
+# Voice read-backs and the rules assistant's fixed sentences (backend VOICE_KEYS, MESSAGES).
+for key, texts in {**VOICE_KEYS, **MESSAGES}.items():
+    out[key] = dict(texts)
 for code, (_pictogram, _next, texts) in CITIZEN_TEMPLATES.items():
     out[f"reason.{code}"] = {lang: " ".join(sentences) for lang, sentences in texts.items()}
 for code, texts in NEXT_STEPS.items():

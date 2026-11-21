@@ -2,13 +2,14 @@ import type { ComponentChildren } from 'preact';
 import { AudioPrompt, type Speech } from '../shared/components/AudioPrompt';
 import { Pictogram } from '../shared/components/Pictogram';
 import { PrototypeFooter } from '../shared/components/PrototypeFooter';
-import { t, type MessageKey } from '../shared/i18n';
+import { t, type Key } from '../shared/i18n';
+import { ActingBanner } from './ActingBanner';
 
 interface CitizenShellProps {
   /** Shows the back button at the start side of the top bar. */
   onBack?: (() => void) | undefined;
   /** The screen's spoken prompt; the speaker button sits at the end side of the top bar. */
-  prompt?: MessageKey | undefined;
+  prompt?: Key | undefined;
   /** A spoken sequence instead of one prompt (review, result). */
   speech?: Speech | undefined;
   autoPlay?: boolean;
@@ -24,6 +25,7 @@ interface CitizenShellProps {
 export function CitizenShell({ onBack, prompt, speech, autoPlay = true, progress, children }: CitizenShellProps) {
   return (
     <div class="flex min-h-dvh flex-col bg-paper text-ink">
+      <ActingBanner />
       <header class="mx-auto flex w-full max-w-phone flex-col gap-2 px-4 pt-3">
         <div class="flex items-center justify-between gap-3">
           {onBack ? (

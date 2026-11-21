@@ -8,7 +8,7 @@ import { AudioPrompt } from '../../shared/components/AudioPrompt';
 import { Button } from '../../shared/components/Button';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { Spinner } from '../../shared/components/Spinner';
-import { lang, t, type MessageKey } from '../../shared/i18n';
+import { lang, t, type Key, type MessageKey } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { CitizenShell } from '../CitizenShell';
 import { draft, fieldState, flush, previousStep, STEPS, stepPath, type SavedField, type SaveState, type StepId } from './flow';
@@ -21,7 +21,7 @@ export function numberKey(n: number): MessageKey | null {
 }
 
 /** Read an answer back as soon as it is tapped. */
-export function sayKey(key: MessageKey): void {
+export function sayKey(key: Key): void {
   const code = lang.peek();
   playPrompt(key, code, t(key, undefined, code));
 }

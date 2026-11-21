@@ -64,7 +64,9 @@ async function dictionary(code) {
   const module = await import(pathToFileURL(join(i18n, `${code}.ts`)).href);
   const dict = module[code];
   if (!dict) throw new Error(`src/shared/i18n/${code}.ts has no export named ${code}`);
-  return dict;
+  // The strings of the lazy chunks (more.{lang}.ts) are recorded too.
+  const more = await import(pathToFileURL(join(i18n, `more.${code}.ts`)).href);
+  return { ...dict, ...(more[`${code}More`] ?? {}) };
 }
 
 function speakable(dict, code) {

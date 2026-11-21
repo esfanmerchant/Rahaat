@@ -53,3 +53,22 @@ export type MyScamReport = MyScamReports['items'][number];
 export type ScamDisputeOut = Json<paths['/v1/scam/reports/{report_id}/dispute']['post']['responses'][200]>;
 export type ScamWarnings = Json<paths['/v1/scam/warnings']['get']['responses'][200]>;
 export type ScamWarning = ScamWarnings['items'][number];
+
+// Helper Mode (backend/app/modules/helpers).
+export type FamiliesOut = Json<paths['/v1/helper/families']['get']['responses'][200]>;
+export type FamilyOut = FamiliesOut['items'][number];
+export type SwitchOut = Json<paths['/v1/helper/switch']['post']['responses'][200]>;
+export type DelegationOut = Json<paths['/v1/me/helpers']['get']['responses'][200]>[number];
+export type DelegationCreate = Json<paths['/v1/me/helpers']['post']['requestBody']>;
+
+// Voice answers (backend/app/modules/voice).
+export type VoiceIn = Json<paths['/v1/voice/interpret']['post']['requestBody']>;
+export type VoiceOut = Json<paths['/v1/voice/interpret']['post']['responses'][200]>;
+
+// "Ask about the rules" (backend/app/modules/rag).
+export type AskOut = Json<paths['/v1/ask']['post']['responses'][200]>;
+
+// My data: access log, corrections, erasure (backend/app/modules/consent).
+export type AccessLogPage = Json<paths['/v1/me/access-log']['get']['responses'][200]>;
+export type AccessEntry = AccessLogPage['items'][number];
+export type DataRequestOut = Json<paths['/v1/me/data-requests']['get']['responses'][200]>[number];

@@ -1,5 +1,6 @@
 import createClient from 'openapi-fetch';
 import type { paths } from './schema';
+import { actingEpoch, actingHeaders } from '../acting';
 import { lang } from '../i18n';
 import { getAccessToken, refreshSession } from './session';
 
@@ -15,6 +16,10 @@ function withBearer(request: Request): Request {
   const headers = new Headers(request.headers);
   headers.set('Accept-Language', lang.peek());
   if (token) headers.set('Authorization', `Bearer ${token}`);
+  // Helper Mode: the family's headers on every request for that family (not on sign-in or switching).
+  const path = new URL(request.url, window.location.origin).pathname;
+  const acting = path.startsWith('/v1/helper/') || path.startsWith('/v1/auth/') ? null : actingHeaders();
+  if (acting) for (const [name, value] of Object.entries(acting)) headers.set(name, value);
   return new Request(request, { headers });
 }
 
@@ -26,11 +31,17 @@ async function authFetch(request: Request): Promise<Response> {
   const path = new URL(request.url, window.location.origin).pathname;
   const retryable = !NO_RETRY.has(path);
   const spare = retryable ? request.clone() : null;
-  const response = await fetch(withBearer(request));
+  const epoch = actingEpoch();
+  // An answer for a family the helper has already left is never shown or stored for the next one.
+  const checked = (response: Response): Response => {
+    if (epoch !== actingEpoch()) throw new DOMException('Another family is open now', 'AbortError');
+    return response;
+  };
+  const response = checked(await fetch(withBearer(request)));
   if (response.status !== 401 || !spare) return response;
   const outcome = await refreshSession();
   if (outcome !== 'ok') return response;
-  return fetch(withBearer(spare));
+  return checked(await fetch(withBearer(spare)));
 }
 
 /**

@@ -1,4 +1,5 @@
 import { computed, signal } from '@preact/signals';
+import { actingScope } from '../../shared/acting';
 import { onSessionEnd } from '../../shared/api/auth';
 import type { ApiFailure } from '../../shared/api/problem';
 import type { DocumentKind } from '../../shared/api/types';
@@ -33,7 +34,7 @@ import { deleteItem, getBlob, getItem, onVaultOpen, putBlob, putItem, vaultState
 export interface FieldInput {
   value: unknown;
   confidence: number;
-  provenance: 'tapped';
+  provenance: 'tapped' | 'spoken';
 }
 
 interface OpBase {
@@ -303,6 +304,16 @@ interface Saved {
 }
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Helper Mode: each family has its own sealed queue and draft (`outbox:{person}`),
+ * so one family's unsent answers are never sent as another's.
+ */
+function sealName(base: 'outbox' | 'draft'): string {
+  const family = actingScope();
+  return family ? `${base}:${family}` : base;
+}
+
 let draftSource: (() => unknown) | null = null;
 
 /** flow.ts gives the draft to seal next to the queue, so an offline reload can show it again. */
@@ -328,10 +339,10 @@ export async function persistNow(): Promise<void> {
     const photo = blobs.get(op.id);
     if (op.kind === 'upload' && photo && !sealedBlobs.has(op.id) && (await putBlob(`blob:${op.id}`, photo))) sealedBlobs.add(op.id);
   }
-  const saved = await putItem('outbox', { v: 1, ops: [...snapshot] } satisfies Saved);
+  const saved = await putItem(sealName('outbox'), { v: 1, ops: [...snapshot] } satisfies Saved);
   const draft = draftSource?.() ?? null;
-  if (draft) await putItem('draft', draft);
-  else await deleteItem('draft');
+  if (draft) await putItem(sealName('draft'), draft);
+  else await deleteItem(sealName('draft'));
   // Changed while sealing: seal again, so the stored copy is never older than what the screen says.
   if (saved && ops.peek() === snapshot) storedIds.value = new Set(snapshot.map((op) => op.id));
   else if (saved) schedulePersist();
@@ -347,26 +358,27 @@ export function setDraftRestorer(restorer: (saved: unknown) => void): void {
   restoreDraft = restorer;
 }
 
-// The vault opened (sign-in or unlock): bring back what was sealed, then send it.
-onVaultOpen(() => {
+/** Bring back what was sealed for this person (or this family), then send it. */
+export async function restoreSealed(): Promise<void> {
   restoring = true;
-  void (async () => {
-    try {
-      const saved = await getItem<Saved>('outbox');
-      const sealedDraft = await getItem<unknown>('draft');
-      const inMemory = new Set(ops.peek().map((op) => op.id));
-      const fromVault = (saved?.ops ?? []).filter((op) => !inMemory.has(op.id));
-      if (fromVault.length > 0) ops.value = [...fromVault, ...ops.peek()];
-      for (const op of fromVault) if (op.kind === 'upload') sealedBlobs.add(op.id);
-      if (sealedDraft !== undefined) restoreDraft?.(sealedDraft);
-      storedIds.value = new Set(fromVault.map((op) => op.id));
-    } finally {
-      restoring = false;
-    }
-    await persistNow();
-    void runOutbox();
-  })();
-});
+  try {
+    const saved = await getItem<Saved>(sealName('outbox'));
+    const sealedDraft = await getItem<unknown>(sealName('draft'));
+    const inMemory = new Set(ops.peek().map((op) => op.id));
+    const fromVault = (saved?.ops ?? []).filter((op) => !inMemory.has(op.id));
+    if (fromVault.length > 0) ops.value = [...fromVault, ...ops.peek()];
+    for (const op of fromVault) if (op.kind === 'upload') sealedBlobs.add(op.id);
+    if (sealedDraft !== undefined) restoreDraft?.(sealedDraft);
+    storedIds.value = new Set(fromVault.map((op) => op.id));
+  } finally {
+    restoring = false;
+  }
+  await persistNow();
+  void runOutbox();
+}
+
+// The vault opened (sign-in or unlock): bring back what was sealed, then send it.
+onVaultOpen(() => void restoreSealed());
 
 online.subscribe((isOnline) => {
   if (isOnline) {

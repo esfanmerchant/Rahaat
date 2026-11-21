@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
+import { acting } from '../shared/acting';
 import { warmAudio } from '../shared/audio';
 import { logout, session } from '../shared/api/auth';
 import { api } from '../shared/api/client';
@@ -35,8 +36,10 @@ export function HomeScreen({ user }: { user: AuthUser }) {
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const current = lang.value;
   const now = session.value;
-  // Helpers act for other people; their consent centre comes with Helper Mode (D1.9).
-  const isCitizen = now.status === 'signed-in' && now.active.role === 'citizen';
+  // A helper sees the consent centre only while acting for a family; the server decides what the delegation allows.
+  const isCitizen = (now.status === 'signed-in' && now.active.role === 'citizen') || acting.value !== null;
+  const family = acting.value;
+  const shownName = family ? (lang.value === 'ur' && family.nameUr ? family.nameUr : family.name) : user.display_name;
 
   useEffect(() => {
     warmAudio(current);
@@ -81,7 +84,7 @@ export function HomeScreen({ user }: { user: AuthUser }) {
         <Pictogram name="person" size={56} class="text-primary" />
         {/* display_name is rendered as text, never as HTML. */}
         <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold">
-          {t('home_greeting', { name: user.display_name })}
+          {t('home_greeting', { name: shownName })}
         </h1>
       </div>
       <p class="text-lg text-ink-muted">{t(hint)}</p>
@@ -111,6 +114,9 @@ export function HomeScreen({ user }: { user: AuthUser }) {
       <div class="grid grid-cols-1 gap-3">
         <Button size="lg" variant="secondary" icon="shield" block onClick={() => route('/scam')}>
           {t('home_scam')}
+        </Button>
+        <Button size="lg" variant="secondary" icon="message" block onClick={() => route('/rules')}>
+          {t('home_rules')}
         </Button>
         {isCitizen ? (
           <Button size="lg" variant="secondary" icon="lock" block onClick={() => route('/my-data')}>
@@ -151,7 +157,7 @@ export function HomeScreen({ user }: { user: AuthUser }) {
             );
           })}
         </div>
-        {confirmLeave ? (
+        {family ? null : confirmLeave ? (
           <div role="alert" class="flex flex-col gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
             <p class="flex items-center gap-2 text-lg font-bold">
               <Pictogram name="warning" size={32} />

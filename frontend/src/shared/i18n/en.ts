@@ -368,6 +368,12 @@ export const en = {
   signout_unsent_stay: 'Stay and send them',
   signout_unsent_go: 'Sign out and delete them',
   login_send_saved: 'Sign in to send the answers saved on this phone.',
+
+  helper_acting_for: 'Helping {name}',
+  helper_change: 'Change family',
+  helper_banner_note: 'This family closes after 3 minutes without a touch.',
+  home_rules: 'Ask about the rules',
+  voice_say: 'Say your answer',
 } as const;
 
 export type MessageKey = keyof typeof en;
