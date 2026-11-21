@@ -132,6 +132,11 @@ html[data-theme="day"],
   background-color: var(--color-info-soft);
 }
 
+/* Tile labels on a bright night fill need dark text. */
+[data-theme="night"] .fill-white {
+  fill: #070b1d;
+}
+
 /* Native form controls follow the theme. */
 [data-theme="night"] select,
 [data-theme="night"] input,

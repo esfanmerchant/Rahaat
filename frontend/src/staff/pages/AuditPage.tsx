@@ -5,6 +5,7 @@ import { call, type Result } from '../../shared/api/problem';
 import { Button } from '../../shared/components/Button';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
+import { prefersReducedMotion } from '../theme';
 import { Badge, fmtTime, INPUT, Mono, TD, Th, useLoad, type AuditEntry, type ChainOut } from '../ui';
 
 const PAGE = 25;
@@ -72,13 +73,13 @@ export function AuditPage() {
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-3">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-lg font-semibold">
+        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-xl font-black tracking-tight">
           Audit trail
         </h1>
         <span class="text-xs text-ink-subtle">Append-only, newest first. Nothing here can be edited.</span>
       </div>
 
-      <VerifyChain />
+      <VerifyChain rows={items} onPick={setOpen} />
 
       <form class="flex flex-wrap items-end gap-3" onSubmit={apply} aria-label="Audit filters">
         <label class="flex flex-col gap-0.5">
@@ -124,8 +125,8 @@ export function AuditPage() {
 
       {items.length > 0 ? (
         <div class="grid items-start gap-3 xl:grid-cols-[1fr_28rem]">
-          <div class="overflow-x-auto border border-line">
-            <table class="w-full border-collapse text-sm">
+          <div class="st-panel max-h-[60dvh] overflow-auto">
+            <table class="st-table w-full border-collapse text-sm">
               <caption class="sr-only">Audit trail, newest first. Select a row to see its hashes and details.</caption>
               <thead>
                 <tr>
@@ -240,33 +241,98 @@ function RowDetail({ row, onClose }: { row: AuditEntry; onClose: () => void }) {
   );
 }
 
-function VerifyChain() {
+type BlockState = 'idle' | 'scan' | 'ok' | 'bad' | 'unchecked';
+
+/** The newest rows as linked blocks: each block holds its own hash and the previous one, so a change breaks the link. */
+function ChainStrip({ rows, states, onPick }: { rows: AuditEntry[]; states: BlockState[]; onPick: (r: AuditEntry) => void }) {
+  return (
+    <ol class="flex items-stretch overflow-x-auto py-2" aria-label="Audit rows as a hash chain, oldest on the left">
+      {rows.map((r, i) => {
+        const st = states[i] ?? 'idle';
+        return (
+          <li key={r.seq} class="flex items-stretch">
+            {i > 0 ? <span class={`st-link ${st === 'ok' ? 'ok' : st === 'bad' ? 'bad' : ''}`} style={{ transitionDelay: `${i * 35}ms` }} aria-hidden="true" /> : null}
+            <button
+              type="button"
+              onClick={() => onPick(r)}
+              class={`st-block text-start ${st === 'ok' ? 'ok' : st === 'bad' ? 'bad' : ''} ${st === 'scan' ? 'st-lit' : ''}`}
+              style={{ transitionDelay: `${i * 35}ms` }}
+              aria-label={`Row ${r.seq}, ${r.action}, ${st === 'ok' ? 'verified' : st === 'bad' ? 'broken' : 'not yet checked'}`}
+            >
+              <span class="rh-num block font-mono text-sm font-bold">#{r.seq}</span>
+              <span class="block truncate text-[0.65rem] text-ink-muted">{r.action}</span>
+              <span class="block truncate font-mono text-[0.65rem] text-ink-subtle" title={r.hash ?? ''}>{(r.hash ?? '').slice(0, 10)}</span>
+              <span class="block truncate font-mono text-[0.6rem] text-ink-subtle" title={r.prev_hash ?? ''}>prev {(r.prev_hash ?? '').slice(0, 6)}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function VerifyChain({ rows, onPick }: { rows: AuditEntry[]; onPick: (r: AuditEntry) => void }) {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Result<ChainOut> | null>(null);
+  const [scan, setScan] = useState<number | null>(null);
+  // Oldest first, so the chain reads left to right.
+  const chain = [...rows].sort((a, b) => a.seq - b.seq);
   const run = async () => {
     setBusy(true);
-    setOutcome(await call(api.GET('/v1/audit/verify')));
+    setOutcome(null);
+    const fast = prefersReducedMotion();
+    const req = call(api.GET('/v1/audit/verify'));
+    if (!fast) {
+      for (let i = 0; i < chain.length; i++) {
+        setScan(i);
+        await new Promise((r) => window.setTimeout(r, Math.max(30, Math.min(110, 1800 / chain.length))));
+      }
+    }
+    const res = await req;
+    setScan(null);
+    setOutcome(res);
     setBusy(false);
   };
+  const data = outcome && outcome.ok ? outcome.data : null;
+  const broken = data && !data.ok ? (data.first_broken_seq ?? null) : null;
+  const states: BlockState[] = chain.map((r, i) => {
+    if (scan !== null) return i === scan ? 'scan' : 'idle';
+    if (!data) return 'idle';
+    if (data.ok) return 'ok';
+    if (broken === null) return 'unchecked';
+    return r.seq < broken ? 'ok' : r.seq === broken ? 'bad' : 'unchecked';
+  });
+  const olderBreak = data && !data.ok && broken !== null && chain.length > 0 && broken < (chain[0]?.seq ?? 0);
   return (
-    <div class="flex flex-col gap-2 border border-line p-3">
+    <div class="st-panel flex flex-col gap-2 p-3">
       <div class="flex flex-wrap items-center gap-3">
         <Button size="sm" busy={busy} onClick={() => void run()}>
           Verify chain
         </Button>
         <span class="text-xs text-ink-muted">Recomputes every row hash from the start and reports the first row that does not match. This check is itself written to the trail.</span>
       </div>
+      {chain.length > 0 ? <ChainStrip rows={chain} states={states} onPick={onPick} /> : null}
       <div aria-live="polite">
         {outcome === null ? null : outcome.ok ? (
           outcome.data.ok ? (
-            <p class="border border-primary bg-primary-soft px-3 py-2 text-primary-strong">
-              Chain intact. {outcome.data.checked} rows checked, head sequence {outcome.data.head_seq}.
-              <br />
-              <span class="font-mono text-xs break-all">head hash {outcome.data.head_hash}</span>
-            </p>
+            <div class="st-seal flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-primary-soft px-3 py-2 text-primary-strong st-lit">
+              <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+                <circle cx="17" cy="17" r="15" fill="none" stroke="currentColor" stroke-width="2" />
+                <circle cx="17" cy="17" r="11" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5" />
+                <path d="M10.5 17.5 15 22l8.5-10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="rh-draw" pathLength={100} />
+              </svg>
+              <div>
+                <p class="text-lg font-black leading-tight">
+                  <span class="rh-num">{outcome.data.checked}</span> of <span class="rh-num">{outcome.data.checked}</span> rows verified
+                </p>
+                <p class="text-xs">Chain intact, head sequence {outcome.data.head_seq}.</p>
+                <p class="break-all font-mono text-xs">head hash {outcome.data.head_hash}</p>
+              </div>
+            </div>
           ) : (
-            <p role="alert" class="border border-danger bg-danger-soft px-3 py-2 text-danger">
-              Chain broken. First broken row: {outcome.data.first_broken_seq ?? 'unknown'}. {outcome.data.problem ?? ''} {outcome.data.checked} rows checked before the break.
+            <p role="alert" class="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-danger">
+              <span class="font-bold">Chain broken at sequence {outcome.data.first_broken_seq ?? 'unknown'}.</span> {outcome.data.problem ?? ''} {outcome.data.checked} rows were checked before the break.
+              {olderBreak ? ' The broken row is older than the rows drawn above.' : ''}
             </p>
           )
         ) : (

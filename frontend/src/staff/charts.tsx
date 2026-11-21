@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { useState } from 'preact/hooks';
 
 /**
  * Hand-written SVG charts for the evaluation pages. No chart library (CLAUDE.md).
@@ -56,6 +57,7 @@ export interface XYProps {
 }
 
 export function XYChart({ id, title, xLabel, yLabel, series, xDomain, yDomain, vlines = [], dots = [], diagonal, summary }: XYProps) {
+  const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
   const [x0, x1] = xDomain;
   const [y0, y1] = yDomain;
   const sx = (v: number) => M.l + ((v - x0) / (x1 - x0 || 1)) * (W - M.l - M.r);
@@ -73,10 +75,15 @@ export function XYChart({ id, title, xLabel, yLabel, series, xDomain, yDomain, v
     return d;
   };
   return (
-    <figure class="m-0">
+    <figure class="st-chart relative m-0">
       <figcaption id={`${id}-t`} class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
         {title}
       </figcaption>
+      {tip ? (
+        <div class="st-tip" style={{ left: `${(tip.x / W) * 100}%`, top: `${(tip.y / H) * 100 + 8}%`, transform: 'translateX(-50%)' }} role="tooltip">
+          {tip.text}
+        </div>
+      ) : null}
       <svg viewBox={`0 0 ${W} ${H}`} class="block w-full max-w-[520px]" role="img" aria-labelledby={`${id}-t ${id}-d`}>
         <desc id={`${id}-d`}>{summary}</desc>
         {ticks(y0, y1).map((t) => (
@@ -106,11 +113,51 @@ export function XYChart({ id, title, xLabel, yLabel, series, xDomain, yDomain, v
           </g>
         ))}
         {series.map((s) => (
-          <path key={s.name} d={path(s)} fill="none" class={s.stroke} stroke-width="2" stroke-linejoin="round" stroke-dasharray={s.dashed ? '6 3' : undefined} />
+          <path
+            key={s.name}
+            d={path(s)}
+            fill="none"
+            class={`${s.stroke} ${s.dashed ? 'st-fade' : 'st-line'}`}
+            pathLength={s.dashed ? undefined : 100}
+            stroke-width="2.25"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            stroke-dasharray={s.dashed ? '6 3' : undefined}
+          />
         ))}
+        {series.map((s) => {
+          const pts = [...s.points].sort((a, b) => a[0] - b[0]);
+          const stride = Math.max(1, Math.ceil(pts.length / 24));
+          return pts
+            .filter((_, i) => i % stride === 0)
+            .map((p) => {
+              const text = `${s.name}: ${xLabel} ${fmtTick(p[0])}, ${yLabel} ${fmtTick(p[1])}`;
+              const show = () => setTip({ x: sx(p[0]), y: sy(p[1]), text });
+              return (
+                <circle
+                  key={`${s.name}-${p[0]}-${p[1]}`}
+                  cx={sx(p[0])}
+                  cy={sy(p[1])}
+                  r="5"
+                  fill="transparent"
+                  class="cursor-crosshair outline-none [&:focus-visible]:stroke-focus"
+                  stroke-width="2"
+                  tabIndex={0}
+                  role="img"
+                  aria-label={text}
+                  onMouseEnter={show}
+                  onFocus={show}
+                  onMouseLeave={() => setTip(null)}
+                  onBlur={() => setTip(null)}
+                />
+              );
+            });
+        })}
         {dots.map((d) => (
           <g key={d.label}>
-            <circle cx={sx(d.x)} cy={sy(d.y)} r="4.5" class={d.fill} stroke-width="1.5" />
+            <circle cx={sx(d.x)} cy={sy(d.y)} r="5" class={`${d.fill} st-pt`} stroke-width="1.5">
+              <title>{d.label}</title>
+            </circle>
           </g>
         ))}
         <text x={(M.l + W - M.r) / 2} y={H - 4} text-anchor="middle" class="fill-ink text-[11px]">
@@ -157,7 +204,7 @@ export function ReliabilityChart({ id, bins, ece, brier, n }: { id: string; bins
   const sx = (v: number) => M.l + v * (W - M.l - M.r);
   const sy = (v: number) => H - M.b - v * (H - M.t - M.b);
   return (
-    <figure class="m-0">
+    <figure class="st-chart m-0">
       <figcaption id={`${id}-t`} class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
         Reliability: said versus happened
       </figcaption>
@@ -177,7 +224,7 @@ export function ReliabilityChart({ id, bins, ece, brier, n }: { id: string; bins
         <rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} fill="none" class="stroke-line-strong" stroke-width="1" />
         <line x1={sx(0)} y1={sy(0)} x2={sx(1)} y2={sy(1)} class="stroke-ink-subtle" stroke-width="1" stroke-dasharray="4 3" />
         {used.map((b) => (
-          <circle key={`${b.mean_predicted}`} cx={sx(b.mean_predicted as number)} cy={sy(b.observed_rate as number)} r={3 + 6 * Math.sqrt(b.count / maxCount)} class="fill-info-soft stroke-info-strong" stroke-width="1.5">
+          <circle key={`${b.mean_predicted}`} cx={sx(b.mean_predicted as number)} cy={sy(b.observed_rate as number)} r={3 + 6 * Math.sqrt(b.count / maxCount)} class="fill-info-soft stroke-info-strong st-pt" stroke-width="1.5" tabIndex={0} role="img" aria-label={`${b.count} cases: said ${(b.mean_predicted as number).toFixed(2)}, happened ${(b.observed_rate as number).toFixed(2)}`}>
             <title>{`${b.count} cases: said ${(b.mean_predicted as number).toFixed(2)}, happened ${(b.observed_rate as number).toFixed(2)}`}</title>
           </circle>
         ))}
@@ -246,15 +293,15 @@ export function Confusion({ rows, columns, counts, caption }: { rows: readonly s
 export function HBars({ rows, max, unit = '' }: { rows: readonly { label: string; value: number; cls?: string }[]; max?: number; unit?: string }) {
   const top = max ?? Math.max(1, ...rows.map((r) => r.value));
   return (
-    <ul class="flex flex-col gap-1">
+    <ul class="st-chart flex flex-col gap-1">
       {rows.map((r) => (
         <li key={r.label} class="grid grid-cols-[9rem_1fr_4rem] items-center gap-2">
           <span class="truncate text-xs text-ink-muted" title={r.label}>
             {r.label}
           </span>
           <svg viewBox="0 0 100 8" preserveAspectRatio="none" class="h-2 w-full" aria-hidden="true">
-            <rect width="100" height="8" class="fill-surface" />
-            <rect width={Math.max(0, Math.min(100, (r.value / top) * 100))} height="8" class={r.cls ?? 'fill-info-strong'} />
+            <rect width="100" height="8" rx="3" class="fill-sunken" />
+            <rect width={Math.max(0, Math.min(100, (r.value / top) * 100))} height="8" rx="3" class={`${r.cls ?? 'fill-info-strong'} st-bar-fill`} />
           </svg>
           <span class="text-end font-mono text-xs tabular-nums">
             {r.value}

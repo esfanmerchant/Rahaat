@@ -89,7 +89,7 @@ export function DecisionPage({ id }: { id: string }) {
       ) : null}
 
       <Section id="verify" title="Replay and verification">
-        <ReplayBox id={trace.decision_id} />
+        <ReplayBox id={trace.decision_id} facts={{ inputHash: trace.input_hash, engine: trace.engine_version, model: trace.model_version, ruleVersion: trace.rule_version_no, outcome: trace.outcome }} />
       </Section>
     </article>
   );
