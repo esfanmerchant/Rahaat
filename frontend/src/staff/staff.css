@@ -696,3 +696,104 @@ html[data-theme="night"], [data-theme="night"] {
   .dm-canvas { transition: opacity 250ms linear; }
   .dm-cue svg { animation: none; }
 }
+
+/* Sub-section tabs (SectionTabs.tsx): one section at a time, so a page needs little scrolling. */
+.st-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 14px;
+  background: var(--st-panel-2, var(--color-sunken));
+  border: 1px solid var(--st-edge, var(--color-line));
+  width: fit-content;
+  max-width: 100%;
+}
+.st-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-ink-muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 220ms var(--ease-out), color 220ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.st-tab:hover {
+  color: var(--color-ink);
+  background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+}
+.st-tab:active {
+  transform: scale(0.97);
+}
+.st-tab-on {
+  background: var(--st-panel, var(--color-paper));
+  color: var(--color-ink);
+  box-shadow: 0 0 0 1px var(--st-edge, var(--color-line)), 0 6px 16px -10px var(--st-glow-noor, rgb(0 0 0 / 0.3));
+}
+.st-tab-on .st-tab-icon {
+  color: var(--st-noor, var(--color-noor));
+}
+.st-tab-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+}
+.st-tab-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.st-tab-badge {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-info-soft);
+  color: var(--st-info, var(--color-info));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+.st-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.st-panel {
+  outline: none;
+  animation: st-panel-in 360ms var(--ease-out) both;
+}
+.st-panel-from-start {
+  --st-from: -18px;
+}
+.st-panel-from-end {
+  --st-from: 18px;
+}
+@keyframes st-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--st-from, 18px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-panel {
+    animation: st-fade-in 160ms linear both;
+  }
+  @keyframes st-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
