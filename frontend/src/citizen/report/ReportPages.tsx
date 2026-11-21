@@ -82,12 +82,18 @@ const speechOf = (keys: readonly Key[], id: string): Speech => ({
 
 const NOTE_MAX = 500;
 
-function NoteStep({ note, onNote }: { note: string; onNote: (text: string) => void }) {
+function NoteStep({ note, onNote, onBusy }: { note: string; onNote: (text: string) => void; onBusy: (busy: boolean) => void }) {
   const speech = useSpeechInput(lang.value);
   const [typing, setTyping] = useState(false);
   const heard = speech.input.state === 'heard' ? speech.input.text.slice(0, NOTE_MAX) : null;
   const failed = speech.input.state === 'failed' ? speech.input.why : null;
   const blocked = failed === 'denied' || failed === 'unavailable';
+  // While the phone listens or waits for the yes icon, the screen has no other button to press.
+  const busy = speech.input.state === 'listening' || heard !== null;
+  useEffect(() => {
+    onBusy(busy);
+    return () => onBusy(false);
+  }, [busy]);
   useEffect(() => {
     if (failed) sayKey(blocked ? 'rp_mic_off' : 'voice_nothing');
   }, [failed]);
@@ -289,6 +295,7 @@ function ReportFlow({ spec }: { spec: FlowSpec }) {
   const [step, setStep] = useState(0);
   const [choice, setChoice] = useState<Option | null>(null);
   const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
   if (sent) {
     return (
@@ -332,10 +339,12 @@ function ReportFlow({ spec }: { spec: FlowSpec }) {
       <CitizenShell onBack={back} prompt="rp_note_title" progress={progress}>
         <Heading icon="message" title="rp_note_title" />
         <p class="text-lg text-ink-muted">{t('rp_note_prompt')}</p>
-        <NoteStep note={note} onNote={setNote} />
-        <Button size="lg" icon="forward" block onClick={() => setStep(2)} class="mt-auto">
-          {t(note ? 'next' : 'rp_skip')}
-        </Button>
+        <NoteStep note={note} onNote={setNote} onBusy={setBusy} />
+        {busy ? null : (
+          <Button size="lg" icon="forward" block onClick={() => setStep(2)} class="mt-auto">
+            {t(note ? 'next' : 'rp_skip')}
+          </Button>
+        )}
       </CitizenShell>
     );
   }
