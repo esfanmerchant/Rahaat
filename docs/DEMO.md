@@ -40,7 +40,7 @@ Specimen cards for the camera step are in `data/demo_cards/<person>/` (`clean.jp
 
 ## Challenge Lab cards (staff console, `Challenge Lab`)
 
-Cards in the console include: cost of being wrong (three seeded cases: clear, borderline, fraud signal), I am not sure (queue and handoff package), bad data (Mohammad against Muhammed goes to "possible duplicate", garbage input returns a repairable 422), rules that change, explain and audit, consent take-back, scams and fakes, and a security strip. Check on the day which are live on the deployed build (the page marks unbuilt ones); do not run a card you have not run beforehand. The consent take-back card needs a seeded citizen with a live consent; the security card's consent-function probe may report a failure until migration for finding 2 in `docs/SECURITY_REPORT.md` is applied, so rehearse it first.
+Cards in the console include: cost of being wrong (three seeded cases: clear, borderline, fraud signal), I am not sure (queue and handoff package), bad data (Mohammad against Muhammed goes to "possible duplicate", garbage input returns a repairable 422), rules that change, explain and audit, consent take-back, scams and fakes, and a security strip. Check on the day which are live on the deployed build (the page marks unbuilt ones); do not run a card you have not run beforehand. The consent take-back card needs a seeded citizen with a live consent; the security card's live probes pass on both hosts (migration 0006 fixed finding 2), but rehearse it first like every card.
 
 ## If the network fails
 
