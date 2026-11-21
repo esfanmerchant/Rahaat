@@ -74,6 +74,7 @@ class KbDocument(Base, IdMixin, TenantMixin, CreatedMixin):
     """An approved, versioned source for RAG. Nothing unapproved enters the corpus."""
 
     __tablename__ = "kb_documents"
+    __table_args__ = (UniqueConstraint("tenant_id", "source", "version_no", name="uq_kb_document_version"),)
     title: Mapped[str] = mapped_column(String(200))
     lang: Mapped[str] = mapped_column(String(8), default="en")
     version_no: Mapped[int] = mapped_column(Integer, default=1)

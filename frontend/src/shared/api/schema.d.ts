@@ -229,6 +229,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask about the Rahat rules; answers cite the document, version and section
+         * @description Answers only with sentences copied from approved policy text, at most three, each with a citation.
+         *
+         *     Below the retrieval threshold, or when a guard objects, it refuses: "I am not sure. Please ask a person."
+         *     It never promises eligibility or a payment; answers about them carry a notice that only an officer decides.
+         */
+        post: operations["ask_v1_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/audit": {
         parameters: {
             query?: never;
@@ -837,6 +860,40 @@ export interface paths {
         get: operations["eval_summary_v1_evals_summary_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kb/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Policy documents, versions and sections */
+        get: operations["documents_v1_kb_documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kb/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Load the policy corpus files (new versions only; edits need a new version) */
+        post: operations["ingest_corpus_v1_kb_ingest_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1510,6 +1567,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/voice/interpret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Interpret a spoken answer against the type the question expects
+         * @description Returns a TypedDecision. Below the confidence floor it abstains (route `ask_more`) and says what to ask.
+         *
+         *     An answer is never saved here. Read `readback` to the person; when they confirm, send `form_patch` in
+         *     `PATCH /v1/applications/{id}`.
+         */
+        post: operations["interpret_answer_v1_voice_interpret_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/voice/stt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transcribe a short recording (optional; the app uses the phone's recogniser first) */
+        post: operations["transcribe_v1_voice_stt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1544,6 +1641,19 @@ export interface components {
             reasons?: string[];
             /** Score */
             score: number;
+        };
+        /** AnswerSentenceOut */
+        AnswerSentenceOut: {
+            /**
+             * Citation
+             * @description Index into `citations`
+             */
+            citation: number;
+            /**
+             * Text
+             * @description Copied word for word from the cited section
+             */
+            text: string;
         };
         /** ApplicationCreate */
         ApplicationCreate: {
@@ -1734,6 +1844,52 @@ export interface components {
             subject_id: string;
             /** Subject Type */
             subject_type: string;
+        };
+        /** AskIn */
+        AskIn: {
+            /**
+             * Lang
+             * @description Answer language; Urdu script is always answered in Urdu
+             */
+            lang?: ("en" | "ur") | null;
+            /**
+             * Question
+             * @description Treated as data, never as instructions
+             */
+            question: string;
+            /**
+             * Tenant Slug
+             * @description Anonymous callers only: which department's rules (default: the first)
+             */
+            tenant_slug?: string | null;
+        };
+        /** AskOut */
+        AskOut: {
+            /** Answered */
+            answered: boolean;
+            /** Citations */
+            citations: components["schemas"]["Citation"][];
+            /** @description choice 'answer', or abstained with route 'human' (ask a person) */
+            decision: components["schemas"]["TypedDecision_str_"];
+            /** Lang */
+            lang: string;
+            /** @description Shown with answers about eligibility or payment: only an officer decides */
+            notice: components["schemas"]["SpokenText"] | null;
+            /**
+             * Prototype Label
+             * @default Prototype. Not an official service. All identity, payment and data services are simulated.
+             */
+            prototype_label: string;
+            /** Reason */
+            reason: string;
+            /** @description 'I am not sure. Please ask a person.' when nothing reliable was found */
+            refusal: components["schemas"]["SpokenText"] | null;
+            /** Retrieval */
+            retrieval: {
+                [key: string]: number;
+            };
+            /** Sentences */
+            sentences: components["schemas"]["AnswerSentenceOut"][];
         };
         /** AuditEntry */
         AuditEntry: {
@@ -2076,6 +2232,31 @@ export interface components {
             slices: {
                 [key: string]: string | null;
             };
+        };
+        /** Citation */
+        Citation: {
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            /** Doc Key */
+            doc_key: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Lang */
+            lang: string;
+            /** Section */
+            section: string;
+            /** Section Id */
+            section_id: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
         };
         /** CompareIn */
         CompareIn: {
@@ -3194,6 +3375,22 @@ export interface components {
              */
             verified: boolean;
         };
+        /**
+         * FormValueOut
+         * @description Ready to send in `PATCH /v1/applications/{id}` once the person has confirmed the read-back.
+         */
+        FormValueOut: {
+            /** Confidence */
+            confidence: number;
+            /**
+             * Provenance
+             * @default spoken
+             * @constant
+             */
+            provenance: "spoken";
+            /** Value */
+            value: number | boolean | string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -3351,6 +3548,53 @@ export interface components {
         JobRetryIn: {
             /** Reason */
             reason: string;
+        };
+        /** KbDocumentOut */
+        KbDocumentOut: {
+            /** Content Hash */
+            content_hash: string;
+            /** Doc Key */
+            doc_key: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lang */
+            lang: string;
+            /** Sections */
+            sections: components["schemas"]["KbSectionOut"][];
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
+        /** KbIngestOut */
+        KbIngestOut: {
+            /** Added */
+            added: string[];
+            /** Refused */
+            refused: string[];
+            /** Retired */
+            retired: string[];
+            /** Unchanged */
+            unchanged: number;
+        };
+        /** KbSectionOut */
+        KbSectionOut: {
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            /** Section */
+            section: string;
+            /** Section Id */
+            section_id: string;
+            /** Sentences */
+            sentences: number;
         };
         /** LabelIn */
         LabelIn: {
@@ -4474,6 +4718,42 @@ export interface components {
             to: string;
         };
         /**
+         * SpeechClip
+         * @description One clip, the same shape as the frontend's `SpeechItem`: a recording key and its words.
+         */
+        SpeechClip: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+        };
+        /**
+         * Spoken
+         * @description A sentence to show and to play. `audio` is the clip sequence; `audio_keys` the same keys alone.
+         */
+        Spoken: {
+            /** Audio */
+            audio: components["schemas"]["SpeechClip"][];
+            /** Audio Keys */
+            audio_keys: string[];
+            /** Lang */
+            lang: string;
+            /** Text */
+            text: string;
+        };
+        /** SpokenText */
+        SpokenText: {
+            /**
+             * Key
+             * @description Message key; the app has a recording for it
+             */
+            key: string;
+            /** Lang */
+            lang: string;
+            /** Text */
+            text: string;
+        };
+        /**
          * StaffDetailOut
          * @description For officers, admins and auditors only.
          */
@@ -4525,6 +4805,27 @@ export interface components {
             thresholds: {
                 [key: string]: number;
             };
+        };
+        /** SttOut */
+        SttOut: {
+            /**
+             * Confidence
+             * @description Provider confidence (0 to 1) when it gives one
+             */
+            confidence: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /** Lang */
+            lang: string;
+            /**
+             * Notice
+             * @default The audio was not stored.
+             */
+            notice: string;
+            /** Provider */
+            provider: string;
+            /** Transcript */
+            transcript: string;
         };
         /** SubmitOut */
         SubmitOut: {
@@ -4738,6 +5039,40 @@ export interface components {
              */
             route: "auto" | "ask_more" | "human";
         };
+        /** TypedDecision[str] */
+        TypedDecision_str_: {
+            /**
+             * Abstained
+             * @default false
+             */
+            abstained: boolean;
+            /**
+             * Choice
+             * @description None when the component abstained
+             */
+            choice: string | null;
+            /**
+             * Confidence
+             * @description Calibrated probability of the chosen class
+             */
+            confidence: number;
+            /** Model Version */
+            model_version: string;
+            /** Probabilities */
+            probabilities?: {
+                [key: string]: number;
+            };
+            /**
+             * Reasons
+             * @description Reason codes, never free text
+             */
+            reasons?: string[];
+            /**
+             * Route
+             * @enum {string}
+             */
+            route: "auto" | "ask_more" | "human";
+        };
         /** UncertainField */
         UncertainField: {
             /** Confidence */
@@ -4849,6 +5184,110 @@ export interface components {
             sent_at?: string | null;
             /** Template */
             template?: string | null;
+        };
+        /** VoiceInterpretIn */
+        VoiceInterpretIn: {
+            /**
+             * Alternatives
+             * @description Other hypotheses from the engine, best first
+             */
+            alternatives?: string[];
+            /**
+             * Application Id
+             * @description Links the audit entry to the application being filled
+             */
+            application_id?: string | null;
+            /**
+             * Attempt
+             * @description 1 for the first try at this question; from 3 the screen offers pictures
+             * @default 1
+             */
+            attempt: number;
+            /**
+             * Engine
+             * @description device: the phone's recogniser; server: POST /v1/voice/stt
+             * @default device
+             * @enum {string}
+             */
+            engine: "device" | "server";
+            /**
+             * Expected
+             * @description The answer type the question expects; must match the question
+             * @enum {string}
+             */
+            expected: "yes_no" | "number" | "income_band" | "name_confirm";
+            /**
+             * Expected Name
+             * @description full_name only: the name read from the card
+             */
+            expected_name?: string | null;
+            /**
+             * Lang
+             * @description Language of the read-back; defaults to Accept-Language, then Urdu
+             */
+            lang?: ("en" | "ur") | null;
+            /**
+             * Question Key
+             * @description Which question was asked. `confirm` is the answer to a read-back.
+             * @enum {string}
+             */
+            question_key: "household_size" | "income_band" | "is_widow" | "has_disability" | "receives_other_aid" | "full_name" | "confirm";
+            /**
+             * Stt Confidence
+             * @description The engine's own confidence; 0 or absent means not reported
+             */
+            stt_confidence?: number | null;
+            /**
+             * Transcript
+             * @description What the speech engine heard. Treated as data, never as instructions.
+             */
+            transcript: string;
+        };
+        /** VoiceInterpretOut */
+        VoiceInterpretOut: {
+            /** @description When abstained: what to say before asking again */
+            ask_again: components["schemas"]["Spoken"] | null;
+            /** @description choice is 'yes', 'no', 'unknown', a number like '5', or a band like 'under_15k' */
+            decision: components["schemas"]["TypedDecision_str_"];
+            /** Expected */
+            expected: string;
+            /**
+             * Fallback
+             * @description use_pictures after three tries or when speech cannot help
+             * @enum {string}
+             */
+            fallback: "none" | "say_again" | "use_pictures";
+            /**
+             * Field
+             * @description The form field this answers, or null (name confirmation, read-back confirmation)
+             */
+            field: string | null;
+            /**
+             * Form Patch
+             * @description Send this only after the person confirms the read-back
+             */
+            form_patch: {
+                [key: string]: components["schemas"]["FormValueOut"];
+            } | null;
+            /**
+             * Needs Confirmation
+             * @description Always true for an answer: read it back and ask 'Is that right?'
+             */
+            needs_confirmation: boolean;
+            /** Question Key */
+            question_key: string;
+            /** @description 'You said: five people. Is that right?' with its clips, in the person's language */
+            readback: components["schemas"]["Spoken"] | null;
+            /**
+             * Unknown
+             * @description The person said they do not know; a valid answer that stays unknown
+             */
+            unknown: boolean;
+            /**
+             * Value
+             * @description The form value; null for 'I do not know' and when abstained
+             */
+            value: number | boolean | string | null;
         };
         /** WarningIn */
         WarningIn: {
@@ -5431,6 +5870,55 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    ask_v1_ask_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "accept-language"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AskOut"];
+                };
+            };
+            /** @description department_not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description too_many_requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -6584,6 +7072,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvalSummaryOut"];
+                };
+            };
+        };
+    };
+    documents_v1_kb_documents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KbDocumentOut"][];
+                };
+            };
+        };
+    };
+    ingest_corpus_v1_kb_ingest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KbIngestOut"];
                 };
             };
         };
@@ -7960,6 +8488,133 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    interpret_answer_v1_voice_interpret_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "accept-language"?: string | null;
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceInterpretIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceInterpretOut"];
+                };
+            };
+            /** @description application_not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description invalid_input or expected_type_mismatch */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description too_many_requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    transcribe_v1_voice_stt_post: {
+        parameters: {
+            query?: {
+                lang?: "ur" | "en";
+            };
+            header?: {
+                /** @description Helpers only: the person id this request is for */
+                "X-Acting-For"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The raw recording, at most 1 MB and 30 seconds */
+        requestBody: {
+            content: {
+                "audio/amr": string;
+                "audio/flac": string;
+                "audio/mp4": string;
+                "audio/mpeg": string;
+                "audio/ogg": string;
+                "audio/wav": string;
+                "audio/webm": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SttOut"];
+                };
+            };
+            /** @description audio_too_large or audio_too_long */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description unsupported_audio */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description empty_audio */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description too_many_requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description use_device_speech: no server provider is configured */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description speech_unavailable: the provider did not answer */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -75,7 +75,7 @@ def list_audit(
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     cursor: int | None = Query(None, ge=1, description="Return entries with seq below this"),
     action: str | None = Query(None, max_length=64, description="Exact action, or a prefix ending in '.'"),
-    result: str | None = Query(None, pattern="^(ok|denied|failed)$"),
+    result: str | None = Query(None, pattern="^(ok|denied|failed|abstained|refused|blocked|flag|flagged|mask)$"),
     actor_id: str | None = Query(None, max_length=64),
     object_id: str | None = Query(None, max_length=64),
 ) -> AuditPage:

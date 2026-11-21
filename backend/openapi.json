@@ -75,6 +75,26 @@
         "title": "AnomalyEvidence",
         "type": "object"
       },
+      "AnswerSentenceOut": {
+        "properties": {
+          "citation": {
+            "description": "Index into `citations`",
+            "title": "Citation",
+            "type": "integer"
+          },
+          "text": {
+            "description": "Copied word for word from the cited section",
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "citation"
+        ],
+        "title": "AnswerSentenceOut",
+        "type": "object"
+      },
       "ApplicationCreate": {
         "additionalProperties": false,
         "properties": {
@@ -528,6 +548,134 @@
           "created_at"
         ],
         "title": "ApprovalOut",
+        "type": "object"
+      },
+      "AskIn": {
+        "additionalProperties": false,
+        "properties": {
+          "lang": {
+            "anyOf": [
+              {
+                "enum": [
+                  "en",
+                  "ur"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Answer language; Urdu script is always answered in Urdu",
+            "title": "Lang"
+          },
+          "question": {
+            "description": "Treated as data, never as instructions",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "tenant_slug": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "pattern": "^[a-z0-9-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Anonymous callers only: which department's rules (default: the first)",
+            "title": "Tenant Slug"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "AskIn",
+        "type": "object"
+      },
+      "AskOut": {
+        "properties": {
+          "answered": {
+            "title": "Answered",
+            "type": "boolean"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/TypedDecision_str_",
+            "description": "choice 'answer', or abstained with route 'human' (ask a person)"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpokenText"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shown with answers about eligibility or payment: only an officer decides"
+          },
+          "prototype_label": {
+            "default": "Prototype. Not an official service. All identity, payment and data services are simulated.",
+            "title": "Prototype Label",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "refusal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpokenText"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "'I am not sure. Please ask a person.' when nothing reliable was found"
+          },
+          "retrieval": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Retrieval",
+            "type": "object"
+          },
+          "sentences": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerSentenceOut"
+            },
+            "title": "Sentences",
+            "type": "array"
+          }
+        },
+        "required": [
+          "decision",
+          "answered",
+          "lang",
+          "sentences",
+          "citations",
+          "notice",
+          "refusal",
+          "reason",
+          "retrieval"
+        ],
+        "title": "AskOut",
         "type": "object"
       },
       "AuditEntry": {
@@ -1593,6 +1741,56 @@
           "after"
         ],
         "title": "ChangedCaseOut",
+        "type": "object"
+      },
+      "Citation": {
+        "properties": {
+          "chunk_id": {
+            "format": "uuid",
+            "title": "Chunk Id",
+            "type": "string"
+          },
+          "doc_key": {
+            "title": "Doc Key",
+            "type": "string"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "section_id": {
+            "title": "Section Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "chunk_id",
+          "document_id",
+          "doc_key",
+          "title",
+          "version",
+          "section_id",
+          "section",
+          "lang"
+        ],
+        "title": "Citation",
         "type": "object"
       },
       "CompareIn": {
@@ -4183,6 +4381,44 @@
         "title": "FieldValue[str]",
         "type": "object"
       },
+      "FormValueOut": {
+        "description": "Ready to send in `PATCH /v1/applications/{id}` once the person has confirmed the read-back.",
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "provenance": {
+            "const": "spoken",
+            "default": "spoken",
+            "title": "Provenance",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "confidence"
+        ],
+        "title": "FormValueOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4538,6 +4774,124 @@
           "reason"
         ],
         "title": "JobRetryIn",
+        "type": "object"
+      },
+      "KbDocumentOut": {
+        "properties": {
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "doc_key": {
+            "title": "Doc Key",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/KbSectionOut"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "doc_key",
+          "title",
+          "lang",
+          "version",
+          "status",
+          "content_hash",
+          "sections"
+        ],
+        "title": "KbDocumentOut",
+        "type": "object"
+      },
+      "KbIngestOut": {
+        "properties": {
+          "added": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Added",
+            "type": "array"
+          },
+          "refused": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Refused",
+            "type": "array"
+          },
+          "retired": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Retired",
+            "type": "array"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "added",
+          "unchanged",
+          "retired",
+          "refused"
+        ],
+        "title": "KbIngestOut",
+        "type": "object"
+      },
+      "KbSectionOut": {
+        "properties": {
+          "chunk_id": {
+            "format": "uuid",
+            "title": "Chunk Id",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "section_id": {
+            "title": "Section Id",
+            "type": "string"
+          },
+          "sentences": {
+            "title": "Sentences",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "chunk_id",
+          "section_id",
+          "section",
+          "sentences"
+        ],
+        "title": "KbSectionOut",
         "type": "object"
       },
       "LabelIn": {
@@ -7622,6 +7976,84 @@
         "title": "SmsOutboxItem",
         "type": "object"
       },
+      "SpeechClip": {
+        "description": "One clip, the same shape as the frontend's `SpeechItem`: a recording key and its words.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "SpeechClip",
+        "type": "object"
+      },
+      "Spoken": {
+        "description": "A sentence to show and to play. `audio` is the clip sequence; `audio_keys` the same keys alone.",
+        "properties": {
+          "audio": {
+            "items": {
+              "$ref": "#/components/schemas/SpeechClip"
+            },
+            "title": "Audio",
+            "type": "array"
+          },
+          "audio_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Audio Keys",
+            "type": "array"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "lang",
+          "audio",
+          "audio_keys"
+        ],
+        "title": "Spoken",
+        "type": "object"
+      },
+      "SpokenText": {
+        "properties": {
+          "key": {
+            "description": "Message key; the app has a recording for it",
+            "title": "Key",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text",
+          "lang"
+        ],
+        "title": "SpokenText",
+        "type": "object"
+      },
       "StaffDetailOut": {
         "description": "For officers, admins and auditors only.",
         "properties": {
@@ -7776,6 +8208,58 @@
           "decision_reasons"
         ],
         "title": "StaffDetailOut",
+        "type": "object"
+      },
+      "SttOut": {
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Provider confidence (0 to 1) when it gives one",
+            "title": "Confidence"
+          },
+          "duration_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration S"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "notice": {
+            "default": "The audio was not stored.",
+            "title": "Notice",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "transcript": {
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transcript",
+          "confidence",
+          "lang",
+          "provider"
+        ],
+        "title": "SttOut",
         "type": "object"
       },
       "SubmitOut": {
@@ -8334,6 +8818,70 @@
         "title": "TypedDecision[Literal['genuine', 'suspect']]",
         "type": "object"
       },
+      "TypedDecision_str_": {
+        "properties": {
+          "abstained": {
+            "default": false,
+            "title": "Abstained",
+            "type": "boolean"
+          },
+          "choice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the component abstained",
+            "title": "Choice"
+          },
+          "confidence": {
+            "description": "Calibrated probability of the chosen class",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Probabilities",
+            "type": "object"
+          },
+          "reasons": {
+            "description": "Reason codes, never free text",
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "ask_more",
+              "human"
+            ],
+            "title": "Route",
+            "type": "string"
+          }
+        },
+        "required": [
+          "choice",
+          "confidence",
+          "route",
+          "model_version"
+        ],
+        "title": "TypedDecision[str]",
+        "type": "object"
+      },
       "UncertainField": {
         "properties": {
           "confidence": {
@@ -8639,6 +9187,251 @@
           "genuine"
         ],
         "title": "VerifyOut",
+        "type": "object"
+      },
+      "VoiceInterpretIn": {
+        "additionalProperties": false,
+        "properties": {
+          "alternatives": {
+            "description": "Other hypotheses from the engine, best first",
+            "items": {
+              "maxLength": 400,
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Links the audit entry to the application being filled",
+            "title": "Application Id"
+          },
+          "attempt": {
+            "default": 1,
+            "description": "1 for the first try at this question; from 3 the screen offers pictures",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "engine": {
+            "default": "device",
+            "description": "device: the phone's recogniser; server: POST /v1/voice/stt",
+            "enum": [
+              "device",
+              "server"
+            ],
+            "title": "Engine",
+            "type": "string"
+          },
+          "expected": {
+            "description": "The answer type the question expects; must match the question",
+            "enum": [
+              "yes_no",
+              "number",
+              "income_band",
+              "name_confirm"
+            ],
+            "title": "Expected",
+            "type": "string"
+          },
+          "expected_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "full_name only: the name read from the card",
+            "title": "Expected Name"
+          },
+          "lang": {
+            "anyOf": [
+              {
+                "enum": [
+                  "en",
+                  "ur"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Language of the read-back; defaults to Accept-Language, then Urdu",
+            "title": "Lang"
+          },
+          "question_key": {
+            "description": "Which question was asked. `confirm` is the answer to a read-back.",
+            "enum": [
+              "household_size",
+              "income_band",
+              "is_widow",
+              "has_disability",
+              "receives_other_aid",
+              "full_name",
+              "confirm"
+            ],
+            "title": "Question Key",
+            "type": "string"
+          },
+          "stt_confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The engine's own confidence; 0 or absent means not reported",
+            "title": "Stt Confidence"
+          },
+          "transcript": {
+            "description": "What the speech engine heard. Treated as data, never as instructions.",
+            "maxLength": 400,
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_key",
+          "expected",
+          "transcript"
+        ],
+        "title": "VoiceInterpretIn",
+        "type": "object"
+      },
+      "VoiceInterpretOut": {
+        "properties": {
+          "ask_again": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Spoken"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When abstained: what to say before asking again"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/TypedDecision_str_",
+            "description": "choice is 'yes', 'no', 'unknown', a number like '5', or a band like 'under_15k'"
+          },
+          "expected": {
+            "title": "Expected",
+            "type": "string"
+          },
+          "fallback": {
+            "description": "use_pictures after three tries or when speech cannot help",
+            "enum": [
+              "none",
+              "say_again",
+              "use_pictures"
+            ],
+            "title": "Fallback",
+            "type": "string"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The form field this answers, or null (name confirmation, read-back confirmation)",
+            "title": "Field"
+          },
+          "form_patch": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/FormValueOut"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Send this only after the person confirms the read-back",
+            "title": "Form Patch"
+          },
+          "needs_confirmation": {
+            "description": "Always true for an answer: read it back and ask 'Is that right?'",
+            "title": "Needs Confirmation",
+            "type": "boolean"
+          },
+          "question_key": {
+            "title": "Question Key",
+            "type": "string"
+          },
+          "readback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Spoken"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "'You said: five people. Is that right?' with its clips, in the person's language"
+          },
+          "unknown": {
+            "description": "The person said they do not know; a valid answer that stays unknown",
+            "title": "Unknown",
+            "type": "boolean"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The form value; null for 'I do not know' and when abstained",
+            "title": "Value"
+          }
+        },
+        "required": [
+          "decision",
+          "question_key",
+          "expected",
+          "field",
+          "value",
+          "unknown",
+          "form_patch",
+          "needs_confirmation",
+          "readback",
+          "ask_again",
+          "fallback"
+        ],
+        "title": "VoiceInterpretOut",
         "type": "object"
       },
       "WarningIn": {
@@ -9806,6 +10599,77 @@
         ]
       }
     },
+    "/v1/ask": {
+      "post": {
+        "description": "Answers only with sentences copied from approved policy text, at most three, each with a citation.\n\nBelow the retrieval threshold, or when a guard objects, it refuses: \"I am not sure. Please ask a person.\"\nIt never promises eligibility or a payment; answers about them carry a notice that only an officer decides.",
+        "operationId": "ask_v1_ask_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "department_not_found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "too_many_requests"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ask about the Rahat rules; answers cite the document, version and section",
+        "tags": [
+          "rules assistant"
+        ]
+      }
+    },
     "/v1/audit": {
       "get": {
         "operationId": "list_audit_v1_audit_get",
@@ -9867,7 +10731,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "pattern": "^(ok|denied|failed)$",
+                  "pattern": "^(ok|denied|failed|abstained|refused|blocked|flag|flagged|mask)$",
                   "type": "string"
                 },
                 {
@@ -11930,6 +12794,62 @@
         "summary": "Accuracy, mistakes, abstention, silent guesses, latency, cost",
         "tags": [
           "evals"
+        ]
+      }
+    },
+    "/v1/kb/documents": {
+      "get": {
+        "operationId": "documents_v1_kb_documents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KbDocumentOut"
+                  },
+                  "title": "Response Documents V1 Kb Documents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Policy documents, versions and sections",
+        "tags": [
+          "rules assistant"
+        ]
+      }
+    },
+    "/v1/kb/ingest": {
+      "post": {
+        "operationId": "ingest_corpus_v1_kb_ingest_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KbIngestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Load the policy corpus files (new versions only; edits need a new version)",
+        "tags": [
+          "rules assistant"
         ]
       }
     },
@@ -14495,6 +15415,214 @@
         "summary": "Send the draft for a second admin to publish",
         "tags": [
           "digital twin"
+        ]
+      }
+    },
+    "/v1/voice/interpret": {
+      "post": {
+        "description": "Returns a TypedDecision. Below the confidence floor it abstains (route `ask_more`) and says what to ask.\n\nAn answer is never saved here. Read `readback` to the person; when they confirm, send `form_patch` in\n`PATCH /v1/applications/{id}`.",
+        "operationId": "interpret_answer_v1_voice_interpret_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceInterpretIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceInterpretOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "application_not_found"
+          },
+          "422": {
+            "description": "invalid_input or expected_type_mismatch"
+          },
+          "429": {
+            "description": "too_many_requests"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Interpret a spoken answer against the type the question expects",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/v1/voice/stt": {
+      "post": {
+        "operationId": "transcribe_v1_voice_stt_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "lang",
+            "required": false,
+            "schema": {
+              "default": "ur",
+              "enum": [
+                "ur",
+                "en"
+              ],
+              "title": "Lang",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Helpers only: the person id this request is for",
+            "in": "header",
+            "name": "X-Acting-For",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Helpers only: the person id this request is for",
+              "title": "X-Acting-For"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "audio/amr": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/flac": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/mp4": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/mpeg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/ogg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/wav": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/webm": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "description": "The raw recording, at most 1 MB and 30 seconds",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SttOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "413": {
+            "description": "audio_too_large or audio_too_long"
+          },
+          "415": {
+            "description": "unsupported_audio"
+          },
+          "422": {
+            "description": "empty_audio"
+          },
+          "429": {
+            "description": "too_many_requests"
+          },
+          "501": {
+            "description": "use_device_speech: no server provider is configured"
+          },
+          "503": {
+            "description": "speech_unavailable: the provider did not answer"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Transcribe a short recording (optional; the app uses the phone's recogniser first)",
+        "tags": [
+          "voice"
         ]
       }
     }

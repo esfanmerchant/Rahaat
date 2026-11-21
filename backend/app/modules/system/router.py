@@ -67,6 +67,12 @@ def _providers() -> dict[str, Any]:
         providers.update(document_providers())
     except Exception:  # noqa: BLE001
         log.exception("could not read the document-AI providers")
+    for name in ("voice", "rag", "guardrails"):
+        try:
+            module = __import__(f"app.modules.{name}.service", fromlist=["providers"])
+            providers[name] = module.providers()
+        except Exception:  # noqa: BLE001
+            log.exception("could not read the %s providers", name)
     try:
         from app.modules.scam.service import provider_status as scam_providers
 
