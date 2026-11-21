@@ -158,6 +158,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/jobs/drain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run due jobs now (Vercel Cron; bearer CRON_SECRET) */
+        get: operations["drain_jobs_v1_admin_jobs_drain_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/jobs/{job_id}/retry": {
         parameters: {
             query?: never;
@@ -1370,6 +1387,23 @@ export interface paths {
         };
         /** Programs in this department, with the active rule version */
         get: operations["list_programs_v1_programs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/public/pulse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Live counts and a synthetic replay for the /live page */
+        get: operations["get_pulse_v1_public_pulse_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3033,7 +3067,7 @@ export interface components {
              * @description The analysis stored for this matrix, when one was made
              */
             eval_run_id?: string | null;
-            thresholds: components["schemas"]["ThresholdsOut"];
+            thresholds: components["schemas"]["app__modules__evals__schemas__ThresholdsOut"];
         };
         /** CostMatrixSave */
         CostMatrixSave: {
@@ -3234,7 +3268,7 @@ export interface components {
             run_id?: string | null;
             /** Stored */
             stored: boolean;
-            thresholds: components["schemas"]["ThresholdsOut"];
+            thresholds: components["schemas"]["app__modules__evals__schemas__ThresholdsOut"];
         };
         /**
          * DecisionInput
@@ -3792,6 +3826,14 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** DrainOut */
+        DrainOut: {
+            /**
+             * Ran
+             * @description Jobs run by this call
+             */
+            ran: number;
+        };
         /** DryRunIn */
         DryRunIn: {
             input: components["schemas"]["DecisionInput"];
@@ -4186,6 +4228,26 @@ export interface components {
              */
             understanding: string;
         };
+        /** HeadlineOut */
+        HeadlineOut: {
+            /** Approved */
+            approved: number;
+            /** Asked For Proof */
+            asked_for_proof: number;
+            /** Cases */
+            cases: number;
+            /** Rejected */
+            rejected: number;
+            /** Sent To Person */
+            sent_to_person: number;
+            /** Silent Guesses */
+            silent_guesses: number;
+            thresholds: components["schemas"]["app__modules__pulse__schemas__ThresholdsOut"];
+            /** Wrong Approvals */
+            wrong_approvals: number;
+            /** Wrong Rejections */
+            wrong_rejections: number;
+        };
         /** Hypothesis */
         Hypothesis: {
             /** Label */
@@ -4451,6 +4513,26 @@ export interface components {
             enabled: boolean;
             /** User Per Minute */
             user_per_minute: number;
+        };
+        /** LiveOut */
+        LiveOut: {
+            /** Applications By Status */
+            applications_by_status: {
+                [key: string]: number;
+            };
+            /** Audit Chain Length */
+            audit_chain_length: number;
+            /**
+             * Decisions By Route
+             * @description auto (approved), ask_more, human and reject (hard-rule rejection)
+             */
+            decisions_by_route: {
+                [key: string]: number;
+            };
+            /** Departments */
+            departments: number;
+            payments: components["schemas"]["PaymentsOut"];
+            scam: components["schemas"]["ScamOut"];
         };
         /** LiveStats */
         LiveStats: {
@@ -4878,6 +4960,17 @@ export interface components {
              */
             four_eyes_limit_pkr: number;
         };
+        /** PaymentsOut */
+        PaymentsOut: {
+            /** Sent */
+            sent: number;
+            /** Sent Amount Pkr */
+            sent_amount_pkr: number;
+            /** Settled */
+            settled: number;
+            /** Settled Amount Pkr */
+            settled_amount_pkr: number;
+        };
         /** PersonBucketOut */
         PersonBucketOut: {
             /** Display Name */
@@ -4983,6 +5076,19 @@ export interface components {
             rule_version?: components["schemas"]["RuleVersionBrief"] | null;
             /** Slug */
             slug: string;
+        };
+        /** PulseOut */
+        PulseOut: {
+            /** Cache Seconds */
+            cache_seconds: number;
+            /** Elapsed Ms */
+            elapsed_ms: number;
+            /** Generated At */
+            generated_at: string;
+            live: components["schemas"]["LiveOut"];
+            /** Notice */
+            notice: string;
+            replay: components["schemas"]["ReplayOut"];
         };
         /** QrResult */
         QrResult: {
@@ -5201,6 +5307,46 @@ export interface components {
             ece: number;
             /** N */
             n: number;
+        };
+        /** ReplayCase */
+        ReplayCase: {
+            /**
+             * Correct
+             * @description An automatic outcome matched the label. Deferrals to proof or a person are never counted wrong.
+             */
+            correct: boolean;
+            /**
+             * Kind
+             * @description Synthetic case kind: a fraud type, eligible_and_genuine, not_eligible or not_genuine
+             */
+            kind: string;
+            /** Outcome */
+            outcome: string;
+            /** P Ok */
+            p_ok: number;
+            /** Reason Code */
+            reason_code: string;
+            /**
+             * Route
+             * @description auto | ask_more | human; an auto case with outcome rejected is a hard-rule rejection
+             */
+            route: string;
+        };
+        /** ReplayOut */
+        ReplayOut: {
+            /** Available */
+            available: boolean;
+            /** Cases */
+            cases: components["schemas"]["ReplayCase"][];
+            /** Cases Scored */
+            cases_scored: number;
+            headline: components["schemas"]["HeadlineOut"] | null;
+            /** Model Version */
+            model_version: string | null;
+            /** Replay Source */
+            replay_source: string;
+            /** Rule Version No */
+            rule_version_no: number | null;
         };
         /** ReplayResult */
         ReplayResult: {
@@ -5441,6 +5587,13 @@ export interface components {
             verified?: components["schemas"]["VerifiedOut"] | null;
             /** What To Do */
             what_to_do: string;
+        };
+        /** ScamOut */
+        ScamOut: {
+            /** Blocked */
+            blocked: number;
+            /** Reports */
+            reports: number;
         };
         /** ScamReportList */
         ScamReportList: {
@@ -5858,22 +6011,6 @@ export interface components {
             results: components["schemas"]["SyncOpResult"][];
             /** Server Time */
             server_time: string;
-        };
-        /** ThresholdsOut */
-        ThresholdsOut: {
-            /** Approve */
-            approve: number;
-            /** Approve Formula */
-            approve_formula?: string | null;
-            /**
-             * Queue Days
-             * @default 1
-             */
-            queue_days: number;
-            /** Reject */
-            reject: number;
-            /** Reject Formula */
-            reject_formula?: string | null;
         };
         /** TimelineItem */
         TimelineItem: {
@@ -6357,6 +6494,22 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** ThresholdsOut */
+        app__modules__evals__schemas__ThresholdsOut: {
+            /** Approve */
+            approve: number;
+            /** Approve Formula */
+            approve_formula?: string | null;
+            /**
+             * Queue Days
+             * @default 1
+             */
+            queue_days: number;
+            /** Reject */
+            reject: number;
+            /** Reject Formula */
+            reject_formula?: string | null;
+        };
         /** SwitchIn */
         app__modules__helpers__schemas__SwitchIn: {
             /**
@@ -6366,6 +6519,15 @@ export interface components {
             person_id: string;
             /** Pin */
             pin: string;
+        };
+        /** ThresholdsOut */
+        app__modules__pulse__schemas__ThresholdsOut: {
+            /** Approve */
+            approve: number;
+            /** Confidence Floor */
+            confidence_floor: number;
+            /** Reject */
+            reject: number;
         };
     };
     responses: never;
@@ -6662,6 +6824,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    drain_jobs_v1_admin_jobs_drain_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DrainOut"];
                 };
             };
             /** @description Validation Error */
@@ -9092,6 +9285,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramOut"][];
+                };
+            };
+        };
+    };
+    get_pulse_v1_public_pulse_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PulseOut"];
                 };
             };
         };

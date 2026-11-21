@@ -21,6 +21,7 @@ EXPECTED_PUBLIC = {
     "POST /v1/auth/login", "POST /v1/auth/refresh", "POST /v1/auth/logout", "POST /v1/notifications/verify",
     "POST /v1/people/register/start", "POST /v1/people/register/complete", "GET /{full_path:path}",
     "GET /v1/admin/jobs/drain",  # Vercel Cron: bearer CRON_SECRET compared in constant time; 404 while the secret is unset
+    "GET /v1/public/pulse",  # aggregate counts and a synthetic replay for /live; no personal data; rate limited per network
     "POST /v1/ask",  # rules assistant: answers only from approved policy text, no personal data, per-address rate limits
 }  # fmt: skip
 

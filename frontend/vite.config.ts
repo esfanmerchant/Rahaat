@@ -89,7 +89,7 @@ export default defineConfig({
         // chunks load from the network so a citizen on a weak connection never
         // downloads them. The voice prompts are cached at runtime (below).
         globPatterns: ['**/*.{js,css,html,svg,png}', 'audio/silence.mp3'], // the plugin adds manifest.webmanifest itself
-        globIgnores: ['**/assets/staff-*.js', '**/assets/demo-*.js', 'audio/**/*.json'],
+        globIgnores: ['**/assets/staff-*.js', '**/assets/demo-*.js', '**/assets/live-*.js', 'audio/**/*.json'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: NAVIGATE_FALLBACK_DENYLIST,
         // A stale service worker during the live demo would be a disaster.
@@ -149,6 +149,9 @@ export default defineConfig({
           const path = id.replace(/\\/g, '/');
           if (path.includes('/src/staff/demo/')) return 'demo';
           if (path.includes('/src/staff/')) return 'staff';
+          // /live: the page and its HUD in 'live'; three.js and the scene in 'live-three', fetched only when WebGL will run.
+          if (path.includes('/node_modules/three/') || path.includes('/src/live/scene')) return 'live-three';
+          if (path.includes('/src/live/')) return 'live';
           return undefined;
         },
       },

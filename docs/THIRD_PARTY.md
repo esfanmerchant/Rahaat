@@ -71,3 +71,10 @@ OpenSPP (social-protection registry patterns), the Jev typed-decision model's do
 | pyclipper, shapely, six, tqdm | MIT / BSD-3 / MIT / MPL-2.0+MIT | Pulled in by rapidocr |
 
 `opencv-python` is dropped by a uv override; `opencv-python-headless` (Apache-2.0) provides `cv2`.
+
+## Added with the /live page (frontend)
+
+| Package | Licence | Use |
+|---|---|---|
+| three 0.187.0 | MIT | WebGL scene of the /live page ("The Loom of Light"). Own lazy chunk, never in the citizen budget, loaded only when WebGL works and neither reduced motion nor Save-Data is on. |
+| @types/three 0.187.0 (dev) | MIT | TypeScript types for three (build time only; not shipped). |
