@@ -82,10 +82,10 @@ Track D2
 
 ## Phase 3: bonus features and the rest (T2)
 
-- [ ] A15 Webhooks  - [ ] A16 Plans and usage  - [ ] A17 USSD/SMS and verify code  - [ ] A18 Appeals, complaints, admin users, reports
+- [ ] A15 Webhooks  - [ ] A16 Plans and usage  - [x] A17 Feature-phone channel: USSD menu (English and Roman Urdu: status by tracking code and phone, check a message by verify code, stop sharing with the PIN through the real consent service, call-me-back case) and SMS commands STATUS, VERIFY, STOP, HELP with replies through the mock SMS gateway carrying a verify code; `POST /v1/channels/ussd` and `/v1/channels/sms/inbound` admit API keys with `channels:ussd` or `channels:sms`; the aggregator and the SMS network are SIMULATED  - [ ] A18 Appeals, complaints, admin users, reports
 - [x] B12 Digital Twin: draft rules replayed over live and labelled cases, fairness slices, no side effects  - [x] B13 Evaluation summary API  - [ ] B14 Analytics  - [ ] B15 Anomaly detection  - [ ] B16 Override feedback
 - [x] C9 RAG: 7 policy documents in English and Urdu, answers copied with citations, refusal below a cost-chosen threshold; 0 wrong answers on dev and test  - [ ] C10 Agent  - [ ] C11 Guardrails: input and output guards done, 67-attack red team passes with 0 false alarms; action guard still to come with the agent  - [ ] C12 Memory  - [ ] C13 Optional providers (T3)
-- [ ] D1.10 Sync conflicts, local encryption  - [ ] D1.11 USSD simulator, symbols  - [ ] D1.12 Budgets in CI
+- [ ] D1.10 Sync conflicts, local encryption  - [x] D1.11 USSD simulator at `/ussd` (own lazy chunk `ussd`, 7 KB gzip, outside the citizen budget and the PWA precache; the status names the tracking symbols)  - [ ] D1.11b links to `/ussd` from `/demo` and `/live` (WP-E)  - [ ] D1.12 Budgets in CI
 - [ ] D2.8 Digital Twin view  - [ ] D2.9 Scam Map  - [ ] D2.10 Dashboards  - [ ] D2.11 Admin screens
 
 **Gate 3**: every item passes its check or is `HIDDEN`.

@@ -119,9 +119,6 @@ export function Phone({ phone, display }: { phone: PhoneApi; display: string }) 
         </g>
         {/* Keypad plate. */}
         <rect x="16" y="346" width="268" height="204" rx="18" fill="url(#ussd-plate)" stroke="#1b2552" />
-        <g transform="translate(150 584)">
-          <circle r="21" fill="none" stroke="#2a3570" />
-        </g>
       </svg>
 
       {/* The lit LCD. */}

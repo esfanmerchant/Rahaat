@@ -30,7 +30,7 @@ export function SmsPanel({ msisdn, display, trackingDigits, pin }: { msisdn: str
   const [failure, setFailure] = useState<RelayFailure | null>(null);
   const [loaded, setLoaded] = useState(false);
   const seen = useRef(new Set<string>());
-  const end = useRef<HTMLDivElement>(null);
+  const log = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -57,7 +57,9 @@ export function SmsPanel({ msisdn, display, trackingDigits, pin }: { msisdn: str
   }, [msisdn]);
 
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'nearest' });
+    // Scroll the thread itself, never the page.
+    const el = log.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [items.length]);
 
   async function send(text: string) {
@@ -94,7 +96,7 @@ export function SmsPanel({ msisdn, display, trackingDigits, pin }: { msisdn: str
         <h2 class="m-0 text-base font-bold">Text messages</h2>
         <p class="m-0 font-mono text-sm text-night-muted">{display}</p>
       </header>
-      <div class="flex max-h-[22rem] min-h-[12rem] flex-1 flex-col gap-2 overflow-y-auto px-4 py-3 lg:max-h-[26rem]" role="log" aria-live="polite" aria-label="Messages">
+      <div ref={log} class="flex max-h-[22rem] min-h-[12rem] flex-1 flex-col gap-2 overflow-y-auto px-4 py-3 lg:max-h-[26rem]" role="log" aria-live="polite" aria-label="Messages">
         {!loaded ? <p class="m-0 text-sm text-night-muted">Loading…</p> : null}
         {loaded && items.length === 0 ? (
           <p class="m-0 text-sm text-night-muted">No messages yet. Send HELP to see how it works.</p>
@@ -105,7 +107,6 @@ export function SmsPanel({ msisdn, display, trackingDigits, pin }: { msisdn: str
             {m.body}
           </p>
         ))}
-        <div ref={end} />
       </div>
       {failure ? (
         <p role="alert" class="m-0 border-t border-night-line px-4 py-2 text-sm text-madder-glow">

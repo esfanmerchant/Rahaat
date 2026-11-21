@@ -22,14 +22,24 @@
 
 /* The phone. --phone-w follows the viewport so the whole phone and the footer fit at 1080p and at 844 px tall. */
 .ussd-phone {
-  --phone-w: min(26rem, 88vw, calc((100dvh - 9.5rem) / 2.07));
+  --phone-w: min(24.5rem, 88vw, calc((100dvh - 14rem) / 2.07));
   position: relative;
   width: var(--phone-w);
   aspect-ratio: 300 / 620;
   container-type: inline-size;
-  filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.55)) drop-shadow(0 0 60px rgb(255 211 110 / 0.14));
   user-select: none;
   -webkit-user-select: none;
+}
+/* The glow and the shadow sit on a still underlay, so a changing screen never re-paints a blurred filter. */
+.ussd-phone::before {
+  content: '';
+  position: absolute;
+  inset: 1% 0 0;
+  border-radius: 15cqw 15cqw 24cqw 24cqw;
+  box-shadow:
+    0 8cqw 10cqw -2cqw rgb(0 0 0 / 0.55),
+    0 0 16cqw rgb(255 211 110 / 0.14);
+  pointer-events: none;
 }
 .ussd-chassis {
   position: absolute;
@@ -65,7 +75,6 @@
   background-image:
     linear-gradient(rgb(18 22 49 / 0.09) 1px, transparent 1px), linear-gradient(90deg, rgb(18 22 49 / 0.09) 1px, transparent 1px);
   background-size: 0.9cqw 0.9cqw;
-  mix-blend-mode: multiply;
 }
 .ussd-lcd-status {
   display: flex;

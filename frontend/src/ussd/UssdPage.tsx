@@ -80,8 +80,8 @@ function Simulator({ data }: { data: PersonasOut }) {
   }, [phone.press, phone.letter, phone.call, phone.backspace, phone.end]);
 
   return (
-    <div class="mx-auto grid w-full max-w-[1680px] items-start gap-6 px-4 pb-8 pt-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-10 lg:px-10 lg:pt-6">
-      <section aria-label="Who is calling" class="order-1 flex flex-col gap-4 lg:order-none">
+    <div class="mx-auto grid w-full max-w-[1680px] items-start gap-6 px-4 pb-8 pt-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-10 lg:gap-y-4 lg:px-10 lg:pt-6">
+      <section aria-label="Who is calling" class="order-1 lg:col-start-1 lg:row-start-1">
         <div role="radiogroup" aria-label="Demo phone number" class="flex flex-wrap gap-2">
           {data.personas.map((p) => (
             <button
@@ -99,7 +99,9 @@ function Simulator({ data }: { data: PersonasOut }) {
             </button>
           ))}
         </div>
+      </section>
 
+      <section aria-label="What to try" class="order-4 flex flex-col gap-4 lg:col-start-1 lg:row-start-2">
         <div class="rounded-2xl border border-night-line bg-night-1/80 p-4">
           <h2 class="m-0 text-base font-bold">What to try</h2>
           <dl class="m-0 mt-3 grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
@@ -140,7 +142,7 @@ function Simulator({ data }: { data: PersonasOut }) {
         </ol>
       </section>
 
-      <section aria-label="Feature phone" class="order-2 flex flex-col items-center gap-4 lg:order-none">
+      <section aria-label="Feature phone" class="order-2 flex flex-col items-center gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         <Phone phone={phone} display={persona?.display ?? ''} />
         <div class="flex flex-wrap justify-center gap-2">
           <button
@@ -155,7 +157,7 @@ function Simulator({ data }: { data: PersonasOut }) {
         </div>
       </section>
 
-      <div class="order-3 lg:order-none">
+      <div class="order-3 lg:col-start-3 lg:row-span-2 lg:row-start-1">
         <SmsPanel msisdn={msisdn} display={persona?.display ?? ''} trackingDigits={digits} pin={data.demo_pin} />
       </div>
     </div>
@@ -180,17 +182,17 @@ export default function UssdPage() {
 
   return (
     <div dir="ltr" lang="en" class="ussd-stage flex flex-col">
-      <header class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pt-4 lg:px-10 lg:pt-5">
+      <header class="flex items-center gap-3 px-4 pt-3 lg:gap-4 lg:px-10 lg:pt-5">
         <Emblem size={40} tone="night" animate />
         <div class="min-w-0">
-          <h1 class="m-0 text-xl font-black tracking-tight lg:text-2xl">Rahat on a feature phone</h1>
-          <p class="m-0 text-sm text-night-muted">Dial {SERVICE_CODE} or send a text. No smartphone, no data plan, no app.</p>
+          <h1 class="m-0 text-lg font-black leading-tight tracking-tight lg:text-2xl">Rahat on a feature phone</h1>
+          <p class="m-0 text-xs text-night-muted lg:text-sm">Dial {SERVICE_CODE} or send a text. No smartphone, no data plan, no app.</p>
         </div>
         <a
           href="/demo"
-          class="ms-auto min-h-12 content-center rounded-lg border border-night-line px-4 text-sm font-bold text-night-ink hover:border-noor focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-noor"
+          class="ms-auto min-h-12 shrink-0 content-center rounded-lg border border-night-line px-4 text-sm font-bold text-night-ink hover:border-noor focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-noor"
         >
-          Back to the demo
+          Demo
         </a>
       </header>
       <main class="flex-1">
