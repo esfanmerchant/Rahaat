@@ -84,7 +84,7 @@ def list_jobs(
 
 @router.post("/{job_id}/retry", response_model=JobOut, summary="Retry a dead job")
 def retry_job(job_id: uuid.UUID, body: JobRetryIn, principal: Principal = Depends(_retry), db: Session = Depends(get_db)) -> JobOut:
-    job = db.scalar(select(models.Job).where(models.Job.id == job_id).with_for_update())
+    job = db.scalar(select(models.Job).where(models.Job.id == job_id, models.Job.tenant_id == principal.tenant_id).with_for_update())
     if job is None:
         raise NotFound("No such job.")
     if job.status != "dead":

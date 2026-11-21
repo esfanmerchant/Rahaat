@@ -11,6 +11,8 @@ services:
     environment:
       APP_ENV: demo
       PORT: "8000"
+      # Only Caddy can reach the app on this private network, and Caddy sets X-Forwarded-For itself.
+      FORWARDED_ALLOW_IPS: "*"
     expose:
       - "8000"
     volumes:

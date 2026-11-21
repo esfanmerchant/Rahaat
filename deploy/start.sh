@@ -19,10 +19,12 @@ if [ -f app/mocks/main.py ]; then
 fi
 
 # Trust X-Forwarded-* from the reverse proxy in front of us (Caddy, the platform router, a tunnel).
-# The API port must be reachable only through that proxy. Set FORWARDED_ALLOW_IPS to the proxy's
+# Only the proxy's address may be trusted: with "*" a client could pick its own address through X-Forwarded-For,
+# dodge per-network rate limits and lock other people's sign-in. The API port must be reachable only through
+# that proxy. Set FORWARDED_ALLOW_IPS to the proxy's
 # address to tighten this. It is passed through the environment, not as a "*" argument, because
 # uvicorn's CLI expands "*" into file names when it runs natively on Windows.
-export FORWARDED_ALLOW_IPS="${FORWARDED_ALLOW_IPS:-*}"
+export FORWARDED_ALLOW_IPS="${FORWARDED_ALLOW_IPS:-127.0.0.1}"
 
 # ONE worker only. The in-process rate limiter and the jobs worker assume a single
 # process; more workers would multiply limits and run duplicate background loops.

@@ -13,7 +13,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import DBAPIError
 
-from app.core.db import get_engine
+from app.core.db import get_engine, get_owner_engine
 from app.db.base import Base
 
 # Transaction-local, like the app: a session-level setting would survive on the pooled connection.
@@ -81,18 +81,34 @@ def test_row_security_cannot_be_turned_off_for_a_session(factory: Any) -> None:
         conn.rollback()
 
 
-@pytest.mark.xfail(strict=True, reason="needs migration: ALTER FUNCTION app_can_read_person(uuid) SET search_path = public, pg_temp "
-                                       "(pg_temp is searched first for tables unless it is named last); see docs/SECURITY_REPORT.md")
+def _set_temp_privilege(grant: bool) -> None:
+    """Owner-side switch for the second layer of the test below (raw driver call: the SQL contains %I)."""
+    verb = "GRANT TEMPORARY ON DATABASE %I TO rahat_app" if grant else "REVOKE TEMPORARY ON DATABASE %I FROM rahat_app"
+    with get_owner_engine().begin() as owner:
+        owner.connection.driver_connection.execute(f"DO $$ BEGIN EXECUTE format('{verb}', current_database()); END $$;")
+
+
 def test_a_temporary_table_cannot_stand_in_for_the_consent_table(factory: Any) -> None:
+    """Two layers (migration 0006): the app role cannot create temporary tables at all, and even if it could, the
+    consent function searches pg_temp last, so a forged temporary 'consents' table is never read."""
     tenant = factory.tenant()
     officer, citizen = factory.account(tenant, "officer"), factory.account(tenant, "citizen")
+    create = text("CREATE TEMP TABLE consents (person_id uuid, tenant_id uuid, status text, grantee_type text, "
+                  "grantee_id uuid, expires_at timestamptz)")  # fmt: skip
     with get_engine().connect() as conn:
-        _as(conn, "officer", tenant.id, officer.user_id)
-        conn.execute(text("UPDATE consents SET status = 'withdrawn' WHERE person_id = :p"), {"p": citizen.person_id})
-        assert conn.execute(text("SELECT count(*) FROM persons")).scalar_one() == 0, "withdrawn: the officer sees nobody"
-        conn.execute(text("CREATE TEMP TABLE consents (person_id uuid, tenant_id uuid, status text, grantee_type text, "
-                          "grantee_id uuid, expires_at timestamptz)"))  # fmt: skip
-        conn.execute(text("INSERT INTO consents VALUES (:p, :t, 'active', 'tenant', :t, NULL)"), {"p": citizen.person_id, "t": tenant.id})
-        visible = conn.execute(text("SELECT count(*) FROM persons")).scalar_one()
-        conn.rollback()
+        with pytest.raises(DBAPIError, match="permission denied to create temporary tables"):
+            conn.execute(create)
+
+    _set_temp_privilege(True)
+    try:
+        with get_engine().connect() as conn:
+            _as(conn, "officer", tenant.id, officer.user_id)
+            conn.execute(text("UPDATE consents SET status = 'withdrawn' WHERE person_id = :p"), {"p": citizen.person_id})
+            assert conn.execute(text("SELECT count(*) FROM persons")).scalar_one() == 0, "withdrawn: the officer sees nobody"
+            conn.execute(create)
+            conn.execute(text("INSERT INTO consents VALUES (:p, :t, 'active', 'tenant', :t, NULL)"), {"p": citizen.person_id, "t": tenant.id})
+            visible = conn.execute(text("SELECT count(*) FROM persons")).scalar_one()
+            conn.rollback()
+    finally:
+        _set_temp_privilege(False)
     assert visible == 0, "a forged temporary 'consents' table brought the person back"

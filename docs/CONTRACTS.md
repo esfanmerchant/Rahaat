@@ -154,3 +154,9 @@ Each test run gets its own throwaway database, so several runs at once do not di
 - `app.modules.matching.service.check_duplicates(db, *, tenant_id, person_id, application_id=None) -> DuplicateEvidence | None`, called by the pipeline where the engine decides. Links are stored records, never merged rows; officers link, mark distinct or unlink with a reason.
 - Policy changes ship as rule parameters in a new version, so old decisions replay exactly (`stale_income_settles_below`, `identity_partial_min_name_score`).
 - Endpoints: `/v1/evals/*` (analysis, what-if, runs, summary, names), `/v1/cost-matrix`, `/v1/decisions` (list) and `/{id}/replay`, `/v1/duplicates/*`, `/v1/matching/compare`, `/v1/twin/runs/*`.
+
+## Built in Phase 2, track A3 (keys, limits, security)
+
+- `Policy(name, roles, api_scopes=[...], cost=n)` admits API keys by scope only; `Cost(n)` sets a route's rate-limit cost; `Public(reason)` routes are rate limited too. `get_db` depends on `get_credential`; `get_claims` refuses API keys. `Principal.api_key` and `Principal.scopes` are new.
+- A new route is covered by the authorisation matrix in `backend/tests/security` automatically.
+- Look objects up by id **and** tenant, even though RLS also filters: two lookups did not, and the suite showed they relied on RLS alone.

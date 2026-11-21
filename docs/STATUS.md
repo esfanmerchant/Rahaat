@@ -72,7 +72,7 @@ Track D2
 
 ## Phase 2: the eight challenges (T1)
 
-- [ ] A9 API keys  - [ ] A10 Rate limiting  - [ ] A11 Consent centre API  - [ ] A12 Helper delegations  - [ ] A13 Sync endpoint  - [ ] A14 Security test suite
+- [x] A9 API keys (scoped, hashed, shown once, a second admin for personal-data scopes)  - [x] A10 Rate limiting (per network, user, key and department lanes)  - [ ] A11 Consent centre API  - [ ] A12 Helper delegations  - [ ] A13 Sync endpoint  - [x] A14 Security suite: authorisation matrix over every route, IDOR, raw-SQL RLS probes; docs/SECURITY_REPORT.md
 - [x] B7 Cost of being wrong: curves, ROC/PR, confusion, reliability (ECE 0.033) on 1,223 held-out cases; what-if in ~45 ms; admin cost matrix  - [x] B8 Name matching and dedupe: 456 messy pairs, 0 wrong links; Mohammad/Muhammed with another phone goes to a person  - [x] B9 Handoff package and cheapest question  - [x] B10 Golden tests (silent guesses 0, measured from stored decisions)  - [x] B11 Replay and decision list
 - [x] C4 Voice: Urdu, Roman Urdu and English answers with read-back; 91.8% accurate on unseen families, 0 wrong-but-confident; device speech first, Groq Whisper if a key is set  - [ ] C5 Audio assets  - [ ] C6 Forgery depth and metrics  - [x] C7 Scam reports (redacted), campaigns by MinHash, Scam Map data with k-anonymity (k=5), public warnings, disputes open a case  - [ ] C8 Scam checker by screenshot and voice
 - [ ] D1.5 PWA offline  - [ ] D1.6 Voice answers  - [ ] D1.7 Consent centre  - [ ] D1.8 Scam checker  - [ ] D1.9 Helper Mode

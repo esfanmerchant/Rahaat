@@ -35,7 +35,7 @@ $$ SELECT NULLIF(current_setting('app.user_id', true), '')::uuid $$;
 
 -- Runs with the owner's rights so it can read consent tables without recursing into their policies.
 CREATE OR REPLACE FUNCTION app_can_read_person(pid uuid) RETURNS boolean
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
   r   text := COALESCE(NULLIF(current_setting('app.role', true), ''), 'none');
   uid uuid := NULLIF(current_setting('app.user_id', true), '')::uuid;

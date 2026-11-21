@@ -160,8 +160,9 @@ def proof_received(db: Session, *, tenant_id: uuid.UUID, application_id: uuid.UU
 # --- reading --------------------------------------------------------------------------------------------
 
 
-def _load(db: Session, case_id: uuid.UUID, *, lock: bool = False) -> models.Case:
-    query = select(models.Case).where(models.Case.id == case_id)
+def _load(db: Session, tenant_id: uuid.UUID, case_id: uuid.UUID, *, lock: bool = False) -> models.Case:
+    # The tenant filter is a second wall: RLS already hides other departments' cases.
+    query = select(models.Case).where(models.Case.id == case_id, models.Case.tenant_id == tenant_id)
     if lock:
         query = query.with_for_update()
     case = db.scalar(query)
@@ -337,7 +338,7 @@ def list_cases(
 
 def get_detail(db: Session, principal: Principal, case_id: uuid.UUID) -> CaseDetail:
     """The officer's review screen. Opening it is recorded: who looked at whose file, and when."""
-    case = _load(db, case_id)
+    case = _load(db, principal.tenant_id, case_id)
     application = _readable_application(db, principal, case)
     seen = db.scalar(select(models.CaseEvent.id).where(models.CaseEvent.case_id == case.id, models.CaseEvent.event == "viewed",
                                                        models.CaseEvent.actor_user_id == principal.user_id).limit(1))  # fmt: skip
@@ -360,7 +361,7 @@ def _active_officer(db: Session, tenant_id: uuid.UUID, user_id: uuid.UUID) -> bo
 
 
 def assign(db: Session, principal: Principal, case_id: uuid.UUID, *, assignee_id: uuid.UUID | None, reason: str) -> CaseDetail:
-    case = _load(db, case_id, lock=True)
+    case = _load(db, principal.tenant_id, case_id, lock=True)
     application = _readable_application(db, principal, case)
     target = assignee_id or principal.user_id
     if not _active_officer(db, principal.tenant_id, target):
@@ -380,7 +381,7 @@ def assign(db: Session, principal: Principal, case_id: uuid.UUID, *, assignee_id
 
 
 def add_note(db: Session, principal: Principal, case_id: uuid.UUID, *, body: str) -> CaseDetail:
-    case = _load(db, case_id, lock=True)
+    case = _load(db, principal.tenant_id, case_id, lock=True)
     application = _readable_application(db, principal, case)
     note = models.CaseNote(id=uuid.uuid4(), tenant_id=case.tenant_id, case_id=case.id, author_user_id=principal.user_id,
                            author_kind="user", body=body, created_at=_now())  # fmt: skip
@@ -418,7 +419,7 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
     from app.modules.notifications.service import notify
     from app.modules.payments.service import request_payment
 
-    case = _load(db, case_id, lock=True)
+    case = _load(db, principal.tenant_id, case_id, lock=True)
     application = _readable_application(db, principal, case)
     try:
         new_status = rules.next_status(case.status, body.action)
@@ -491,7 +492,7 @@ def act(db: Session, principal: Principal, case_id: uuid.UUID, body: CaseActionI
 
 
 def reopen(db: Session, principal: Principal, case_id: uuid.UUID, *, reason: str) -> CaseDetail:
-    case = _load(db, case_id, lock=True)
+    case = _load(db, principal.tenant_id, case_id, lock=True)
     application = _readable_application(db, principal, case)
     try:
         new_status = rules.next_status(case.status, "reopen")
