@@ -43,6 +43,12 @@ def record(
 
 def providers() -> dict[str, str]:
     """For /v1/system/health. The guards are local rules and always available."""
-    from app.modules.guardrails import input_guard, output_guard
+    from app.modules.agent.planner import provider_status as agent_planner
+    from app.modules.guardrails import action_guard, input_guard, output_guard
 
-    return {"guardrails_input": input_guard.MODEL_VERSION, "guardrails_output": output_guard.MODEL_VERSION}
+    return {
+        "guardrails_input": input_guard.MODEL_VERSION,
+        "guardrails_output": output_guard.MODEL_VERSION,
+        "guardrails_action": action_guard.MODEL_VERSION,
+        **agent_planner(),  # the agent planner status rides here: /health already lists this module
+    }
