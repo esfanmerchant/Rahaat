@@ -111,6 +111,12 @@ function Tracker({ app }: { app: ApplicationOut }) {
             {t('result_add_proof')}
           </Button>
         ) : null}
+        {app.status === 'on_hold_consent' ? (
+          // Paused because permission was taken back: the consent centre can give it again.
+          <Button size="lg" icon="retry" block onClick={() => route('/my-data')}>
+            {t('mydata_again')}
+          </Button>
+        ) : null}
         <Button size="lg" variant="secondary" icon="person-help" block onClick={() => route('/ask')}>
           {t('ask_person')}
         </Button>
@@ -173,7 +179,7 @@ function Proof({ app }: { app: ApplicationOut }) {
         busy={busy ? t(phase.name === 'sending' ? 'card_sending' : 'card_preparing') : undefined}
         label={t('result_add_proof')}
       />
-      {phase.name === 'waiting' ? <Notice tone="warn" icon="offline" text={t('card_waiting_offline')} /> : null}
+      {phase.name === 'stored' ? <Notice tone="warn" icon="phone-saved" text={t('outbox_photo_saved')} /> : null}
       {phase.name === 'failed' ? <InlineFailure failure={phase.failure} /> : null}
       {phase.name === 'unreadable' ? <Notice tone="warn" icon="warning" text={t('card_read_failed')} /> : null}
       {doc && doc.accepted ? (

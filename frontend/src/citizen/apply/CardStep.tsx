@@ -1,54 +1,34 @@
 import { useLocation } from 'preact-iso';
-import type { DocumentView } from '../../shared/api/types';
 import { Button } from '../../shared/components/Button';
 import { Pictogram } from '../../shared/components/Pictogram';
-import { messageKeyFor, t, type MessageKey } from '../../shared/i18n';
-import { draft, nextStep, setCard, stepPath } from './flow';
+import { t, type MessageKey } from '../../shared/i18n';
+import { cardPhotoStored, documentMessage, draft, MAX_CARD_TRIES, nextStep, stepPath } from './flow';
 import { InlineFailure, NextButton, Notice, sayKey, StepLayout } from './parts';
 import { PhotoButtons, PhotoPreview } from './PhotoParts';
 import { usePhotoUpload } from './usePhotoUpload';
 
-export const MAX_CARD_TRIES = 3;
-
-/** The words for an upload result: the server's key when we know it, else one per quality. */
-export function documentMessage(doc: DocumentView): MessageKey {
-  if (doc.accepted) return messageKeyFor(doc.message_key) ?? 'doc_ok';
-  return (
-    messageKeyFor(doc.retake_hint) ??
-    messageKeyFor(doc.message_key) ??
-    messageKeyFor(`doc_retake_${doc.quality}`) ??
-    'doc_retake_blurry'
-  );
-}
-
-function isPersonWillCheck(doc: DocumentView): boolean {
-  return doc.accepted && documentMessage(doc) === 'doc_person_will_check';
-}
+export { documentMessage, MAX_CARD_TRIES };
 
 /**
- * b. Photo of the Rahat card. Resized on the device, uploaded, and the
+ * b. Photo of the Rahat card. Resized on the device and put in the outbox; the
  * server's quality check either accepts it or gives a retake hint, which is
- * spoken. After three tries the flow goes on: a person will help.
+ * spoken. After three tries the flow goes on: a person will help. Offline the
+ * photo is saved on the phone and the person goes on; its answer comes later.
  */
 export function CardStep() {
   const { route } = useLocation();
   const d = draft.value;
 
-  const onResult = (doc: DocumentView): void => {
+  // The draft already took the result (flow.ts); here it is only spoken.
+  const onResult = (): void => {
     const current = draft.peek();
     if (!current) return;
-    if (doc.accepted) {
-      setCard(isPersonWillCheck(doc) ? 'check' : 'accepted');
-      sayKey(documentMessage(doc));
-      return;
-    }
-    const tries = current.cardTries + 1;
-    if (tries >= MAX_CARD_TRIES) {
-      setCard('gave_up', tries);
+    if (current.card === 'accepted' || current.card === 'check') {
+      sayKey(current.card === 'check' ? 'doc_person_will_check' : 'doc_ok');
+    } else if (current.card === 'gave_up') {
       sayKey('card_give_up_body');
-    } else {
-      setCard('none', tries);
-      sayKey(documentMessage(doc));
+    } else if (current.cardHint) {
+      sayKey(current.cardHint);
     }
   };
 
@@ -56,11 +36,11 @@ export function CardStep() {
   const { phase } = upload;
   const busy = phase.name === 'preparing' || phase.name === 'sending';
   const card = d?.card ?? 'none';
-  const done = card !== 'none';
   const next = (): void => {
     const current = draft.peek();
     if (current) route(stepPath(nextStep(current, 'card')));
   };
+  const take = (file: File | undefined): void => void upload.choose(file);
 
   let body;
   if (busy) {
@@ -69,23 +49,30 @@ export function CardStep() {
     ) : (
       <Notice tone="check" icon="clock" text={t('card_preparing')} />
     );
-  } else if (phase.name === 'waiting') {
-    body = (
-      <>
-        <PhotoPreview source={upload.preview} label={t('card_title')} />
-        <Notice tone="warn" icon="offline" text={t('card_waiting_offline')} />
-      </>
-    );
   } else if (phase.name === 'failed') {
     body = (
       <>
         <PhotoPreview source={upload.preview} label={t('card_title')} />
         <InlineFailure failure={phase.failure}>
-          <Button size="md" variant="neutral" icon="retry" onClick={() => void upload.retry()}>
+          <Button size="md" variant="neutral" icon="retry" onClick={upload.retry}>
             {t('retry')}
           </Button>
         </InlineFailure>
-        <PhotoButtons onFile={(file) => void upload.choose(file)} takeLabel="card_retake" />
+        <PhotoButtons onFile={take} takeLabel="card_retake" />
+      </>
+    );
+  } else if (card === 'queued') {
+    // Saved on this phone: the person can go on; the answer comes when the network is back.
+    body = (
+      <>
+        <PhotoPreview source={upload.preview} label={t('card_title')} />
+        {cardPhotoStored() === false ? (
+          <Notice tone="warn" icon="offline" text={t('card_waiting_offline')} />
+        ) : (
+          <Notice tone="warn" icon="phone-saved" text={t('outbox_photo_saved')} />
+        )}
+        <NextButton enabled onNext={next} />
+        <PhotoButtons onFile={take} takeLabel="card_retake" quiet />
       </>
     );
   } else if (card === 'gave_up') {
@@ -97,25 +84,25 @@ export function CardStep() {
         <NextButton enabled onNext={next} />
       </>
     );
-  } else if (done) {
+  } else if (card === 'accepted' || card === 'check') {
     const message: MessageKey = card === 'check' ? 'doc_person_will_check' : 'doc_ok';
     body = (
       <>
         <PhotoPreview source={upload.preview} label={t('card_title')} />
         <Notice tone={card === 'check' ? 'check' : 'ok'} icon={card === 'check' ? 'person-help' : 'yes'} text={t(message)} />
         <NextButton enabled onNext={next} />
-        <PhotoButtons onFile={(file) => void upload.choose(file)} takeLabel="card_retake" quiet />
+        <PhotoButtons onFile={take} takeLabel="card_retake" quiet />
       </>
     );
-  } else if (phase.name === 'result' || phase.name === 'unreadable') {
+  } else if (phase.name === 'unreadable' || d?.cardHint) {
     // Not accepted, or the photo could not be opened: say why and take it again.
-    const message: MessageKey = phase.name === 'unreadable' ? 'card_read_failed' : documentMessage(phase.doc);
+    const message: MessageKey = phase.name === 'unreadable' ? 'card_read_failed' : (d?.cardHint ?? 'doc_retake_blurry');
     body = (
       <>
         <PhotoPreview source={upload.preview} label={t('card_title')} />
         <Notice tone="warn" icon="warning" text={t(message)} />
         <RetakeDots tries={d?.cardTries ?? 0} />
-        <PhotoButtons onFile={(file) => void upload.choose(file)} takeLabel="card_retake" />
+        <PhotoButtons onFile={take} takeLabel="card_retake" />
       </>
     );
   } else {
@@ -126,7 +113,7 @@ export function CardStep() {
         </div>
         <p class="text-lg text-ink-muted">{t('card_prompt')}</p>
         <div class="mt-auto">
-          <PhotoButtons onFile={(file) => void upload.choose(file)} />
+          <PhotoButtons onFile={take} />
         </div>
       </>
     );

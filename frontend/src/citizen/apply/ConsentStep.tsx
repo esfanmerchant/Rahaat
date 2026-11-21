@@ -7,7 +7,7 @@ import { t, type MessageKey } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { CitizenShell } from '../CitizenShell';
 import { consentNeeded, draft, firstOpenStep, giveConsent, stepPath } from './flow';
-import { InlineFailure, Notice, StepLayout } from './parts';
+import { InlineFailure, Notice, sayKey, StepLayout } from './parts';
 
 const ROWS: ReadonlyArray<{ icon: PictogramName; label: MessageKey; body: MessageKey }> = [
   { icon: 'person', label: 'consent_what_label', body: 'consent_what' },
@@ -32,7 +32,9 @@ export function ConsentStep() {
       return;
     }
     // Back to the first question still open: the card for a new application,
-    // or where the person was when the server asked for consent again.
+    // or where the person was when the server asked for consent again. Offline
+    // the consent waits on the phone and is sent first when the network is back.
+    if (result.data.queued) sayKey('outbox_stored');
     const d = draft.peek();
     route(stepPath(d ? firstOpenStep(d) : 'card'));
   };

@@ -39,3 +39,17 @@ export type DecisionOutcome = DecisionUserView['outcome'];
 export type Explanation = DecisionUserView['explanation'];
 export type TimelineItem = NonNullable<ApplicationOut['timeline']>[number];
 export type IncomeBand = NonNullable<NonNullable<ApplicationForm['income_band']>['value']>;
+export type ConsentNarrow = Json<paths['/v1/consents/{consent_id}']['patch']['requestBody']>;
+export type ConsentScope = ConsentCreate['field_scopes'][number];
+
+// Scam checker (Track C, backend/app/modules/scam).
+export type ScamCheckIn = Json<paths['/v1/scam/check']['post']['requestBody']>;
+export type ScamCheckOut = Json<paths['/v1/scam/check']['post']['responses'][200]>;
+export type ScamCertainty = ScamCheckOut['certainty'];
+export type ScamUrl = ScamCheckOut['urls'][number];
+export type ScamReview = ScamCheckOut['review'];
+export type MyScamReports = Json<paths['/v1/scam/reports/mine']['get']['responses'][200]>;
+export type MyScamReport = MyScamReports['items'][number];
+export type ScamDisputeOut = Json<paths['/v1/scam/reports/{report_id}/dispute']['post']['responses'][200]>;
+export type ScamWarnings = Json<paths['/v1/scam/warnings']['get']['responses'][200]>;
+export type ScamWarning = ScamWarnings['items'][number];

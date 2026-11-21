@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { playPrompt } from '../shared/audio';
-import { login } from '../shared/api/auth';
+import { login, loginNotice } from '../shared/api/auth';
 import { demoMode } from '../shared/api/system';
 import { AudioPrompt } from '../shared/components/AudioPrompt';
 import { Pictogram } from '../shared/components/Pictogram';
 import { lang, t, type MessageKey } from '../shared/i18n';
-import { online } from '../shared/network';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
+import { vaultState } from '../shared/vault';
 import { CitizenShell } from './CitizenShell';
 import { Keypad } from './Keypad';
 import {
@@ -51,7 +51,7 @@ export function LoginScreen() {
   const [local, setLocal] = useState('');
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(() => (loginNotice.peek() ? { key: loginNotice.peek() as MessageKey } : null));
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const code = lang.value;
 
@@ -96,10 +96,8 @@ export function LoginScreen() {
       show('login_pin_too_short');
       return;
     }
-    if (!online.peek()) {
-      show('state_offline_body');
-      return;
-    }
+    // Offline the server cannot be asked, but the PIN may open this person's
+    // answers saved on the phone (login() tries that); otherwise "no internet".
     setBusy(true);
     setNotice(null);
     const result = await login({ identifier: mockPhone(local), secret: pin });
@@ -161,6 +159,13 @@ export function LoginScreen() {
       <p id="login-hint" class="text-lg text-ink-muted">
         {t(isPhone ? 'login_phone_hint' : 'login_pin_hint')}
       </p>
+      {isPhone && vaultState.value === 'locked' ? (
+        // Answers sealed on this phone wait for their owner's PIN (they are sent after sign-in).
+        <p class="flex items-center gap-2 rounded-lg border-2 border-info bg-info-soft p-2 text-base font-semibold text-info-strong">
+          <Pictogram name="phone-saved" size={28} />
+          <span class="flex-1">{t('login_send_saved')}</span>
+        </p>
+      ) : null}
 
       {isPhone ? <PhoneDisplay local={local} /> : <PinDisplay length={pin.length} local={local} />}
 
