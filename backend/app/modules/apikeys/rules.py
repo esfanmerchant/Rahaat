@@ -42,17 +42,13 @@ def needs_second_admin(scopes: Sequence[str]) -> bool:
     return any(API_SCOPES[s].personal_data for s in scopes if s in API_SCOPES)
 
 
-def rotated_expiry(*, created_at: datetime, expires_at: datetime | None, now: datetime, days: int | None) -> datetime:
-    """The replacement keeps the old key's lifetime unless the admin names another, within 1 to 365 days."""
-    if days is None:
-        lifetime = (expires_at - created_at) if expires_at is not None else timedelta(days=MAX_LIFETIME_DAYS)
-        days = round(lifetime.total_seconds() / 86400)
-    return now + timedelta(days=min(max(days, 1), MAX_LIFETIME_DAYS))
+def rotated_expiry(*, expires_at: datetime | None, now: datetime, days: int | None) -> datetime:
+    """The replacement ends when the old key would have ended, or sooner if the admin asks.
 
-
-def old_key_end(*, now: datetime, expires_at: datetime | None, grace_minutes: int) -> tuple[datetime | None, datetime | None]:
-    """How the replaced key ends: (revoked_at, expires_at). With no grace it is revoked at once."""
-    if grace_minutes <= 0:
-        return now, expires_at
-    grace_end = now + timedelta(minutes=grace_minutes)
-    return None, min(grace_end, expires_at) if expires_at is not None else grace_end
+    Rotation replaces a secret; it never extends a key's life. Otherwise one admin could keep a key that a
+    second admin approved alive for ever, one rotation at a time. A longer life means a new key.
+    """
+    end = expires_at if expires_at is not None else now + timedelta(days=MAX_LIFETIME_DAYS)
+    if days is not None:
+        end = min(end, now + timedelta(days=days))
+    return end

@@ -61,17 +61,9 @@ def test_only_personal_data_scopes_need_a_second_admin() -> None:
     assert not rules.needs_second_admin(["payments:read"])
 
 
-def test_rotation_keeps_the_lifetime_within_bounds() -> None:
-    created = NOW - timedelta(days=10)
-    assert rules.rotated_expiry(created_at=created, expires_at=created + timedelta(days=30), now=NOW, days=None) == NOW + timedelta(days=30)
-    assert rules.rotated_expiry(created_at=created, expires_at=None, now=NOW, days=None) == NOW + timedelta(days=365)
-    assert rules.rotated_expiry(created_at=created, expires_at=None, now=NOW, days=7) == NOW + timedelta(days=7)
-    assert rules.rotated_expiry(created_at=created, expires_at=None, now=NOW, days=9999) == NOW + timedelta(days=365)
-
-
-def test_the_old_key_stops_at_once_unless_a_grace_period_is_asked_for() -> None:
-    expires = NOW + timedelta(days=30)
-    assert rules.old_key_end(now=NOW, expires_at=expires, grace_minutes=0) == (NOW, expires)
-    assert rules.old_key_end(now=NOW, expires_at=expires, grace_minutes=15) == (None, NOW + timedelta(minutes=15))
-    soon = NOW + timedelta(minutes=5)
-    assert rules.old_key_end(now=NOW, expires_at=soon, grace_minutes=60) == (None, soon), "grace never extends a key"
+def test_rotation_never_extends_a_key() -> None:
+    ends = NOW + timedelta(days=20)
+    assert rules.rotated_expiry(expires_at=ends, now=NOW, days=None) == ends, "the replacement ends when the old key would have"
+    assert rules.rotated_expiry(expires_at=ends, now=NOW, days=7) == NOW + timedelta(days=7), "it may end sooner"
+    assert rules.rotated_expiry(expires_at=ends, now=NOW, days=365) == ends, "but never later"
+    assert rules.rotated_expiry(expires_at=None, now=NOW, days=None) == NOW + timedelta(days=365), "a key without an end gets the maximum"

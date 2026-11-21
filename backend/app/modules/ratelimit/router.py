@@ -24,7 +24,7 @@ class LimitsOut(BaseModel):
     enabled: bool
     anonymous_per_minute: int = Field(description="Per client network, for calls without a valid sign-in")
     user_per_minute: int
-    department_per_minute: int = Field(description="Each of the two department lanes (people, API keys)")
+    department_per_minute: int = Field(description="Each of the three department lanes: staff, public (citizens and helpers), API keys")
     api_key_default_per_minute: int
 
 

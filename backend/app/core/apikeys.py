@@ -50,7 +50,8 @@ class ApiScope:
 API_SCOPES: Final[dict[str, ApiScope]] = {
     scope.name: scope
     for scope in (
-        ApiScope("cases:read", "Read the review queue and case files. The person's consent still applies.", personal_data=True),
+        ApiScope("cases:read", "Read the review queue: status, priority, reason code and the person's name while their consent "
+                               "allows. Never the case file.", personal_data=True),  # fmt: skip
         ApiScope("payments:read", "Read payments: amount, status and payment reference. No names.", personal_data=False),
         ApiScope("scam:check", "Check a message for signs of a scam.", personal_data=False),
     )
@@ -104,11 +105,24 @@ _DENIALS: Final[dict[str, str]] = {
 }
 
 
+class KeyRefused(Unauthorized):
+    """A real key's prefix was presented but the key may not be used. Carries what the audit row needs.
+
+    `authenticate` does not write the record itself: the caller first charges the network's rate limit, so
+    someone replaying a revoked key cannot grow a department's audit chain faster than that limit.
+    """
+
+    def __init__(self, *, key_id: UUID, tenant_id: UUID, prefix: str, reason: str) -> None:
+        super().__init__(_DENIALS[reason], code="invalid_api_key" if reason == "api_key_invalid" else reason)
+        self.key_id, self.tenant_id, self.prefix, self.reason = key_id, tenant_id, prefix, reason
+
+
 def authenticate(raw: str) -> ApiKeyIdentity:
     """Verify a presented key. Raises 401 for anything but a live key of an active department.
 
     The lookup by prefix happens before there is a caller, so it uses the system context, like sign-in.
-    Attempts with a real key's prefix (wrong secret, revoked, expired) are audited in that key's department.
+    Attempts with a real key's prefix (wrong secret, revoked, expired) raise `KeyRefused`, which the caller
+    records with `record_refusal` once it has charged the rate limit.
     """
     prefix = parse_prefix(raw)
     if prefix is None:
@@ -116,7 +130,6 @@ def authenticate(raw: str) -> ApiKeyIdentity:
         raise Unauthorized(_INVALID, code="invalid_api_key")
     digest = hash_key(raw)
     now = datetime.now(UTC)
-    denied: tuple[models.ApiKey, str] | None = None
     with system_session() as db:
         found = db.execute(
             select(models.ApiKey, models.Tenant.status)
@@ -128,19 +141,18 @@ def authenticate(raw: str) -> ApiKeyIdentity:
             raise Unauthorized(_INVALID, code="invalid_api_key")
         key, tenant_status = found
         db.expunge(key)
-        if not hmac.compare_digest(key.key_hash, digest):
-            denied = (key, "api_key_invalid")
-        elif key.revoked_at is not None:
-            denied = (key, "api_key_revoked")
-        elif key.expires_at is not None and key.expires_at <= now:
-            denied = (key, "api_key_expired")
-        elif tenant_status != "active":
-            denied = (key, "api_key_tenant_inactive")
-    if denied is not None:
-        row, code = denied
-        _record_denied(row, code)
-        metrics.API_KEY_EVENTS.labels(code).inc()
-        raise Unauthorized(_DENIALS[code], code="invalid_api_key" if code == "api_key_invalid" else code)
+    reason = None
+    if not hmac.compare_digest(key.key_hash, digest):
+        reason = "api_key_invalid"
+    elif key.revoked_at is not None:
+        reason = "api_key_revoked"
+    elif key.expires_at is not None and key.expires_at <= now:
+        reason = "api_key_expired"
+    elif tenant_status != "active":
+        reason = "api_key_tenant_inactive"
+    if reason is not None:
+        metrics.API_KEY_EVENTS.labels(reason).inc()
+        raise KeyRefused(key_id=key.id, tenant_id=key.tenant_id, prefix=key.prefix, reason=reason)
     metrics.API_KEY_EVENTS.labels("authenticated").inc()
     return ApiKeyIdentity(
         id=key.id, tenant_id=key.tenant_id, prefix=key.prefix, name=key.name,
@@ -148,17 +160,17 @@ def authenticate(raw: str) -> ApiKeyIdentity:
     )  # fmt: skip
 
 
-def _record_denied(key: models.ApiKey, code: str) -> None:
+def record_refusal(refused: KeyRefused) -> None:
     """The refused attempt, in its own committed transaction: the request fails, the record stays."""
     try:
         with system_session() as db:
             db.execute(text("SET LOCAL lock_timeout = '2s'"))
-            audit.write(db, tenant_id=key.tenant_id, action="access.denied", actor_type="api_key", actor_id=key.id,
-                        actor_role=API_CLIENT_ROLE, object_type="api_key", object_id=key.id, result="denied", reason=code,
-                        details={"prefix": key.prefix})  # fmt: skip
-            if code == "api_key_invalid":  # someone knows a real prefix but not the secret
-                db.add(models.SecurityEvent(tenant_id=key.tenant_id, kind="api_key_misuse", severity="high",
-                                            details={"prefix": key.prefix, "key_id": str(key.id)}))  # fmt: skip
+            audit.write(db, tenant_id=refused.tenant_id, action="access.denied", actor_type="api_key", actor_id=refused.key_id,
+                        actor_role=API_CLIENT_ROLE, object_type="api_key", object_id=refused.key_id, result="denied",
+                        reason=refused.reason, details={"prefix": refused.prefix})  # fmt: skip
+            if refused.reason == "api_key_invalid":  # someone knows a real prefix but not the secret
+                db.add(models.SecurityEvent(tenant_id=refused.tenant_id, kind="api_key_misuse", severity="high",
+                                            details={"prefix": refused.prefix, "key_id": str(refused.key_id)}))  # fmt: skip
     except Exception:  # noqa: BLE001  (a failure to record must never hide the refusal itself)
         log.exception("could not record a refused API key attempt")
 

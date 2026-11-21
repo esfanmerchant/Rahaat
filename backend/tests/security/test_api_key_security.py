@@ -32,7 +32,9 @@ def _fresh_key(side: support.Side, scopes: list[str]) -> tuple[str, uuid.UUID]:
 
 
 def test_keys_are_admitted_on_reads_with_a_scope(world: World) -> None:
-    assert {support.route_id(r) for r in KEYED} >= {"GET /v1/cases", "GET /v1/cases/{case_id}", "GET /v1/payments"}
+    keyed = {support.route_id(r) for r in KEYED}
+    assert keyed >= {"GET /v1/cases", "GET /v1/payments"}
+    assert "GET /v1/cases/{case_id}" not in keyed, "the case file holds detection details meant for staff only"
 
 
 @pytest.mark.parametrize("route", KEYED, ids=support.route_id)

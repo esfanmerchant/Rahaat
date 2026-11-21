@@ -37,7 +37,7 @@ def _calls_this_month(tenant_id: Any) -> int:
 
 
 def _audit(tenant_id: Any) -> list[models.AuditLog]:
-    return case_data.rows(models.AuditLog, models.AuditLog.tenant_id == tenant_id)
+    return sorted(case_data.rows(models.AuditLog, models.AuditLog.tenant_id == tenant_id), key=lambda r: r.seq)
 
 
 def test_a_key_is_shown_once_works_for_its_scope_and_is_metered(client: TestClient, factory: Any) -> None:
@@ -128,15 +128,36 @@ def test_rotation_replaces_the_secret_and_the_old_key_stops(client: TestClient, 
     assert client.get("/v1/payments", headers=_bearer(old["key"])).json()["code"] == "api_key_revoked"
     again = client.post(f"{KEYS}/{old['id']}/rotate", headers=admin)
     assert again.status_code == 409 and again.json()["code"] == "api_key_revoked", "a revoked key cannot be brought back by rotating it"
-
-    graced = _create(client, admin)
-    replacement = client.post(f"{KEYS}/{graced['id']}/rotate", headers=admin, json={"grace_minutes": 30}).json()
-    assert client.get("/v1/payments", headers=_bearer(graced["key"])).status_code == 200, "the old key works during the grace period"
-    assert client.get("/v1/payments", headers=_bearer(replacement["key"])).status_code == 200
-    ending = case_data.get(models.ApiKey, graced["id"])
-    assert ending.revoked_at is None and ending.expires_at <= datetime.now(UTC) + timedelta(minutes=31)
+    assert new["expires_at"] == old["expires_at"], "rotation replaces the secret, not the end date"
+    longer = client.post(f"{KEYS}/{new['id']}/rotate", headers=admin, json={"expires_in_days": 365}).json()
+    assert longer["expires_at"] == old["expires_at"], "asking for longer does not extend it"
+    shorter = client.post(f"{KEYS}/{longer['id']}/rotate", headers=admin, json={"expires_in_days": 1}).json()
+    assert shorter["expires_at"] < old["expires_at"]
+    with_grace = client.post(f"{KEYS}/{shorter['id']}/rotate", headers=admin, json={"grace_minutes": 30})
+    assert with_grace.status_code == 422, "there is no grace period: the old key always stops at once"
     rotations = [r for r in _audit(tenant.id) if r.action == "apikey.rotated"]
-    assert {r.object_id for r in rotations} == {old["id"], graced["id"]}
+    assert [r.object_id for r in rotations] == [old["id"], new["id"], longer["id"]]
+
+
+def test_rotating_an_approved_personal_data_key_never_multiplies_or_prolongs_it(client: TestClient, factory: Any) -> None:
+    """Regression: a key in a rotation grace period could be rotated again and again by one admin."""
+    tenant = factory.tenant()
+    first, second = factory.headers(client, factory.account(tenant, "admin")), factory.headers(client, factory.account(tenant, "admin"))
+    case_data.review_case(tenant.id, factory.account(tenant, "citizen").person_id)
+    approved = _create(client, first, scopes=["cases:read"], expires_in_days=30)
+    client.post(f"{KEYS}/{approved['id']}/decide", headers=second, json={"approve": True, "reason": "agreement signed"})
+
+    current = approved
+    for _ in range(3):
+        rotated = client.post(f"{KEYS}/{current['id']}/rotate", headers=first, json={"expires_in_days": 365})
+        assert rotated.status_code == 201
+        assert client.post(f"{KEYS}/{current['id']}/rotate", headers=first).status_code == 409, "a replaced key cannot be rotated again"
+        current = rotated.json()
+    live = [k for k in client.get(KEYS, headers=first).json() if k["status"] == "active"]
+    assert [k["id"] for k in live] == [current["id"]], "one live key per approval, whatever one admin does"
+    assert current["expires_at"] == approved["expires_at"], "and its end date never moves"
+    assert client.get("/v1/cases", headers=_bearer(current["key"])).status_code == 200
+    assert client.get("/v1/cases", headers=_bearer(approved["key"])).json()["code"] == "api_key_revoked"
 
 
 def test_a_key_that_reads_personal_data_needs_a_second_admin(client: TestClient, factory: Any) -> None:
@@ -158,16 +179,27 @@ def test_a_key_that_reads_personal_data_needs_a_second_admin(client: TestClient,
 
     queue = client.get("/v1/cases", headers=_bearer(pending["key"]))
     assert queue.status_code == 200 and [c["id"] for c in queue.json()["items"]] == [str(case["case_id"])]
-    assert client.get(f"/v1/cases/{case['case_id']}", headers=_bearer(pending["key"])).status_code == 200
+    assert queue.json()["items"][0]["subject_name"] == "Test Citizen"
+    case_file = client.get(f"/v1/cases/{case['case_id']}", headers=_bearer(pending["key"]))
+    assert case_file.status_code == 403 and case_file.json()["code"] == "api_scope_missing", "the case file holds staff-only details"
     assert client.get("/v1/payments", headers=_bearer(pending["key"])).status_code == 403, "cases:read does not open payments"
 
     case_data.set_consent(citizen.person_id, "withdrawn")
-    blocked = client.get(f"/v1/cases/{case['case_id']}", headers=_bearer(pending["key"]))
-    assert blocked.status_code == 403 and blocked.json()["code"] == "consent_required", "a key loses access with the consent"
-    assert client.get("/v1/cases", headers=_bearer(pending["key"])).json()["items"][0]["subject_name"] is None
+    after = client.get("/v1/cases", headers=_bearer(pending["key"])).json()["items"]
+    assert [c["id"] for c in after] == [str(case["case_id"])] and after[0]["subject_name"] is None, "the person is gone with the consent"
 
-    viewed = [r for r in _audit(tenant.id) if r.action == "case.viewed"]
-    assert viewed and viewed[0].actor_type == "api_key" and viewed[0].actor_id == pending["id"], "a key is never recorded as a person"
+
+def test_an_api_key_is_never_recorded_as_a_person(database: None) -> None:
+    import uuid
+
+    from app.core import audit
+    from conftest import Factory
+
+    tenant = Factory().tenant()
+    key_id = uuid.uuid4()
+    with system_session() as db:  # what any service does when it passes the principal on
+        row = audit.write(db, tenant_id=tenant.id, action="case.viewed", actor_id=key_id, actor_role="api_client")
+        assert row.actor_type == "api_key" and row.actor_id == str(key_id)
 
 
 def test_a_refused_approval_revokes_the_key(client: TestClient, factory: Any) -> None:
@@ -219,7 +251,7 @@ def test_key_management_is_validated_and_tenant_scoped(client: TestClient, facto
         response = client.post(KEYS, headers=admin, json=body)
         assert response.status_code == 422 and response.json()["code"] == code, body
     scopes = {s["name"]: s for s in client.get(f"{KEYS}/scopes", headers=admin).json()}
-    assert scopes["cases:read"]["needs_second_admin"] and "GET /v1/cases/{case_id}" in scopes["cases:read"]["endpoints"]
+    assert scopes["cases:read"]["needs_second_admin"] and scopes["cases:read"]["endpoints"] == ["GET /v1/cases"]
     assert scopes["payments:read"]["endpoints"] == ["GET /v1/payments"]
 
 

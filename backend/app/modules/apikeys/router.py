@@ -42,7 +42,7 @@ def get_key(key_id: UUID, principal: Principal = Depends(_manage), db: Session =
 
 
 @router.post("/{key_id}/rotate", response_model=ApiKeyCreated, status_code=201,
-             summary="Replace the secret; the old key stops at once or after a grace period")  # fmt: skip
+             summary="Replace the secret; the old key stops at once and the new one keeps its end date")  # fmt: skip
 def rotate_key(key_id: UUID, body: ApiKeyRotate | None = None, principal: Principal = Depends(_manage),
                db: Session = Depends(get_db)) -> ApiKeyCreated:  # fmt: skip
     return service.rotate_key(db, principal, key_id, body or ApiKeyRotate())

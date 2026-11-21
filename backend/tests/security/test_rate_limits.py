@@ -64,15 +64,47 @@ def test_each_user_has_a_bucket(client: TestClient, factory: Any, strict_limits:
     assert client.get("/v1/cases", headers=second).status_code == 200, "a colleague is not slowed down"
 
 
-def test_a_departments_people_share_one_lane(client: TestClient, factory: Any, strict_limits: Callable[..., None]) -> None:
+def test_a_departments_staff_share_one_lane(client: TestClient, factory: Any, strict_limits: Callable[..., None]) -> None:
     tenant, other = factory.tenant(), factory.tenant()
     first, second = factory.headers(client, factory.account(tenant, "officer")), factory.headers(client, factory.account(tenant, "officer"))
     outsider = factory.headers(client, factory.account(other, "officer"))
+    citizen = factory.headers(client, factory.account(tenant, "citizen"))
     strict_limits(user=100, tenant=4)
     for headers in (first, first, second, second):
         assert client.get("/v1/cases", headers=headers).status_code == 200
     _assert_limited(client.get("/v1/cases", headers=second), "tenant")
     assert client.get("/v1/cases", headers=outsider).status_code == 200, "another department is not affected"
+    assert client.get("/v1/applications", headers=citizen).status_code == 200, "citizens have their own lane"
+
+
+def test_a_crowd_of_citizen_accounts_cannot_lock_officers_out(client: TestClient, factory: Any, strict_limits: Callable[..., None]) -> None:
+    """Regression: citizens and staff shared one department lane, and anyone can register a citizen account."""
+    tenant = factory.tenant()
+    crowd = [factory.headers(client, factory.account(tenant, "citizen")) for _ in range(3)]
+    officer = factory.headers(client, factory.account(tenant, "officer"))
+    strict_limits(user=100, tenant=6)
+    for headers in crowd * 2:
+        assert client.get("/v1/applications", headers=headers).status_code == 200
+    _assert_limited(client.get("/v1/applications", headers=crowd[0]), "tenant")
+    assert client.get("/v1/cases", headers=officer).status_code == 200, "the staff lane is untouched"
+
+
+def test_replaying_a_refused_key_cannot_flood_the_audit_log(client: TestClient, factory: Any, strict_limits: Callable[..., None]) -> None:
+    """Regression: a refused key was recorded before the rate limit was charged, so 429s still wrote audit rows."""
+    from app.db import models
+    from app.modules.cases import testing as case_data
+
+    tenant = factory.tenant()
+    admin = factory.headers(client, factory.account(tenant, "admin"))
+    created = client.post("/v1/admin/api-keys", headers=admin, json={"name": "Old partner", "scopes": ["payments:read"]}).json()
+    client.post(f"/v1/admin/api-keys/{created['id']}/revoke", headers=admin)
+    strict_limits(anonymous=2)
+    forged = f"rk_{created['prefix']}_{'Q' * 43}"
+    statuses = [client.get("/v1/payments", headers={"X-API-Key": raw}).status_code for raw in [forged] * 6 + [created["key"]] * 6]
+    assert statuses.count(401) == 2 and statuses.count(429) == 10
+    denied = case_data.rows(models.AuditLog, models.AuditLog.tenant_id == tenant.id, models.AuditLog.action == "access.denied")
+    events = case_data.rows(models.SecurityEvent, models.SecurityEvent.tenant_id == tenant.id)
+    assert len(denied) == 2 and len(events) == 2, "only the attempts that were answered are recorded"
 
 
 def test_an_api_key_has_its_own_limit_and_cannot_starve_the_officers(client: TestClient, factory: Any,
@@ -136,7 +168,7 @@ def test_admins_see_their_departments_current_use(client: TestClient, factory: A
     assert 47 <= officer_bucket["remaining"] < 50 and officer_bucket["per_minute"] == 50 and officer_bucket["display_name"]
     assert [(k["name"], k["per_minute"]) for k in body["api_keys"]] == [("Usage probe", 10)]
     assert 7 <= body["api_keys"][0]["remaining"] < 10, "three calls taken, refilling slowly"
-    assert {lane["label"] for lane in body["department"]} == {"people", "api_keys"}
+    assert {lane["label"] for lane in body["department"]} == {"staff", "api_keys"}, "lanes appear once used"
     assert body["api_calls_this_month"] == 3 and body["limits"]["user_per_minute"] == 50
     assert {"method": "POST", "path": "/v1/applications/{application_id}/documents", "cost": 10} in body["costly_routes"]
     assert created["key"] not in usage.text

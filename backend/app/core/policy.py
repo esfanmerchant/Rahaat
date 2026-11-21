@@ -95,7 +95,7 @@ class Policy:
                 raise Forbidden("This API key is not allowed to call this endpoint.", code=code)
             apikeys.record_use(key)
             return principal
-        ratelimit.charge(request.url.path, ratelimit.user_charges(principal.tenant_id, principal.user_id), cost)
+        ratelimit.charge(request.url.path, ratelimit.user_charges(principal.tenant_id, principal.user_id, principal.role), cost)
         if principal.role not in self.roles:
             self._deny(principal, "role_not_allowed", {"allowed_roles": list(self.roles)})
             raise Forbidden("Your role cannot do this.", code="role_not_allowed")

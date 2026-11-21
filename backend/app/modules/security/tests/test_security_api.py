@@ -33,7 +33,8 @@ def test_the_database_refuses_every_bypass_and_the_run_is_audited(client: TestCl
         assert "permission denied" in results["audit_is_append_only"]["evidence"]["database_said"]
         assert "row-level security" in results["row_security_off_is_refused"]["evidence"]["database_said"]
         assert results["other_departments_invisible"]["evidence"]["other_departments_cases"] == 0
-    runs = case_data.rows(models.AuditLog, models.AuditLog.tenant_id == mine.id, models.AuditLog.action == "security.probes_run")
+    runs = sorted(case_data.rows(models.AuditLog, models.AuditLog.tenant_id == mine.id, models.AuditLog.action == "security.probes_run"),
+                  key=lambda r: r.seq)  # fmt: skip
     assert len(runs) == 2 and runs[-1].seq == body["audit_seq"]
 
 

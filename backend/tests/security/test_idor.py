@@ -68,5 +68,6 @@ def test_an_api_key_reads_only_its_own_department(world: World) -> None:
     mine = world.client.get("/v1/cases", headers=world.headers(world.a, "key:cases"))
     assert mine.status_code == 200
     assert [c["id"] for c in mine.json()["items"]] == [str(world.a.ids["case_id"])]
-    other = world.client.get(f"/v1/cases/{world.b.ids['case_id']}", headers=world.headers(world.a, "key:cases"))
-    assert other.status_code == 404
+    assert not support.leaked(mine.text, world.b.markers)
+    payments = world.client.get("/v1/payments", headers=world.headers(world.a, "key:payments"))
+    assert payments.status_code == 200 and not support.leaked(payments.text, world.b.markers)

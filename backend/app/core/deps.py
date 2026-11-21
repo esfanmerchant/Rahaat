@@ -87,11 +87,16 @@ def get_credential(
     bearer: HTTPAuthorizationCredentials | None = Depends(_bearer),
     header_key: str | None = Depends(_api_key_header),
 ) -> Credential:
-    """Verify whatever the caller presented. A failure counts against the caller's network rate limit."""
+    """Verify whatever the caller presented. A failure counts against the caller's network rate limit.
+
+    The limit is charged before a refused key is recorded, so a caller over its limit gets 429 and writes nothing.
+    """
     try:
         return _verify(bearer, header_key)
-    except Unauthorized:
+    except Unauthorized as exc:
         ratelimit.charge_anonymous(request.url.path)  # after too many failures the answer becomes 429
+        if isinstance(exc, apikeys.KeyRefused):
+            apikeys.record_refusal(exc)
         raise
 
 

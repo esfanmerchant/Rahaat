@@ -5,8 +5,8 @@ worth of requests and refills continuously, so a short burst passes and a steady
 A request takes its cost from every bucket that applies, or from none: a call refused by the department's
 bucket does not use up the caller's own.
 
-A department has two lanes, one for people and one for API keys, so a busy integration cannot lock its own
-officers out (and the other way round).
+A department has three lanes, for staff, for the public (citizens and helpers) and for API keys, so neither a
+busy integration nor a crowd of self-registered accounts can lock officers out.
 
 Only `/v1/` paths are limited. Health, metrics, the API docs and the static frontend are exempt. Sign-in and
 registration keep their own, stricter throttles on top of this.
@@ -198,11 +198,17 @@ def anonymous_charges(ip: str) -> list[Charge]:
     return [Charge("ip", network, get_settings().rate_limits().anonymous_per_minute, label=network)]
 
 
-def user_charges(tenant_id: UUID, user_id: UUID) -> list[Charge]:
+STAFF_LANE_ROLES = frozenset({"officer", "admin", "auditor"})
+
+
+def user_charges(tenant_id: UUID, user_id: UUID, role: str) -> list[Charge]:
+    """A user's own bucket and their department lane. Staff and the public (citizens, helpers) have separate lanes:
+    anyone can register as a citizen, and a crowd of such accounts must never lock officers out."""
     limits = get_settings().rate_limits()
+    lane = "staff" if role in STAFF_LANE_ROLES else "public"
     return [
         Charge("user", f"{tenant_id}:{user_id}", limits.user_per_minute, tenant_id, label=str(user_id)),
-        Charge("tenant", f"{tenant_id}:people", limits.tenant_per_minute, tenant_id, label="people"),
+        Charge("tenant", f"{tenant_id}:{lane}", limits.tenant_per_minute, tenant_id, label=lane),
     ]
 
 

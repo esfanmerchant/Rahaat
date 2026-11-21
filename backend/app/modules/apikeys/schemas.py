@@ -18,8 +18,8 @@ class ApiKeyCreate(Strict):
 
 
 class ApiKeyRotate(Strict):
-    expires_in_days: int | None = Field(default=None, ge=1, le=MAX_LIFETIME_DAYS, description="Default: the old key's lifetime")
-    grace_minutes: int = Field(default=0, ge=0, le=1440, description="Minutes the old key keeps working; 0 stops it at once")
+    expires_in_days: int | None = Field(default=None, ge=1, le=MAX_LIFETIME_DAYS,
+                                        description="End the new key sooner than the old one would have ended; it never ends later")  # fmt: skip
     reason: str | None = Field(default=None, max_length=300)
 
 

@@ -132,21 +132,25 @@ def create_key(db: Session, principal: Principal, body: ApiKeyCreate, registry: 
 
 
 def rotate_key(db: Session, principal: Principal, key_id: uuid.UUID, body: ApiKeyRotate) -> ApiKeyCreated:
-    """A new secret with the same name, scopes and limit. The old key stops at once, or after a short grace."""
+    """A new secret with the same name, scopes, limit and end date. The old key is revoked in the same transaction.
+
+    There is never more than one live key per approval, and rotation never moves the end date, so rotating cannot
+    multiply or prolong a key that a second admin approved.
+    """
     now = datetime.now(UTC)
     old = _load(db, principal, key_id, lock=True)
     status = rules.key_status(revoked_at=old.revoked_at, expires_at=old.expires_at, pending=bool(_pending(db, [old.id])), now=now)
     if status != "active":
         raise Conflict(f"Only an active key can be rotated; this one is {status.replace('_', ' ')}.", code=f"api_key_{status}")
-    new, raw = _new_key(db, principal, name=old.name, scopes=list(old.scopes or []), rate=old.rate_limit_per_min,
-                        expires_at=rules.rotated_expiry(created_at=old.created_at, expires_at=old.expires_at, now=now,
-                                                        days=body.expires_in_days), now=now)  # fmt: skip
-    old.revoked_at, old.expires_at = rules.old_key_end(now=now, expires_at=old.expires_at, grace_minutes=body.grace_minutes)
-    _audit(db, principal, "apikey.rotated", old, reason=body.reason,
-           details={"replaced_by": str(new.id), "new_prefix": new.prefix, "grace_minutes": body.grace_minutes})  # fmt: skip
+    scopes = list(old.scopes or [])
+    new, raw = _new_key(db, principal, name=old.name, scopes=scopes, rate=old.rate_limit_per_min,
+                        expires_at=rules.rotated_expiry(expires_at=old.expires_at, now=now, days=body.expires_in_days), now=now)  # fmt: skip
+    old.revoked_at = now
+    _audit(db, principal, "apikey.rotated", old, reason=body.reason, details={"replaced_by": str(new.id), "new_prefix": new.prefix})
     _audit(db, principal, "apikey.created", new, reason=body.reason, details={
-        "rotated_from": str(old.id), "scopes": list(new.scopes or []), "rate_limit_per_minute": new.rate_limit_per_min,
+        "rotated_from": str(old.id), "scopes": scopes, "rate_limit_per_minute": new.rate_limit_per_min,
         "expires_at": _iso(new.expires_at), "needs_second_admin": False,
+        "approval_carried_from": str(old.id) if rules.needs_second_admin(scopes) else None,
     })  # fmt: skip
     db.commit()
     return ApiKeyCreated(**_out(new, None, now).model_dump(), key=raw)
