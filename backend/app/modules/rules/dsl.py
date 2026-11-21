@@ -64,6 +64,8 @@ ENGINE_PARAMS: Final[dict[str, tuple[float, float]]] = {
     "confidence_floor": (0.5, 1.0),
     "income_max_age_days": (1, 3650),
     "proof_days": (0, 60),
+    "stale_income_settles_below": (0, 1),
+    "identity_partial_min_name_score": (0.8, 1.0),
 }
 
 _ID = re.compile(r"^[a-z][a-z0-9_]{0,47}$")
