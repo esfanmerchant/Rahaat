@@ -64,7 +64,7 @@ ignore = ["B008", "S101", "S105", "S106", "S311", "UP046"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["app/core", "app/contracts"]
+files = ["app/core", "app/contracts", "app/mocks", "app/modules/cases", "app/modules/payments", "app/modules/notifications", "app/modules/jobs", "app/modules/integrations"]
 plugins = ["pydantic.mypy"]
 strict = true
 ignore_missing_imports = true

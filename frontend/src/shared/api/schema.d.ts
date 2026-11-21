@@ -38,6 +38,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Background jobs, newest first */
+        get: operations["list_jobs_v1_admin_jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/jobs/{job_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry a dead job */
+        post: operations["retry_job_v1_admin_jobs__job_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/mocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Failure controls and circuit breakers of the simulated services */
+        get: operations["get_mocks_v1_admin_mocks_get"];
+        put?: never;
+        /** Make a simulated service slow, flaky or down, or reset all */
+        post: operations["control_mocks_v1_admin_mocks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/mocks/sms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the mock SMS gateway delivered (numbers masked) */
+        get: operations["mock_sms_v1_admin_mocks_sms_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/applications": {
         parameters: {
             query?: never;
@@ -102,6 +171,40 @@ export interface paths {
         put?: never;
         /** [stub] Submit and get the decision */
         post: operations["submit_application_v1_applications__application_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approvals waiting for a second person */
+        get: operations["list_approvals_v1_approvals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/approvals/{approval_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Release or stop a payment (second person) */
+        post: operations["decide_v1_approvals__approval_id__decide_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -285,8 +388,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] Officer review queue */
-        get: operations["cases_v1_cases_get"];
+        /** Review queue */
+        get: operations["list_cases_v1_cases_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -302,7 +405,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] One case with its handoff package */
+        /** One case with its handoff package, form, document checks and trace */
         get: operations["get_case_v1_cases__case_id__get"];
         put?: never;
         post?: never;
@@ -321,8 +424,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** [stub] Approve, reject, request proof or escalate */
+        /** Approve, reject, request proof or escalate */
         post: operations["act_on_case_v1_cases__case_id__actions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cases/{case_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take a case or give it to another officer */
+        post: operations["assign_case_v1_cases__case_id__assign_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -338,8 +458,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** [stub] Add a note */
+        /** Add a note */
         post: operations["add_note_v1_cases__case_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cases/{case_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen a resolved case */
+        post: operations["reopen_case_v1_cases__case_id__reopen_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -439,8 +576,59 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [stub] My messages */
-        get: operations["notifications_v1_notifications_get"];
+        /** My messages, newest first */
+        get: operations["my_notifications_v1_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the code at the end of a message */
+        post: operations["verify_message_v1_notifications_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/outbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every message this department sent (destinations masked) */
+        get: operations["outbox_v1_outbox_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Payments, newest first */
+        get: operations["list_payments_v1_payments_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -689,6 +877,47 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** ApprovalDecideIn */
+        ApprovalDecideIn: {
+            /** Approve */
+            approve: boolean;
+            /** Reason */
+            reason: string;
+        };
+        /** ApprovalList */
+        ApprovalList: {
+            /** Items */
+            items: components["schemas"]["ApprovalOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** ApprovalOut */
+        ApprovalOut: {
+            /** Approver Id */
+            approver_id?: string | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Reason */
+            reason?: string | null;
+            /** Requested By */
+            requested_by?: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /** Subject Type */
+            subject_type: string;
+        };
         /** AuditEntry */
         AuditEntry: {
             /** Acting For Person Id */
@@ -783,6 +1012,16 @@ export interface components {
              */
             reason: string;
         };
+        /** CaseAssignIn */
+        CaseAssignIn: {
+            /**
+             * Assignee Id
+             * @description An officer of this department; omit to take the case yourself
+             */
+            assignee_id?: string | null;
+            /** Reason */
+            reason: string;
+        };
         /** CaseDetail */
         CaseDetail: {
             /** Age Minutes */
@@ -870,6 +1109,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+        };
+        /** CaseReopenIn */
+        CaseReopenIn: {
+            /** Reason */
+            reason: string;
         };
         /** CaseSummary */
         CaseSummary: {
@@ -1418,6 +1662,51 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** JobList */
+        JobList: {
+            /**
+             * Counts
+             * @description Jobs per status in this department
+             */
+            counts?: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["JobOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** JobOut */
+        JobOut: {
+            /** Attempts */
+            attempts: number;
+            /** Created At */
+            created_at: string;
+            /** Finished At */
+            finished_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Last Error */
+            last_error?: string | null;
+            /** Max Attempts */
+            max_attempts: number;
+            /** Priority */
+            priority: number;
+            /** Run At */
+            run_at?: string | null;
+            /** Status */
+            status: string;
+        };
+        /** JobRetryIn */
+        JobRetryIn: {
+            /** Reason */
+            reason: string;
+        };
         /** LoginIn */
         LoginIn: {
             /**
@@ -1459,6 +1748,45 @@ export interface components {
             tenant_name: string;
             /** Tenant Slug */
             tenant_slug: string;
+        };
+        /** MockControlIn */
+        MockControlIn: {
+            /** Down */
+            down?: boolean | null;
+            /** Failure Rate */
+            failure_rate?: number | null;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /**
+             * Reason
+             * @description Stored in the audit log
+             */
+            reason: string;
+            /**
+             * Reset
+             * @description Clear every control and close every breaker
+             * @default false
+             */
+            reset: boolean;
+            /**
+             * Service
+             * @description Which service to change; omit with reset
+             */
+            service?: ("identity" | "registry" | "payment" | "sms") | null;
+        };
+        /** MocksOut */
+        MocksOut: {
+            /**
+             * Label
+             * @description Every one of these services is simulated
+             */
+            label: string;
+            /** Services */
+            services: {
+                [key: string]: components["schemas"]["ServiceOut"];
+            };
+            /** Transport */
+            transport: string;
         };
         /** NotificationList */
         NotificationList: {
@@ -1518,6 +1846,76 @@ export interface components {
              * @description Treated as data, never as instructions
              */
             raw_text?: string | null;
+        };
+        /** OutboxItem */
+        OutboxItem: {
+            /** Attempts */
+            attempts: number;
+            /** Body */
+            body: string;
+            /** Channel */
+            channel: string;
+            /** Created At */
+            created_at: string;
+            /**
+             * Destination
+             * @description Masked: only the last three digits
+             */
+            destination?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lang */
+            lang: string;
+            /** Last Error */
+            last_error?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
+            /** Status */
+            status: string;
+            /** Template */
+            template: string;
+            /** Verify Code */
+            verify_code?: string | null;
+        };
+        /** OutboxList */
+        OutboxList: {
+            /** Items */
+            items: components["schemas"]["OutboxItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** PaymentList */
+        PaymentList: {
+            /** Items */
+            items: components["schemas"]["PaymentOut"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** PaymentOut */
+        PaymentOut: {
+            /** Amount Pkr */
+            amount_pkr: number;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Approval Id */
+            approval_id?: string | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rail Ref */
+            rail_ref?: string | null;
+            /** Status */
+            status: string;
         };
         /** PersonOut */
         PersonOut: {
@@ -1628,6 +2026,23 @@ export interface components {
             /** Version No */
             version_no: number;
         };
+        /** ServiceOut */
+        ServiceOut: {
+            /** Breaker */
+            breaker: {
+                [key: string]: unknown;
+            };
+            /** Calls */
+            calls: number;
+            /** Down */
+            down: boolean;
+            /** Failure Rate */
+            failure_rate: number;
+            /** Failures Injected */
+            failures_injected: number;
+            /** Latency Ms */
+            latency_ms: number;
+        };
         /** SessionOut */
         SessionOut: {
             /** Created At */
@@ -1652,6 +2067,24 @@ export interface components {
              * Format: uuid
              */
             tenant_id: string;
+        };
+        /** SmsOutboxItem */
+        SmsOutboxItem: {
+            /** At */
+            at: string;
+            /** Body */
+            body: string;
+            /** Message Id */
+            message_id: string;
+            /** Sender */
+            sender: string;
+            /** Status */
+            status: string;
+            /**
+             * To
+             * @description Masked
+             */
+            to: string;
         };
         /** SubmitOut */
         SubmitOut: {
@@ -1754,6 +2187,30 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VerifyIn */
+        VerifyIn: {
+            /**
+             * Code
+             * @description The code at the end of a message
+             */
+            code: string;
+        };
+        /** VerifyOut */
+        VerifyOut: {
+            /** Channel */
+            channel?: string | null;
+            /** Department */
+            department?: string | null;
+            /**
+             * Genuine
+             * @description True only for a message this platform really sent
+             */
+            genuine: boolean;
+            /** Sent At */
+            sent_at?: string | null;
+            /** Template */
+            template?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -1803,6 +2260,159 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    list_jobs_v1_admin_jobs_get: {
+        parameters: {
+            query?: {
+                status?: ("queued" | "running" | "done" | "failed" | "dead" | "cancelled") | null;
+                kind?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_job_v1_admin_jobs__job_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobRetryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_mocks_v1_admin_mocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MocksOut"];
+                };
+            };
+        };
+    };
+    control_mocks_v1_admin_mocks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MockControlIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MocksOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mock_sms_v1_admin_mocks_sms_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsOutboxItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1979,6 +2589,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubmitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_approvals_v1_approvals_get: {
+        parameters: {
+            query?: {
+                status?: "pending" | "approved" | "rejected" | "expired";
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_v1_approvals__approval_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                approval_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalDecideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
                 };
             };
             /** @description Validation Error */
@@ -2245,9 +2923,19 @@ export interface operations {
             };
         };
     };
-    cases_v1_cases_get: {
+    list_cases_v1_cases_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A status, 'active' (default) or 'all' */
+                status?: "open" | "assigned" | "in_review" | "waiting_proof" | "escalated" | "resolved" | "closed" | "active" | "all";
+                kind?: ("application_review" | "duplicate_review" | "document_review" | "complaint" | "appeal" | "correction" | "scam_review") | null;
+                /** @description 'me', 'unassigned' or a user id */
+                assignee?: string | null;
+                /** @description priority (most urgent first), confidence (least sure first) or age (oldest first) */
+                sort?: "priority" | "confidence" | "age";
+                limit?: number;
+                cursor?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2261,6 +2949,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2331,6 +3028,41 @@ export interface operations {
             };
         };
     };
+    assign_case_v1_cases__case_id__assign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseAssignIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_note_v1_cases__case_id__notes_post: {
         parameters: {
             query?: never;
@@ -2348,6 +3080,41 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_case_v1_cases__case_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseReopenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2523,9 +3290,13 @@ export interface operations {
             };
         };
     };
-    notifications_v1_notifications_get: {
+    my_notifications_v1_notifications_get: {
         parameters: {
-            query?: never;
+            query?: {
+                channel?: "in_app" | "sms" | "all";
+                limit?: number;
+                cursor?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2539,6 +3310,116 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_message_v1_notifications_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerifyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outbox_v1_outbox_get: {
+        parameters: {
+            query?: {
+                status?: ("queued" | "sent" | "failed" | "read") | null;
+                channel?: ("in_app" | "sms") | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutboxList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_payments_v1_payments_get: {
+        parameters: {
+            query?: {
+                status?: ("pending_approval" | "approved" | "submitted" | "settled" | "failed" | "reversed" | "cancelled") | null;
+                application_id?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

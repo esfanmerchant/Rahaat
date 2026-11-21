@@ -124,9 +124,19 @@ Trust rule for form fields: a client may send only provenance `tapped`, `typed` 
 | Add demo data | `app/modules/<name>/seed_step.py` defining `seed(db)` (optional `ORDER`); safe to run twice | edit `app/seed.py` |
 | Start or stop something with the app | `app/modules/<name>/lifecycle.py` defining `startup()` and `shutdown()`; check `get_settings().worker_enabled_effective` | edit `app/main.py` |
 | Module test fixtures | `app/modules/<name>/tests/conftest.py` | edit `backend/conftest.py` |
+| Run background work | `app/modules/<name>/job_handlers.py` defining `HANDLERS = {"kind": fn}` and optionally `ON_FAILURE`; enqueue with `app.modules.jobs.service.enqueue(db, *, tenant_id, kind, payload=None, person_id=None, ...)` | start threads yourself |
 
 Demo citizens (names, mock IDs, dates of birth) come from `app.demo_accounts.demo_citizens()`. Specimen cards and the mock registry are built from it, so they always agree with the seed.
 
 Tracking codes: `app.contracts.common.tracking_symbols(number)` gives three pictogram names from `TRACKING_SYMBOLS`.
 
 Each test run gets its own throwaway database, so several runs at once do not disturb each other.
+
+## Built in Phase 1, track A2 (cases, payments, notifications, jobs, integrations)
+
+- Notification templates (`notify(..., template=...)`): `application_received`, `person_will_check`, `proof_needed`, `approved`, `rejected`, `payment_sent`, `payment_delayed`. Payload keys kept: `tracking_code`, `amount_pkr`, `rail_ref`, `proof_kind` (`rahat_id`, `income_proof`, `other`), `application_id`, `payment_id`, `case_id`. An unknown template raises `ValueError`. Every message ends with a verify code; `lookup_verify_code(code)` checks one, and `POST /v1/notifications/verify` is the public check.
+- `request_payment` needs the application already in `approved` and an approved engine decision or an officer's approval. Up to the tenant's `payment_four_eyes_limit_pkr` it releases at once; above it a second officer, not the one who approved the case, must decide on `POST /v1/approvals/{id}/decide`.
+- More helpers: `cases.service.proof_received`, `cases.service.reopen_for_application`, `jobs.service.cancel_for_person`, `jobs.service.run_pending` (tests), `integrations.service.submit_payment`, `send_sms`, `degradation_message(service, lang)`.
+- Adapters return a status on an outage (`unavailable`), never raise. Transport is in-process in dev and test and HTTP to `MOCK_BASE_URL` elsewhere (`MOCK_TRANSPORT` overrides). Each mock service has its own key (`MOCK_*_KEY`).
+- `notifications` has a `person_id` but no consent policy in the database; the API filters it. Known gap, accepted for now.
+

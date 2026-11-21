@@ -121,6 +121,11 @@ function Initialize-Secrets {
         Set-Content -Path $SecretsFile -Value $lines -Encoding ASCII
         Say 'generated new secrets in .live\secrets.env'
     }
+    # Keys added later are appended, so an existing secrets file keeps its old values.
+    $known = (Get-Content $SecretsFile) -join "`n"
+    foreach ($name in @('MOCK_IDENTITY_KEY', 'MOCK_REGISTRY_KEY', 'MOCK_PAYMENT_KEY', 'MOCK_SMS_KEY', 'MOCK_CONTROL_KEY')) {
+        if ($known -notmatch "(?m)^$name=") { Add-Content -Path $SecretsFile -Value ($name + '=' + (New-RandomText 24 -UrlSafe)) -Encoding ASCII }
+    }
     foreach ($line in Get-Content $SecretsFile) {
         if ($line -match '^\s*#' -or $line -notmatch '=') { continue }
         $parts = $line.Split('=', 2)

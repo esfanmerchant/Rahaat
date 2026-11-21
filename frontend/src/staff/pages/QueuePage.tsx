@@ -14,8 +14,9 @@ export function QueuePage() {
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const [loaded, reload] = useLoad(() => call(api.GET('/v1/cases')), []);
   const now = useNow();
+  // Priority 0 is the most urgent, so the default sort is ascending: urgent cases first.
   const [sortKey, setSortKey] = useState<SortKey>('priority');
-  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [dir, setDir] = useState<'asc' | 'desc'>('asc');
   const [status, setStatus] = useState('');
   const [kind, setKind] = useState('');
   const [cursor, setCursor] = useState(0);
@@ -40,7 +41,8 @@ export function QueuePage() {
     if (key === sortKey) setDir(dir === 'asc' ? 'desc' : 'asc');
     else {
       setSortKey(key);
-      setDir(key === 'confidence' ? 'asc' : 'desc');
+      // First click: most urgent, least confident, or oldest first.
+      setDir(key === 'age' ? 'desc' : 'asc');
     }
   };
 

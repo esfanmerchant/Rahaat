@@ -18,16 +18,9 @@ from app.contracts.api import (
     ApplicationOut,
     ApplicationPatch,
     ApplicationSummary,
-    CaseActionIn,
-    CaseDetail,
-    CaseList,
-    CaseNoteIn,
-    CaseSummary,
     ConsentCreate,
     ConsentOut,
     DocumentOut,
-    NotificationList,
-    NotificationOut,
     PersonOut,
     ProgramOut,
     RuleVersionBrief,
@@ -66,13 +59,11 @@ _RULES = UUID("20000000-0000-4000-8000-000000000002")
 _APPLICATION = UUID("30000000-0000-4000-8000-000000000001")
 _DOCUMENT = UUID("40000000-0000-4000-8000-000000000001")
 _DECISION = UUID("50000000-0000-4000-8000-000000000001")
-_CASE = UUID("60000000-0000-4000-8000-000000000001")
 _CONSENT = UUID("70000000-0000-4000-8000-000000000001")
 _TENANT = UUID("80000000-0000-4000-8000-000000000001")
 _MOCK_ID = make_mock_id(1_000_201)
 
 _citizen_side = Policy("stub:citizen", ["citizen", "helper"])
-_officer = Policy("stub:officer", ["officer"])
 _review = Policy("stub:decision-read", ["officer", "auditor"])
 _anyone = Policy("stub:any", ALL_ROLES)
 
@@ -169,15 +160,6 @@ def _application(status: str = "in_review") -> ApplicationOut:
     )  # fmt: skip
 
 
-def _case() -> CaseDetail:
-    return CaseDetail(
-        id=_CASE, kind="application_review", status="open", priority=30, confidence=0.81, opened_reason="income_unverified",
-        subject_name="Zainab Bibi", application_id=_APPLICATION, assigned_to=None, sla_due_at=_T, age_minutes=18, created_at=_T,
-        handoff=_handoff(), form=_form(), document_checks=[_document_check()], decision=_trace(), notes=[], events=[],
-        allowed_actions=["approve", "reject", "request_proof", "escalate"],
-    )  # fmt: skip
-
-
 @router.get("/me/person", response_model=PersonOut, summary="[stub] My person record")
 def my_person(_: Principal = Depends(_citizen_side)) -> PersonOut:
     return PersonOut(id=_PERSON, full_name="Zainab Bibi", full_name_ur="زینب بی بی", district="Karachi East",
@@ -245,33 +227,6 @@ def upload_document(application_id: UUID, file: UploadFile = File(...), kind: Do
                     _: Principal = Depends(_citizen_side)) -> DocumentOut:  # fmt: skip
     return DocumentOut(document=DocumentCitizenView(document_id=str(_DOCUMENT), kind=kind, accepted=True, quality="ok", message_key="doc_ok"),
                        application_version=4)  # fmt: skip
-
-
-@router.get("/notifications", response_model=NotificationList, summary="[stub] My messages")
-def notifications(_: Principal = Depends(_anyone)) -> NotificationList:
-    return NotificationList(items=[NotificationOut(id=UUID("90000000-0000-4000-8000-000000000001"), channel="sms", template="application_received",
-                                                   lang="ur", body="راحت: آپ کی درخواست R-48213 مل گئی۔ ہم کبھی فیس یا پن نہیں مانگتے۔ کوڈ: K7Q2MX",
-                                                   status="sent", verify_code="K7Q2MX", created_at=_T)])  # fmt: skip
-
-
-@router.get("/cases", response_model=CaseList, summary="[stub] Officer review queue")
-def cases(_: Principal = Depends(_officer)) -> CaseList:
-    return CaseList(items=[CaseSummary(**_case().model_dump(include=set(CaseSummary.model_fields)))])
-
-
-@router.get("/cases/{case_id}", response_model=CaseDetail, summary="[stub] One case with its handoff package")
-def get_case(case_id: UUID, _: Principal = Depends(_officer)) -> CaseDetail:
-    return _case()
-
-
-@router.post("/cases/{case_id}/actions", response_model=CaseDetail, summary="[stub] Approve, reject, request proof or escalate")
-def act_on_case(case_id: UUID, body: CaseActionIn, _: Principal = Depends(_officer)) -> CaseDetail:
-    return _case()
-
-
-@router.post("/cases/{case_id}/notes", response_model=CaseDetail, status_code=201, summary="[stub] Add a note")
-def add_note(case_id: UUID, body: CaseNoteIn, _: Principal = Depends(_officer)) -> CaseDetail:
-    return _case()
 
 
 @router.get("/decisions/{decision_id}", summary="[stub] A decision: the citizen's reason and the auditor's trace")

@@ -51,11 +51,11 @@ DEMO_TENANTS: list[DemoTenant] = [
 DEMO_ACCOUNTS: list[DemoAccount] = [
     {"label": "Admin", "kind": "staff", "role": "admin", "tenants": ["sindh-relief"],
      "identifier": "admin@sindh.rahat.example", "name": "Ayesha Siddiqui", "lang": "en"},
-    {"label": "Second approver (admin)", "kind": "staff", "role": "admin", "tenants": ["sindh-relief"],
+    {"label": "Second admin (approves rule changes)", "kind": "staff", "role": "admin", "tenants": ["sindh-relief"],
      "identifier": "approver@sindh.rahat.example", "name": "Bilal Ahmed", "lang": "en"},
     {"label": "Officer", "kind": "staff", "role": "officer", "tenants": ["sindh-relief"],
      "identifier": "officer@sindh.rahat.example", "name": "Farhan Qureshi", "lang": "en"},
-    {"label": "Second officer", "kind": "staff", "role": "officer", "tenants": ["sindh-relief"],
+    {"label": "Second officer (approves large payments)", "kind": "staff", "role": "officer", "tenants": ["sindh-relief"],
      "identifier": "officer2@sindh.rahat.example", "name": "Sana Mirza", "lang": "en"},
     {"label": "Auditor (both departments)", "kind": "staff", "role": "auditor", "tenants": ["sindh-relief", "punjab-relief"],
      "identifier": "auditor@rahat.example", "name": "Nadia Hussain", "lang": "en"},
