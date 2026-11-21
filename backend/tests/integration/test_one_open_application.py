@@ -32,6 +32,7 @@ def test_a_second_open_application_for_the_same_program_is_refused(client: TestC
     again = client.post("/v1/applications", headers=headers, json={"program_id": str(program_id), "client_op_id": f"op-{uuid.uuid4().hex}"})
     assert again.status_code == 409 and again.json()["code"] == "application_exists"
     assert again.json()["application_id"] == first.json()["id"]
+    assert again.json()["status"] == 409 and again.json()["application_status"] == "draft"
 
     with system_session() as db:  # a rejected application no longer blocks a new one
         db.get(models.Application, uuid.UUID(first.json()["id"])).status = "rejected"

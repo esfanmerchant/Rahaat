@@ -87,7 +87,8 @@ def problem(
         "request_id": current_request_id(),
     }
     if extra:
-        body.update(extra)
+        # Extra fields never replace the standard ones (type, title, status, detail, code, request_id).
+        body.update({k: v for k, v in extra.items() if k not in body})
     return JSONResponse(body, status_code=status, media_type=PROBLEM_JSON, headers=headers)
 
 

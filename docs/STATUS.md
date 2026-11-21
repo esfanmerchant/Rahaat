@@ -2,7 +2,7 @@
 
 Tick an item only after you ran it and saw it work. Item ids match PLAN section 7. `SIMULATED` marks something that needs a real external party. `HIDDEN` marks a feature kept behind a flag because it is not demo-proof.
 
-Last updated: Sat 21 Nov 2026, 14:50 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
+Last updated: Sat 21 Nov 2026, 15:05 PKT, by the lead session. **Gate 0 passed.** Phase 1 is in progress: track agents are working in the worktrees under `.wt/`.
 
 ## Phase 0: foundation
 
@@ -68,7 +68,7 @@ Track D2
 - [x] D2.2 Officer queue and case review with the handoff package first (urgent cases first)
 - [x] D2.3 Auditor decision viewer and audit explorer with chain verification
 
-**Gate 1 passed in tests** (Sat 21 Nov, 14:45): `backend/tests/integration/test_anchor_flow.py` runs the anchor flow through the HTTP API with every track's real code. Aslam is approved and paid by the system alone and his verify code checks out; Zainab, with no income record, is asked for proof, handed to an officer with notes, approved with a reason and paid; the auditor sees both views and an intact chain. Still to confirm: the same on the live URL.
+**Gate 1 passed in tests** (Sat 21 Nov, 14:45): `backend/tests/integration/test_anchor_flow.py` runs the anchor flow through the HTTP API with every track's real code. Aslam is approved and paid by the system alone and his verify code checks out; Zainab, with no income record, is asked for proof, handed to an officer with notes, approved with a reason and paid; the auditor sees both views and an intact chain. **Confirmed on the live URL** (15:00) by running the same flow over HTTPS through the tunnel. That run found a real defect, one person could open two applications for one program and be paid twice, now refused by the service (409 `application_exists`) and by a database index (migration 0004).
 
 ## Phase 2: the eight challenges (T1)
 

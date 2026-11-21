@@ -314,7 +314,7 @@ def _refuse_second_open_application(db: Session, ctx: PersonContext, program_id:
     if open_one is not None:
         raise Conflict(
             "You already have an application for this program.", code="application_exists",
-            extra={"application_id": str(open_one.id), "status": open_one.status},
+            extra={"application_id": str(open_one.id), "application_status": open_one.status},
         )  # fmt: skip
 
 
