@@ -48,3 +48,4 @@ AI_Hackathon_*.pdf
 
 # vercel
 .vercel/
+.env.local  # written by `vercel link`

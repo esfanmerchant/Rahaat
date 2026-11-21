@@ -70,13 +70,27 @@ $plain = [ordered]@{
 
 function Set-VercelEnv([string]$Name, [string]$Value, [bool]$IsSecret) {
   if ($DryRun) { Write-Host ("[dry run] {0,-20} {1}" -f $Name, $(if ($IsSecret) { '(secret)' } else { 'plain' })); return }
-  $cliArgs = @('--yes', $VercelCli, 'env', 'add', $Name, 'production', '--force')
-  if ($IsSecret) { $cliArgs += '--sensitive' }
-  $env:VERCEL_TOKEN = $token   # the CLI reads the token from the environment, so it is not on a command line
-  # The value goes in on standard input and is never echoed.
-  $Value | & npx @args 2>&1 | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "could not set $Name (exit code $LASTEXITCODE)" }
+  # Through Vercel's REST API, not the CLI: piping a value into a native command from Windows PowerShell can add
+  # a byte-order mark to it, and a mistake in the CLI arguments once handed a secret to a shell. Here the value
+  # only ever travels in an HTTPS request body, and no error message below includes it.
+  $body = @{ key = $Name; value = $Value; target = @('production'); type = $(if ($IsSecret) { 'sensitive' } else { 'plain' }) } | ConvertTo-Json -Compress
+  $uri = "https://api.vercel.com/v10/projects/$($link.projectId)/env?upsert=true&teamId=$($link.orgId)"
+  try {
+    Invoke-RestMethod -Method Post -Uri $uri -Headers @{ Authorization = "Bearer $token" } -ContentType 'application/json; charset=utf-8' `
+      -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) | Out-Null
+  }
+  catch {
+    $status = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 'no response' }
+    throw "could not set $Name (HTTP $status)"
+  }
   Write-Host ("set {0,-20} {1}" -f $Name, $(if ($IsSecret) { '(secret)' } else { 'plain' }))
+}
+
+$link = $null
+if (-not $DryRun) {
+  $link = Get-Content -Raw -LiteralPath (Join-Path $repo '.vercel\project.json') | ConvertFrom-Json
+  if (-not $link.projectId -or -not $link.orgId) { throw '.vercel\project.json has no projectId/orgId: run `vercel link` again' }
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 }
 
 Push-Location $repo
