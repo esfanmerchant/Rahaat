@@ -381,16 +381,19 @@ def _decide(evidence: _Evidence, qr: QrResult) -> TypedDecision[Authenticity]:
     score = PRIOR + sum(s.weight for s in evidence.signals)
     p_suspect = _sigmoid(score)
     reasons = [s.code for s in sorted(evidence.signals, key=lambda s: -abs(s.weight))]
-    strong = any(s.weight >= STRONG for s in evidence.signals)
+    strong = [s.code for s in evidence.signals if s.weight >= STRONG]
     probabilities = {"genuine": round(1.0 - p_suspect, 4), "suspect": round(p_suspect, 4)}
-    if strong or p_suspect >= 0.5:
+    if p_suspect > 0.5:
         return TypedDecision[Authenticity](choice="suspect", probabilities=probabilities, confidence=round(p_suspect, 4),
                                            route="human", reasons=reasons, model_version=MODEL_VERSION)  # fmt: skip
     if "qr_signature_valid" not in codes or not qr.signature_valid:
         return _abstain("human", reasons or ["qr_missing"])
+    # The choice follows the probabilities; a strong signal still stops it acting alone.
     p_genuine = 1.0 - p_suspect
-    route = "auto" if p_genuine >= GENUINE_AUTO_FLOOR else "human"
-    if route == "human":
+    route = "auto" if p_genuine >= GENUINE_AUTO_FLOOR and not strong else "human"
+    if strong:
+        reasons = [*reasons, "strong_signal_needs_review"]
+    elif route == "human":
         reasons = [*reasons, "below_auto_floor"]
     return TypedDecision[Authenticity](choice="genuine", probabilities=probabilities, confidence=round(p_genuine, 4),
                                        route=route, reasons=reasons, model_version=MODEL_VERSION)  # fmt: skip

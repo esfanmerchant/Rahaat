@@ -33,8 +33,11 @@ def assert_routing_is_safe(check: DocumentCheck) -> None:
     if a.route == "auto":
         assert a.choice == "genuine" and not a.abstained and check.retake_hint is None
         assert check.qr.signature_valid is True
+        assert all(s.weight < 3.5 for s in check.signals)  # no strong signal ever acts alone
     if a.choice == "suspect":
         assert a.route == "human"
+    if a.choice is not None:
+        assert a.confidence == a.probabilities[a.choice] and a.confidence >= 0.5  # the choice follows the numbers
 
 
 @pytest.mark.parametrize("name", ["clean", "flat", "upside_down", "forwarded", "white_table", "screenshot"])
@@ -290,3 +293,33 @@ def test_a_poor_fit_is_never_called_a_mismatch(images: dict[str, bytes]) -> None
     shifted = geom.matrix @ np.array([[1.0, 0.0, 28.0], [0.0, 1.0, -22.0], [0.0, 0.0, 1.0]])
     off = print_check(rectify(rgb, shifted), PERSON.as_dict())
     assert "mismatch" not in off.fields.values()
+
+
+def _decide_with(*codes: str, signature_valid: bool | None = True):  # type: ignore[no-untyped-def]
+    from app.contracts.documents import QrResult
+    from app.modules.docs_ai.service import _decide, _Evidence
+
+    evidence = _Evidence()
+    for code in codes:
+        evidence.add(code, "test")
+    return _decide(evidence, QrResult(found=signature_valid is not None, signature_valid=signature_valid))
+
+
+def test_decision_rules() -> None:
+    alone = _decide_with("qr_signature_valid")
+    assert (alone.choice, alone.route) == ("genuine", "auto")
+    with_print = _decide_with("qr_signature_valid", "print_matches_qr")
+    assert with_print.route == "auto" and with_print.confidence > alone.confidence
+    editor = _decide_with("qr_signature_valid", "metadata_editor")
+    assert (editor.choice, editor.route) == ("genuine", "human") and "below_auto_floor" in editor.reasons
+    leaning = _decide_with("qr_signature_valid", "print_matches_qr", "ocr_matches_qr", "ela_anomaly")
+    assert (leaning.choice, leaning.route) == ("genuine", "human") and "strong_signal_needs_review" in leaning.reasons
+    forged = _decide_with("qr_signature_valid", "print_qr_mismatch")
+    assert (forged.choice, forged.route) == ("suspect", "human")
+    for code in ("qr_signature_invalid", "qr_issuer_unknown", "qr_not_issuer_format", "qr_payload_oversized"):
+        d = _decide_with(code, signature_valid=False)
+        assert (d.choice, d.route) == ("suspect", "human"), code
+    missing = _decide_with("qr_missing", signature_valid=None)
+    assert missing.abstained and missing.choice is None and missing.route == "human"
+    missing_edited = _decide_with("qr_missing", "metadata_editor", signature_valid=None)
+    assert missing_edited.abstained and missing_edited.route == "human"

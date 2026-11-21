@@ -1,8 +1,14 @@
 """Find the card in a photo and map it onto the canonical layout.
 
-The card is lighter than what it lies on, roughly rectangular, and has a dark green header band along one
-long edge. We find its outline, order the corners so the header is on top, and compute the homography from
-card coordinates to image coordinates. A card whose outline runs into the image border is cut off.
+Three ways to find it, tried in this order by `service._locate` and `service._check`:
+
+1. Outline: the card is lighter than what it usually lies on. Find the largest light blob, fit a quad, put
+   the green header on top. A card whose outline runs into the image border is cut off.
+2. Header band: on a light table the outline merges with the background; the green header spans the card's
+   full width, so its rectangle fixes the card.
+3. QR anchor: the QR sits at a fixed place, so its three finder-pattern corners fix the card (screenshots).
+
+Whichever is used, `refine` then re-fits the homography to the static print (header text, labels, footer).
 """
 
 from __future__ import annotations
