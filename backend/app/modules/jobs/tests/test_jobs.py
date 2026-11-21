@@ -146,3 +146,14 @@ def test_admin_sees_the_queue_and_can_retry_a_dead_job(client: Any, factory: Any
 
     other_admin = factory.headers(client, factory.account(factory.tenant(), "admin"))
     assert client.post(f"/v1/admin/jobs/{job_id}/retry", headers=other_admin, json={"reason": "not mine"}).status_code == 404
+
+
+def test_consent_withdrawal_can_cancel_a_persons_queued_jobs(factory: Any) -> None:
+    tenant = factory.tenant()
+    citizen = factory.account(tenant, "citizen")
+    kind = f"test.person.{uuid.uuid4().hex[:8]}"
+    (mine,) = _enqueue(tenant.id, kind, person_id=citizen.person_id)
+    (other,) = _enqueue(tenant.id, kind)
+    with system_session() as db:
+        assert service.cancel_for_person(db, tenant_id=tenant.id, person_id=citizen.person_id) == 1
+    assert _job(mine).status == "cancelled" and _job(other).status == "queued"

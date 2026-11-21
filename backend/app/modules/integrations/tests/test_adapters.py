@@ -29,19 +29,19 @@ def test_breaker_opens_after_the_threshold_and_lets_one_trial_through() -> None:
     gate = CircuitBreaker("x", threshold=2, reset_after=10, clock=clock)
     assert gate.allow()
     gate.record_failure()
-    assert gate.state == "closed" and gate.allow()
+    assert gate.snapshot()["state"] == "closed" and gate.allow()
     gate.record_failure()
-    assert gate.state == "open"
+    assert gate.snapshot()["state"] == "open"
     assert not gate.allow()
     clock.advance(10)
-    assert gate.state == "half_open"
+    assert gate.snapshot()["state"] == "half_open"
     assert gate.allow() and not gate.allow()  # exactly one trial call
     gate.record_failure()
-    assert gate.state == "open"  # the trial failed: open again for another full period
+    assert gate.snapshot()["state"] == "open"  # the trial failed: open again for another full period
     clock.advance(10)
     assert gate.allow()
     gate.record_success()
-    assert gate.state == "closed" and gate.snapshot()["consecutive_failures"] == 0
+    assert gate.snapshot()["state"] == "closed" and gate.snapshot()["consecutive_failures"] == 0
 
 
 def test_backoff_doubles_and_is_capped() -> None:

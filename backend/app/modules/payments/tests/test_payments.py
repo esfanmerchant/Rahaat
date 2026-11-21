@@ -159,3 +159,34 @@ def test_a_rail_outage_leaves_the_payment_retryable(factory: Any, mocks: None) -
     assert t.get(models.Payment, payment_id).status == "settled"
     assert t.get(models.Application, ids["application_id"]).status == "paid"
     assert t.get(models.Job, job.id).status == "done"
+
+
+def test_the_submit_pipeline_can_pay_from_the_citizens_own_session(factory: Any, mocks: None) -> None:
+    tenant = factory.tenant()
+    citizen = factory.account(tenant, "citizen")
+    ids = _engine_approved(tenant.id, citizen.person_id)
+    ctx = RlsContext(role="citizen", tenant_id=tenant.id, user_id=citizen.user_id, person_id=citizen.person_id)
+    with session_scope(ctx) as db:  # what POST /v1/applications/{id}/submit does after an auto approval
+        payment = request_payment(db, tenant_id=tenant.id, application_id=ids["application_id"], person_id=citizen.person_id,
+                                  decision_id=ids["decision_id"], amount_pkr=12_000)  # fmt: skip
+        payment_id = payment.id
+    assert t.get(models.Payment, payment_id).status == "settled"
+    assert t.get(models.Application, ids["application_id"]).status == "paid"
+
+
+def test_a_second_approver_can_stop_the_payment_and_the_case_reopens(client: Any, factory: Any, mocks: None) -> None:
+    tenant = factory.tenant()
+    t.set_limit(tenant.id, 5_000)
+    citizen = factory.account(tenant, "citizen")
+    first, second = factory.headers(client, factory.account(tenant, "officer")), factory.headers(client, factory.account(tenant, "officer"))
+    ids = t.review_case(tenant.id, citizen.person_id)
+    assert client.post(f"/v1/cases/{ids['case_id']}/actions", headers=first,
+                       json={"action": "approve", "reason": "Looks eligible from the letter"}).status_code == 200  # fmt: skip
+    (payment,) = t.rows(models.Payment, models.Payment.application_id == ids["application_id"])
+    stopped = client.post(f"/v1/approvals/{payment.approval_id}/decide", headers=second,
+                          json={"approve": False, "reason": "The letter is unsigned; check again"})  # fmt: skip
+    assert stopped.status_code == 200 and stopped.json()["status"] == "rejected"
+    assert t.get(models.Payment, payment.id).status == "cancelled"
+    assert t.get(models.Application, ids["application_id"]).status == "in_review"
+    assert t.get(models.Case, ids["case_id"]).status == "open"
+    assert len(STATE.payments) == 0
