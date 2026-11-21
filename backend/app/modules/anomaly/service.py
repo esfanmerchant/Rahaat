@@ -137,6 +137,7 @@ def _handoff(finding: D.Finding) -> HandoffPackage:
             "priority": finding.priority,
             "model_version": D.MODEL_VERSION,
             "evidence_count": len(finding.evidence_ids),
+            "how_to_resolve": "Approve means an innocent explanation was found. Reject means the concern is confirmed. Write the reason either way.",
             "application_ids": finding.evidence_ids[:MAX_EVIDENCE_IDS],
         },
     )

@@ -25,12 +25,31 @@ def _form(payout: str, national_id: str, district: str = "Dadu") -> dict[str, An
     return form.model_dump(mode="json")
 
 
-def _apply(tenant_id: uuid.UUID, person_id: uuid.UUID, program_id: uuid.UUID, form: dict[str, Any], *, via: str = "web", by: uuid.UUID | None = None,
-          at: datetime | None = None) -> uuid.UUID:  # fmt: skip
+def _apply(
+    tenant_id: uuid.UUID,
+    person_id: uuid.UUID,
+    program_id: uuid.UUID,
+    form: dict[str, Any],
+    *,
+    via: str = "web",
+    by: uuid.UUID | None = None,
+    at: datetime | None = None,
+) -> uuid.UUID:
     at = at or datetime.now(UTC)
     with system_session() as db:
-        row = models.Application(id=uuid.uuid4(), tenant_id=tenant_id, program_id=program_id, person_id=person_id, status="submitted", form=form,
-                                 tracking_code=f"R-{uuid.uuid4().int % 100000:05d}", submitted_at=at, created_at=at, submitted_via=via, created_by=by)  # fmt: skip
+        row = models.Application(
+            id=uuid.uuid4(),
+            tenant_id=tenant_id,
+            program_id=program_id,
+            person_id=person_id,
+            status="submitted",
+            form=form,
+            tracking_code=f"R-{uuid.uuid4().int % 100000:05d}",
+            submitted_at=at,
+            created_at=at,
+            submitted_via=via,
+            created_by=by,
+        )
         db.add(row)
         db.flush()
         return row.id
@@ -121,8 +140,15 @@ def test_repeated_id_and_helper_burst_open_their_own_cases(client: Any, factory:
     for k in range(3):  # one ID number on three different people
         _apply(tenant.id, factory.account(tenant, "citizen").person_id, program_id, _form(f"wallet-{k}", "00000-5550000-5"))
     for k in range(10):  # ten families in ten minutes through one helper
-        _apply(tenant.id, factory.account(tenant, "citizen").person_id, program_id, _form(f"wallet-h{k}", f"00000-66600{k:02d}-6"), via="helper", by=helper,
-               at=now - timedelta(minutes=k))  # fmt: skip
+        _apply(
+            tenant.id,
+            factory.account(tenant, "citizen").person_id,
+            program_id,
+            _form(f"wallet-h{k}", f"00000-66600{k:02d}-6"),
+            via="helper",
+            by=helper,
+            at=now - timedelta(minutes=k),
+        )
     _run(client, admin, tenant.id)
     flags = client.get("/v1/anomalies", headers=admin).json()["flags"]
     assert sorted(f["detector"] for f in flags) == ["helper_burst", "repeated_identity"]
