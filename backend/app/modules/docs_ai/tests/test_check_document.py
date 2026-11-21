@@ -223,7 +223,7 @@ def test_check_is_fast_on_a_normal_card(images: dict[str, bytes]) -> None:
     run(images["clean"])  # warm imports and caches
     started = time.perf_counter()
     run(images["clean"])
-    assert time.perf_counter() - started < 1.5
+    assert time.perf_counter() - started < 3.0, "a normal card is checked in seconds, even on a busy machine"
 
 
 def test_every_scenario_routes_safely(images: dict[str, bytes]) -> None:

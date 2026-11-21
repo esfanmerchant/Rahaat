@@ -74,8 +74,12 @@ def test_drain_runs_due_jobs_within_the_caps(factory: Any) -> None:
     with system_session() as db:
         ids = [service.enqueue(db, tenant_id=tenant.id, kind=kind).id for _ in range(3)]
     with env(JOBS_MODE="inline"):
-        assert inline.drain(max_jobs=2) >= 2
-        inline.drain()
+        assert inline.drain(max_jobs=2, budget_seconds=60) == 2, "the job cap is respected"
+        # The test database is shared, so other tests' due jobs may run first: drain until ours are done.
+        for _ in range(20):
+            if {_status(i) for i in ids} == {"done"}:
+                break
+            inline.drain(budget_seconds=60)
     assert {_status(i) for i in ids} == {"done"}
 
 
