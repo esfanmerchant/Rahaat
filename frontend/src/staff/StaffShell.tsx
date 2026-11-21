@@ -159,7 +159,7 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
       <nav
         ref={railRef}
         aria-label="Staff"
-        class={`st-rail${railOpen ? ' is-open' : ''}`}
+        class={`nv-rail${railOpen ? ' is-open' : ''}`}
         onPointerEnter={(e) => e.pointerType !== 'touch' && setRailOpen(true)}
         onPointerLeave={() => setRailOpen(false)}
         onFocusIn={(e) => (e.target as HTMLElement).matches(':focus-visible') && setRailOpen(true)}
@@ -168,15 +168,15 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
           if (e.key === 'Escape') setRailOpen(false);
         }}
       >
-        <div class="st-rail-panel">
-          <a href="/staff" class="st-rail-logo" aria-label="Rahat staff home">
+        <div class="nv-rail-panel">
+          <a href="/staff" class="nv-rail-logo" aria-label="Rahat staff home">
             <Emblem size={26} tone="night" animate />
-            <span class="st-rail-label">Rahat</span>
+            <span class="nv-rail-label">Rahat</span>
           </a>
-          <ul class="st-rail-list">
+          <ul class="nv-rail-list">
             {grouped(items).map((g) => (
-              <li key={g.title} class="st-rail-group" role="presentation">
-                <p class="st-rail-sep" aria-hidden="true">
+              <li key={g.title} class="nv-rail-group" role="presentation">
+                <p class="nv-rail-sep" aria-hidden="true">
                   <span>{g.title}</span>
                 </p>
                 <ul>
@@ -185,11 +185,11 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
                     const current = path === href || path.startsWith(`${href}/`);
                     return (
                       <li key={item.slug}>
-                        <a href={href} aria-label={item.label} title={item.label} aria-current={current ? 'page' : undefined} class="st-rail-link">
-                          <span class="st-rail-icon">
+                        <a href={href} aria-label={item.label} title={item.label} aria-current={current ? 'page' : undefined} class="nv-rail-link">
+                          <span class="nv-rail-icon">
                             <NavIcon slug={item.slug} />
                           </span>
-                          <span class="st-rail-label">{item.label}</span>
+                          <span class="nv-rail-label">{item.label}</span>
                         </a>
                       </li>
                     );

@@ -316,14 +316,14 @@ export function OverviewPage() {
                   {() => null}
                 </QuietView>
               ) : (
-                <DragGrid id="cc-kpis" class="cc-grid-kpi" items={kpis} />
+                <DragGrid key="cc-kpis" id="cc-kpis" class="cc-grid-kpi" items={kpis} />
               )}
-              <DragGrid id="cc-live" class="cc-grid-2" items={livePanels} />
+              <DragGrid key="cc-live" id="cc-live" class="cc-grid-2" items={livePanels} />
             </div>
           ) : tab === 'map' ? (
-            <DragGrid id="cc-map" class="cc-grid-2" items={mapPanels} />
+            <DragGrid key="cc-map" id="cc-map" class="cc-grid-2" items={mapPanels} />
           ) : (
-            <DragGrid id="cc-system" class="cc-grid-2" items={systemPanels} />
+            <DragGrid key="cc-system" id="cc-system" class="cc-grid-2" items={systemPanels} />
           )
         }
       </SectionTabs>
