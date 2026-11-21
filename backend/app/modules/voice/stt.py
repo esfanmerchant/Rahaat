@@ -34,7 +34,7 @@ log = get_logger("rahat.voice.stt")
 
 GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-GEMINI_TIMEOUT_S = 10.0
+GEMINI_TIMEOUT_S = 15.0  # measured 2 to 3 s; the first call in a process can take longer
 
 
 class VoiceSettings(BaseSettings):
@@ -43,7 +43,10 @@ class VoiceSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), env_file_encoding="utf-8", extra="ignore", env_ignore_empty=True)
 
     gemini_api_key: str | None = None
-    gemini_stt_model: str = "gemini-3.8-flash"  # the id in Google's current generateContent audio examples (Nov 2026); override with GEMINI_STT_MODEL
+    # Measured 21 Nov on a recorded Urdu prompt: 3.1-flash-lite with minimal thinking answered in 2.5 s in Urdu script;
+    # gemini-3.8-flash did not answer within 60 s. Override with GEMINI_STT_MODEL / GEMINI_STT_THINKING ("" = model default).
+    gemini_stt_model: str = "gemini-3.1-flash-lite"
+    gemini_stt_thinking: str = "minimal"
     groq_api_key: str | None = None
     groq_stt_model: str = "whisper-large-v3"
     voice_max_audio_bytes: int = 1_000_000
@@ -235,9 +238,12 @@ _GEMINI_SCHEMA = {
 
 def _gemini(audio: bytes, mime: str, lang: str, client: httpx.Client | None = None) -> SttResult:
     settings = voice_settings()
+    generation: dict[str, Any] = {"temperature": 0, "responseMimeType": "application/json", "responseSchema": _GEMINI_SCHEMA}
+    if settings.gemini_stt_thinking:  # transcription needs no reasoning; thinking only adds seconds
+        generation["thinkingConfig"] = {"thinkingLevel": settings.gemini_stt_thinking}
     payload = {
         "contents": [{"parts": [{"text": _GEMINI_PROMPT}, {"inline_data": {"mime_type": mime, "data": base64.b64encode(audio).decode("ascii")}}]}],
-        "generationConfig": {"temperature": 0, "responseMimeType": "application/json", "responseSchema": _GEMINI_SCHEMA},
+        "generationConfig": generation,
     }
     headers = {"x-goog-api-key": settings.gemini_api_key or "", "Content-Type": "application/json"}  # the key never goes in the URL
     own = client is None
