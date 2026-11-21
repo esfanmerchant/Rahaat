@@ -574,3 +574,55 @@ html[data-theme="night"], [data-theme="night"] {
 @media (prefers-reduced-motion: reduce) {
   .st-chart .st-area { animation: rh-fade 180ms linear both !important; animation-delay: 0ms !important; }
 }
+
+/* ---------- Command Center ---------- */
+.st-spark { stroke: var(--tc); }
+.st-spark-dot { fill: var(--tc); }
+.st-seg {
+  stroke: var(--tc);
+  filter: drop-shadow(0 0 4px var(--tg));
+  transition: stroke-width 160ms var(--ease-out);
+  animation: rh-fade 600ms var(--ease-out) both;
+  cursor: pointer;
+}
+.st-hexfill { fill: var(--st-bad); stroke: var(--st-bad); }
+.st-hex { animation: rh-pop 520ms var(--ease-spring) both; transform-box: fill-box; transform-origin: center; cursor: default; }
+.st-hex:focus-visible polygon:last-of-type, .st-seg:focus-visible { stroke: var(--color-focus); }
+.st-tile {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--st-panel);
+  border: 1px solid var(--st-edge);
+  border-radius: 12px;
+  box-shadow: var(--st-shadow);
+}
+.st-tile::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: var(--tc);
+  box-shadow: 0 0 14px 1px var(--tg);
+  opacity: 0.9;
+}
+.st-tile-num { color: var(--tc); text-shadow: 0 0 22px var(--tg); }
+.st-slide-new { animation: st-slide-new 650ms var(--ease-out) both; }
+@keyframes st-slide-new {
+  from { opacity: 0; transform: translateY(-14px); background-color: var(--color-info-soft); }
+  to { opacity: 1; transform: none; }
+}
+.st-track {
+  position: relative;
+  display: inline-block;
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--st-grid);
+  vertical-align: middle;
+}
+.st-track > i { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 3px; background: var(--tc); box-shadow: 0 0 8px var(--tg); transform-origin: left; animation: st-grow 600ms var(--ease-out) both; }
+.st-track > b { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--color-ink-muted); }
+@media (prefers-reduced-motion: reduce) {
+  .st-seg, .st-hex, .st-slide-new, .st-track > i { animation: rh-fade 180ms linear both !important; animation-delay: 0ms !important; }
+}

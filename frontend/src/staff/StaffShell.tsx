@@ -22,6 +22,7 @@ const membershipKey = (m: { tenant_id: string; role: string }): string => `${m.t
 
 /** Side navigation groups: what you decide, what protects people, what proves it, what runs the system. */
 const GROUPS: Array<{ title: string; slugs: readonly string[] }> = [
+  { title: 'Command', slugs: ['overview'] },
   { title: 'Decide', slugs: ['queue', 'approvals', 'payments', 'duplicates', 'decisions'] },
   { title: 'Protect', slugs: ['scam-map', 'scam-reports', 'mistakes'] },
   { title: 'Prove', slugs: ['audit', 'costs', 'evals', 'twin', 'rules', 'lab'] },

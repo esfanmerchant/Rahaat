@@ -16,6 +16,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
+  { slug: 'overview', label: 'Overview', roles: 'staff', workItem: 'D2.13', built: true },
   { slug: 'queue', label: 'Queue', roles: ['officer'], workItem: 'D2.2', built: true },
   { slug: 'approvals', label: 'Approvals', roles: ['officer'], workItem: 'D2.9', built: true },
   { slug: 'payments', label: 'Payments', roles: ['officer'], workItem: 'D2.9', built: true },

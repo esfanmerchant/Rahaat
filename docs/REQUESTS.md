@@ -90,3 +90,6 @@ From: Track D2   To: Track A (cases)   Status: open
 What: (1) `GET /v1/cases?q=` matching the application's tracking code (`R-12345`), the case id prefix and the subject name; `CaseSummary` would carry `tracking_code`. (2) optional `total` (an exact count) on the case, decision, payment and scam-report lists, or a small `GET /v1/stats/today`.
 Why: the command palette promises "open a case by id or tracking code", but staff cannot see a tracking code today, so it matches id, application id and name from the first 100 cases only. The pulse strip counts one page of up to 100 rows and shows a plus sign beyond that.
 Until then: the palette and pulse use the existing list endpoints and say so in their hints.
+
+## Staff3 (Command Center)
+- **District on application list rows** (Track A): the Overview hex map can colour provinces by scam reports only. A staff endpoint that returns applications or cases with a `district` (or counts of applications per district) would let it show where applications come from. Until then it says so on screen rather than guessing.
