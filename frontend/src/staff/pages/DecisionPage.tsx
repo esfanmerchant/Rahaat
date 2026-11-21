@@ -1,61 +1,10 @@
-import { useState } from 'preact/hooks';
-import { useLocation } from 'preact-iso';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
-import { Button } from '../../shared/components/Button';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
-import { Badge, humanize, INPUT, Section, useLoad, type DecisionTrace, type DecisionUserView } from '../ui';
+import { Badge, humanize, Section, useLoad, type DecisionTrace, type DecisionUserView } from '../ui';
+import { ReplayBox } from './DecisionList';
 import { HashFacts, TraceView } from './parts';
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** There is no decision list endpoint: auditors arrive from an audit row or a case, or paste an id. */
-export function DecisionIndex() {
-  const { route } = useLocation();
-  const headingRef = useFocusOnMount<HTMLHeadingElement>();
-  const [id, setId] = useState('');
-  const [touched, setTouched] = useState(false);
-  const valid = UUID.test(id.trim());
-  return (
-    <section aria-labelledby="page-title" class="flex max-w-2xl flex-col gap-3">
-      <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-lg font-semibold">
-        Decisions
-      </h1>
-      <p class="text-ink-muted">
-        Open a decision by its id. Decision ids appear in the <a href="/staff/audit?action=decision.">audit trail</a> (object id of a decision row) and on every case.
-      </p>
-      <form
-        class="flex flex-wrap items-end gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setTouched(true);
-          if (valid) route(`/staff/decisions/${id.trim()}`);
-        }}
-      >
-        <label class="flex flex-col gap-1">
-          Decision id
-          <input
-            class={`${INPUT} w-96 max-w-full font-mono`}
-            value={id}
-            aria-invalid={touched && !valid}
-            autoComplete="off"
-            spellcheck={false}
-            onInput={(e) => setId(e.currentTarget.value)}
-          />
-        </label>
-        <Button size="sm" type="submit">
-          Open decision
-        </Button>
-      </form>
-      {touched && !valid ? (
-        <p role="alert" class="text-danger">
-          That is not a decision id. It looks like 50000000-0000-4000-8000-000000000001.
-        </p>
-      ) : null}
-    </section>
-  );
-}
 
 export function DecisionPage({ id }: { id: string }) {
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
@@ -137,12 +86,7 @@ export function DecisionPage({ id }: { id: string }) {
       ) : null}
 
       <Section id="verify" title="Replay and verification">
-        <p class="text-ink-muted">
-          Replay of a decision from its snapshot has no endpoint yet, so there is no replay button. The chain check covers the audit trail that references this decision.
-        </p>
-        <p class="mt-2">
-          <a href="/staff/audit">Open the audit explorer and verify the chain</a>
-        </p>
+        <ReplayBox id={trace.decision_id} />
       </Section>
     </article>
   );
