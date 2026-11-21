@@ -1,7 +1,7 @@
 """All tables. Import models from here: `from app.db import models`."""
 
 from app.db.base import Base
-from app.db.models.casework import Appeal, Application, Case, CaseEvent, CaseNote, Document, DocumentCheck, Program
+from app.db.models.casework import Appeal, Application, Case, CaseEvent, CaseNote, Document, DocumentBlob, DocumentCheck, Program
 from app.db.models.identity import AuthSession, Membership, Plan, Tenant, User
 from app.db.models.intelligence import (
     AgentRun,
@@ -81,6 +81,7 @@ __all__ = [
     "CorrectionRequest",
     "Decision",
     "Document",
+    "DocumentBlob",
     "DocumentCheck",
     "DuplicateCandidate",
     "EvalRun",

@@ -28,7 +28,8 @@ Set by `push-env.ps1`; defaults elsewhere are unchanged.
 | `CLIENT_IP_HEADER` | `x-vercel-forwarded-for` | Vercel overwrites this header on every request (it states it does so to prevent IP spoofing), so rate-limit lanes and sign-in lockouts see the real client. `x-real-ip` and `x-forwarded-for` hold the same value; `x-vercel-forwarded-for` is the one that is not rewritten by a proxy placed in front of Vercel. |
 | `STARTUP_WARMUP` | `false` | Models, OCR and the corpus load on first use, not at every cold start. |
 | `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `2` / `1` | See "Pool sizing". |
-| `UPLOAD_DIR` | `/tmp/rahat-uploads` | The deployment filesystem is read-only except `/tmp`. |
+| `UPLOAD_DIR` | `/tmp/rahat-uploads` | The deployment filesystem is read-only except `/tmp`; unused while `DOCUMENT_STORE=db`. |
+| `DOCUMENT_STORE` | `db` | Uploads go to the `document_blobs` table: `/tmp` is not shared between instances, so a file written by one would be missing on another. |
 | `CRON_SECRET` | generated | Vercel Cron sends it as `Authorization: Bearer ...` to `GET /v1/admin/jobs/drain`. |
 | `DATABASE_URL_OWNER` | from `SUPABASE_URL_OWNER` | The app role's URL is derived from it (`rahat_app.<ref>`); the app never runs as the owner. |
 | `SECRET_KEY`, `MASTER_KEY`, `APP_DB_PASSWORD`, `MOCK_*_KEY` | copied from `.live\secrets.env` | The Supabase data was seeded with these exact values. Changing any of them breaks sign-in and decryption. |
@@ -95,7 +96,7 @@ With `JOBS_MODE=inline` there is no worker thread. When a request queues a job (
 ## What behaves differently
 
 - **Mock services are per instance.** Failure injection set on the mocks page, the SMS outbox and the payment ledger of the mock live in each function instance's memory, so a setting may apply to only some requests and is lost when an instance is recycled. Real data (applications, payments, notifications) is in Postgres and unaffected. For a failure-injection demo, set the control and repeat the action; to be sure, keep traffic to one instance (a single browser tab and no parallel load).
-- **Uploaded documents are per instance.** Files go to `/tmp`, which is not shared between instances or kept after recycling. The signed-card check happens during the upload request, but opening a stored document later from another instance fails. Fixing this needs the documents module to store files in Postgres or object storage (request for the lead, not changed here).
+- **Uploaded documents are in Postgres.** With `DOCUMENT_STORE=db` the bytes go into `document_blobs` in the same transaction as the document row (migration 0008), so every instance can serve them and erasure deletes them with the document.
 - **No OCR.** The RapidOCR stack is not in the Vercel bundle (size limit). The document check reports OCR as unavailable and still verifies the signed QR; the printed-text mismatch signal does not fire. `npm run vercel:requirements -- --with-ocr` keeps it, but the function then exceeds 500 MB unless Large Functions are enabled on the account.
 - **Cold start.** With `STARTUP_WARMUP=false` the first request after a cold start loads the app (about 6 s locally from process start to the first `/readyz`, which includes the Python start and a database connection). The first decision trains the evidence model on demand (about 1 s extra locally; the first submit took 2.7 to 3.5 s). `maxDuration` is 60 s, well above this.
 - **Rate limits are per instance** (in-memory), as on any multi-process host; they are per real client address because of `CLIENT_IP_HEADER`.

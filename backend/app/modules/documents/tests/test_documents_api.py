@@ -135,3 +135,32 @@ def test_poor_quality_asks_for_a_retake_and_uploads_close_after_submit(client: T
     client.post(f"/v1/applications/{app}/submit", headers=world.h("citizen"))
     closed = _upload(client, world, app, jpeg_bytes())
     assert closed.status_code == 409 and closed.json()["code"] == "not_editable"
+
+
+def test_with_the_database_store_the_bytes_live_in_postgres_and_go_with_the_document(
+    client: TestClient, world: World, fakes: Fakes, uploads: Path, monkeypatch: Any
+) -> None:
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "document_store", "db")
+    app = new_app(client, world).json()["id"]
+    response = _upload(client, world, app, jpeg_bytes())
+    assert response.status_code == 201, response.text
+    document_id = uuid.UUID(response.json()["document"]["document_id"])
+    assert not [p for p in uploads.rglob("*") if p.is_file()], "nothing is written to the upload folder"
+
+    with system_session() as db:
+        blob = db.get(models.DocumentBlob, document_id)
+        assert blob is not None and blob.tenant_id == world.tenant.id and blob.person_id == world.citizen.person_id
+        stored = bytes(blob.data)
+    officer = client.get(f"/v1/documents/{document_id}/content", headers=world.h("officer"))
+    assert officer.status_code == 200 and officer.content == stored
+    assert client.get(f"/v1/documents/{document_id}/content", headers=world.h("citizen")).status_code == 403
+
+    monkeypatch.setattr(get_settings(), "document_store", "file")
+    assert client.get(f"/v1/documents/{document_id}/content", headers=world.h("officer")).content == stored, "a setting change hides nothing"
+
+    with system_session() as db:
+        db.delete(db.get(models.Document, document_id))
+    with system_session() as db:
+        assert db.get(models.DocumentBlob, document_id) is None, "the bytes go with the document"

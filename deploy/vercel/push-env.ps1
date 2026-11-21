@@ -65,6 +65,7 @@ $plain = [ordered]@{
   DB_POOL_SIZE        = '2'
   DB_MAX_OVERFLOW     = '1'
   UPLOAD_DIR          = '/tmp/rahat-uploads'
+  DOCUMENT_STORE      = 'db'
 }
 
 function Set-VercelEnv([string]$Name, [string]$Value, [bool]$IsSecret) {

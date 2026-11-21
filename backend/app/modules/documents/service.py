@@ -60,6 +60,18 @@ def _path_for(storage_key: str) -> Path:
     return path
 
 
+def _stored_bytes(db: Session, document: models.Document) -> bytes | None:
+    """The upload's bytes: from the database when they were stored there, else from the upload folder.
+
+    Both places are read whatever DOCUMENT_STORE says now, so changing the setting never hides an earlier upload.
+    """
+    blob = db.get(models.DocumentBlob, document.id)
+    if blob is not None and blob.tenant_id == document.tenant_id:
+        return bytes(blob.data)
+    path = _path_for(document.storage_key)
+    return path.read_bytes() if path.is_file() else None
+
+
 def read_capped(stream: BinaryIO, limit: int = imaging.MAX_BYTES) -> bytes:
     """Read at most limit + 1 bytes, so an oversized upload is refused without reading all of it."""
     data = stream.read(limit + 1)
@@ -121,9 +133,11 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
             merged = sorted(values)
 
     storage_key = f"{ctx.tenant_id}/{secrets.token_hex(16)}{ext}"
+    in_db = get_settings().document_store == "db"
     path = _path_for(storage_key)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(clean)
+    if not in_db:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(clean)
     try:
         document = models.Document(
             id=document_id, tenant_id=ctx.tenant_id, application_id=application.id, person_id=ctx.person_id, kind=kind,
@@ -132,6 +146,8 @@ def upload(db: Session, ctx: PersonContext, application_id: UUID, stream: Binary
         )  # fmt: skip
         db.add(document)
         db.flush()
+        if in_db:  # the bytes commit or roll back together with the document row
+            db.add(models.DocumentBlob(document_id=document_id, tenant_id=ctx.tenant_id, person_id=ctx.person_id, data=clean))
         if check is not None:
             db.add(models.DocumentCheck(
                 tenant_id=ctx.tenant_id, document_id=document_id, person_id=ctx.person_id, quality=check.quality,
@@ -206,10 +222,9 @@ def content_for_officer(db: Session, principal: Principal, document_id: UUID) ->
             reason="consent_scope_missing", details={"attempted": "document_content"},
         )  # fmt: skip
         raise Forbidden("This person has not agreed to share their documents.", code="consent_scope_missing")
-    path = _path_for(document.storage_key)
-    if not path.is_file():
+    data = _stored_bytes(db, document)
+    if data is None:
         raise NotFound("The stored file is missing.", code="file_missing")
-    data = path.read_bytes()
     audit.write(db, tenant_id=principal.tenant_id, action="document.viewed", actor_id=principal.user_id, actor_role=principal.role,
                 object_type="document", object_id=document.id, details={"kind": document.kind})  # fmt: skip
     record_view(db, principal, document.person_id, what="document_content", ref_id=document.id, details={"kind": document.kind})

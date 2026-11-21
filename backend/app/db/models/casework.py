@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Boolean, Float, Index, Integer, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy import Boolean, Float, ForeignKey, Index, Integer, LargeBinary, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, CreatedMixin, IdMixin, TenantMixin, UpdatedMixin, fk, json_dict, ts
@@ -63,6 +63,18 @@ class Document(Base, IdMixin, TenantMixin, CreatedMixin):
     height: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(16), default="uploaded")  # uploaded | checked | retake | suspect
     created_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+
+
+class DocumentBlob(Base, TenantMixin, CreatedMixin):
+    """A stored upload's bytes, kept in the database when DOCUMENT_STORE=db (serverless hosts have no shared disk).
+
+    One row per document; deleting the document (erasure, a removed application) deletes its bytes with it.
+    """
+
+    __tablename__ = "document_blobs"
+    document_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("documents.id", ondelete="CASCADE"), primary_key=True)
+    person_id: Mapped[uuid.UUID] = fk("persons.id", ondelete="CASCADE")
+    data: Mapped[bytes] = mapped_column(LargeBinary)
 
 
 class DocumentCheck(Base, IdMixin, TenantMixin, CreatedMixin):

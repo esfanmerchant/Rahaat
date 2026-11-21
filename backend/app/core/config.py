@@ -80,6 +80,8 @@ class Settings(BaseSettings):
 
     frontend_dist: str = "../frontend/dist"
     upload_dir: str = "var/uploads"
+    # file: uploads go to upload_dir. db: into the document_blobs table, for hosts with no disk shared between instances.
+    document_store: Literal["file", "db"] = "file"
     mock_base_url: str = "http://127.0.0.1:9001"
     ai_profile: Literal["full", "lite"] = "lite"
     feature_flags: str = ""
