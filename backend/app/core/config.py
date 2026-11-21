@@ -85,6 +85,14 @@ class Settings(BaseSettings):
     feature_flags: str = ""
     stubs_enabled: bool | None = None
     worker_enabled: bool | None = None  # background job loop; on by default except in tests
+    # Serverless hosting (Vercel). Every default below keeps the always-on server's behaviour.
+    jobs_mode: Literal["thread", "inline"] = "thread"  # inline: no worker thread; due jobs run inside the request that queued them
+    jobs_inline_budget_seconds: float = Field(default=5.0, gt=0, le=30)
+    jobs_inline_max_jobs: int = Field(default=25, ge=1, le=200)
+    cron_secret: str | None = None  # the bearer Vercel Cron sends to the drain endpoint; unset means that endpoint is off
+    mocks_in_process: bool = False  # call the mock services inside this process instead of over HTTP at MOCK_BASE_URL
+    client_ip_header: str | None = None  # a header the platform sets and a client cannot forge, e.g. x-vercel-forwarded-for
+    startup_warmup: bool = True  # false: skip the background model, OCR and corpus warm-ups at start (cold-start friendly)
     max_body_bytes: int = 6_000_000
     login_max_failures: int = 5
     login_lock_minutes: int = 15
@@ -136,6 +144,15 @@ class Settings(BaseSettings):
         if self.worker_enabled is not None:
             return self.worker_enabled
         return self.app_env != "test"
+
+    @property
+    def job_thread_enabled(self) -> bool:
+        """The long-lived worker thread: never in inline mode, where requests drain the queue themselves."""
+        return self.jobs_mode == "thread" and self.worker_enabled_effective
+
+    @property
+    def jobs_inline(self) -> bool:
+        return self.jobs_mode == "inline"
 
     def jwt_keys(self) -> dict[str, str]:
         keys = {self.jwt_active_kid: self.secret_key}

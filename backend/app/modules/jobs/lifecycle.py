@@ -42,7 +42,7 @@ _worker: Worker | None = None
 
 def startup() -> None:
     global _worker
-    if not get_settings().worker_enabled_effective or _worker is not None:
+    if not get_settings().job_thread_enabled or _worker is not None:
         return
     _worker = Worker()
     _worker.start()

@@ -26,6 +26,7 @@ from typing import Any
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session
 
+from app.core.context import note_job_enqueued
 from app.core.db import RlsContext, session_scope, system_session
 from app.core.logging import get_logger, redact
 from app.db import models
@@ -128,6 +129,7 @@ def enqueue(
     )  # fmt: skip
     db.add(job)
     db.flush()
+    note_job_enqueued()  # inline mode: the request drains due jobs once it has committed
     return job
 
 

@@ -14,3 +14,14 @@ def current_request_id() -> str:
 
 def current_client_ip() -> str:
     return client_ip_var.get()
+
+
+# Set per request by the middleware when jobs run inline (serverless). The holder is a mutable dict because a sync
+# endpoint runs in a worker thread whose context changes never reach the middleware, but a shared object does.
+jobs_holder_var: ContextVar[dict[str, bool] | None] = ContextVar("jobs_holder", default=None)
+
+
+def note_job_enqueued() -> None:
+    holder = jobs_holder_var.get()
+    if holder is not None:
+        holder["enqueued"] = True
