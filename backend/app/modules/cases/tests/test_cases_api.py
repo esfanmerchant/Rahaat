@@ -65,7 +65,8 @@ def test_queue_detail_and_who_may_see_it(client: Any, factory: Any, mocks: None)
     detail = client.get(f"/v1/cases/{ids['case_id']}", headers=officer).json()
     assert detail["handoff"]["resolving_proof"] == "income_proof" and detail["form"]["household_size"]["value"] == 5
     assert [c["quality"] for c in detail["document_checks"]] == ["ok"]
-    assert detail["decision"] is None  # Track B's trace_view is not in this tree yet: null, never a fake
+    # Track B's trace_view is wired in: the officer sees the stored decision's full trace.
+    assert detail["decision"]["decision_id"] == str(ids["decision_id"]) and detail["decision"]["route"] == "human"
     assert detail["allowed_actions"] == ["approve", "reject", "request_proof", "escalate"]
     assert [e["event"] for e in detail["events"]] == ["created"]
 

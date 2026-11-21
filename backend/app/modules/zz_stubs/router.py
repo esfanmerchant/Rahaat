@@ -227,8 +227,3 @@ def upload_document(application_id: UUID, file: UploadFile = File(...), kind: Do
                     _: Principal = Depends(_citizen_side)) -> DocumentOut:  # fmt: skip
     return DocumentOut(document=DocumentCitizenView(document_id=str(_DOCUMENT), kind=kind, accepted=True, quality="ok", message_key="doc_ok"),
                        application_version=4)  # fmt: skip
-
-
-@router.get("/decisions/{decision_id}", summary="[stub] A decision: the citizen's reason and the auditor's trace")
-def get_decision(decision_id: UUID, _: Principal = Depends(_review)) -> dict[str, DecisionUserView | DecisionTrace]:
-    return {"user_view": _user_view(), "trace": _trace()}

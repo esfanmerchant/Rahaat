@@ -85,7 +85,7 @@ Stubs live in `backend/app/modules/zz_stubs`. They load only in dev and test, ma
 
 Functions other tracks call (define them with these names so integration is a one-line import):
 
-- Track B: `app.modules.decision.service.decide(snapshot, rule_version, cost_matrix, model_version) -> DecisionResult` (pure).
+- Track B: `app.modules.decision.engine.decide(inp, rules, costs, model) -> DecisionResult` (pure; also re-exported from `decision.service`).
 - Track C: `app.modules.docs_ai.service.check_document(image_bytes, kind) -> DocumentCheck`.
 - Track C: `app.modules.scam.service.classify_message(text, sender) -> TypedDecision[ScamLabel]`.
 
@@ -139,4 +139,13 @@ Each test run gets its own throwaway database, so several runs at once do not di
 - More helpers: `cases.service.proof_received`, `cases.service.reopen_for_application`, `jobs.service.cancel_for_person`, `jobs.service.run_pending` (tests), `integrations.service.submit_payment`, `send_sms`, `degradation_message(service, lang)`.
 - Adapters return a status on an outage (`unavailable`), never raise. Transport is in-process in dev and test and HTTP to `MOCK_BASE_URL` elsewhere (`MOCK_TRANSPORT` overrides). Each mock service has its own key (`MOCK_*_KEY`).
 - `notifications` has a `person_id` but no consent policy in the database; the API filters it. Known gap, accepted for now.
+
+## Built in Phase 1, track B (rules and decisions)
+
+- `decide_and_record(...)` does not commit. It raises `NotFound` with code `program_not_found` or `no_active_rules`.
+- Engine values without their own column (`ask_proof`, `payment_pkr`, `rule_version_no`, `thresholds`, `p_eligible`, `p_genuine`) are in `decision.explanation["engine"]`; read them with `app.modules.decision.service.engine_extras(decision)`.
+- Pass `identity=None` only when no identity check was attempted (it goes to a person). Fill `queue_days` from the live queue.
+- QR payload keys the engine reads: `national_id` (or `id`, `nid`), `full_name` (or `name`), `dob`; income proof `monthly_income_pkr` (or `income_pkr`). Track C's card uses `full_name`, `national_id`, `dob`, `gender`, `district`.
+- An automatic approve or reject needs a verified identity; declared values never settle a hard rule; ties in cost go to the safer action (human, then ask, then approve, then reject).
+- The database refuses to change a published or retired rule version (except published to retired) and any stored decision except its `case_id` and `superseded_by` (migration 0002).
 

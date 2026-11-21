@@ -129,7 +129,8 @@ class EvidenceProbabilities(BaseModel):
 class EvidenceModel(Protocol):
     """A calibrated model. Deterministic for a given version, so a replay gives the same numbers."""
 
-    version: str
+    @property
+    def version(self) -> str: ...
 
     def predict(self, features: dict[str, float]) -> EvidenceProbabilities: ...
 
