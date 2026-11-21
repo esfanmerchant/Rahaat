@@ -1,13 +1,31 @@
 import { useEffect } from 'preact/hooks';
-import { audioUnlocked, playingKey, playPrompt, stopAudio, unlockAudio } from '../audio';
-import { lang, t, type MessageKey } from '../i18n';
+import { audioUnlocked, playingKey, playSpeech, stopAudio, unlockAudio, type SpeechItem } from '../audio';
+import { lang, t, type Lang, type MessageKey } from '../i18n';
 import { Pictogram } from './Pictogram';
+
+/** A spoken sequence: several clips played in order (review answers, a decision). */
+export interface Speech {
+  /** Changes whenever the content changes, so auto-play runs again. */
+  id: string;
+  items: readonly SpeechItem[];
+  /** Language of the clips; defaults to the UI language. */
+  lang?: Lang;
+}
+
+/** The speech for one message key in the current language. */
+export function speechFor(key: MessageKey, code: Lang = lang.value): Speech {
+  return { id: key, items: [{ key, text: t(key, undefined, code) }], lang: code };
+}
 
 interface AudioPromptProps {
   /** Message key. Plays /audio/{lang}/{prompt}.mp3; the text is t(prompt). */
-  prompt: MessageKey;
+  prompt?: MessageKey;
+  /** A sequence instead of one prompt. */
+  speech?: Speech;
   /** Play once when the screen opens (only after the first tap unlocked audio). */
   autoPlay?: boolean;
+  /** Visible word next to the speaker; defaults to "Listen". */
+  label?: string;
   class?: string;
 }
 
@@ -15,21 +33,26 @@ interface AudioPromptProps {
  * The speaker button every citizen screen has. Tap to hear the prompt again,
  * tap while it plays to stop. A missing audio file fails silently.
  */
-export function AudioPrompt({ prompt, autoPlay = false, class: className = '' }: AudioPromptProps) {
+export function AudioPrompt({ prompt, speech, autoPlay = false, label, class: className = '' }: AudioPromptProps) {
   const code = lang.value;
-  const playing = playingKey.value === prompt;
+  const resolved: Speech | null = speech ?? (prompt ? speechFor(prompt, code) : null);
+  const id = resolved?.id ?? '';
+  const playing = resolved !== null && playingKey.value === id;
 
   useEffect(() => {
-    if (autoPlay && audioUnlocked.peek()) playPrompt(prompt, code, t(prompt, undefined, code));
+    if (!resolved) return undefined;
+    if (autoPlay && audioUnlocked.peek()) playSpeech(id, resolved.items, resolved.lang ?? code);
     return () => {
-      if (playingKey.peek() === prompt) stopAudio();
+      if (playingKey.peek() === id) stopAudio();
     };
-  }, [prompt, code, autoPlay]);
+  }, [id, code, autoPlay]);
+
+  if (!resolved) return null;
 
   const onClick = (): void => {
     unlockAudio();
     if (playing) stopAudio();
-    else playPrompt(prompt, code, t(prompt, undefined, code));
+    else playSpeech(id, resolved.items, resolved.lang ?? code);
   };
 
   return (
@@ -37,7 +60,7 @@ export function AudioPrompt({ prompt, autoPlay = false, class: className = '' }:
       type="button"
       onClick={onClick}
       aria-pressed={playing}
-      aria-label={t('listen')}
+      aria-label={label ?? t('listen')}
       class={
         'inline-flex min-h-tap min-w-tap items-center justify-center gap-2 rounded-full border-2 px-3 font-semibold ' +
         (playing
@@ -48,7 +71,7 @@ export function AudioPrompt({ prompt, autoPlay = false, class: className = '' }:
     >
       <Pictogram name="speaker" size={32} />
       <span class="text-base" aria-hidden="true">
-        {t('listen')}
+        {label ?? t('listen')}
       </span>
     </button>
   );
