@@ -67,7 +67,7 @@ export function Verdict({ kind, title, icon, headingRef }: { kind: VerdictKind; 
         <div aria-hidden="true" class="rh-lattice-night absolute inset-0" />
         <div class="relative grid place-items-center">
           <span aria-hidden="true" class="rh-lampglow absolute size-60 rounded-full bg-noor/25 blur-md" />
-          <span aria-hidden="true" class="absolute size-32 rounded-full border-2 border-noor motion-safe:animate-ring" />
+          <span aria-hidden="true" class="absolute size-32 rounded-full border-2 border-noor hidden motion-safe:block motion-safe:animate-ring" />
           <Emblem size={144} tone="night" animate class="relative" />
         </div>
         {heading('relative text-noor')}

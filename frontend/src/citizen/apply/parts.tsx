@@ -32,7 +32,7 @@ function MiniStar({ state }: { state: 'done' | 'current' | 'next' }) {
   const size = state === 'current' ? 26 : 20;
   return (
     <span class="relative grid shrink-0 place-items-center" aria-hidden="true">
-      {state === 'current' ? <span class="absolute size-6 rounded-full bg-noor/50 motion-safe:animate-ring" /> : null}
+      {state === 'current' ? <span class="absolute size-6 rounded-full bg-noor/50 hidden motion-safe:block motion-safe:animate-ring" /> : null}
       <svg viewBox="0 0 24 24" width={size} height={size} class="relative">
         <g
           fill={state === 'done' ? '#0b6a46' : state === 'current' ? '#ffd36e' : 'none'}

@@ -35,7 +35,7 @@ export function stepsDone(status: ApplicationStatus | null): number {
 function Star({ state }: { state: 'done' | 'current' | 'next' }) {
   return (
     <span class="relative grid size-12 place-items-center">
-      {state === 'current' ? <span aria-hidden="true" class="absolute inset-0 rounded-full bg-noor/30 motion-safe:animate-ring" /> : null}
+      {state === 'current' ? <span aria-hidden="true" class="absolute inset-0 rounded-full bg-noor/30 hidden motion-safe:block motion-safe:animate-ring" /> : null}
       <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true" class={state === 'done' ? 'drop-shadow-glow' : ''}>
         <g
           fill={state === 'done' ? '#ffd36e' : 'none'}

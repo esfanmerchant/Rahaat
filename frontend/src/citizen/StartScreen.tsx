@@ -61,7 +61,7 @@ export function StartScreen() {
 
         <div class="flex flex-col items-stretch gap-3 motion-safe:animate-rise" style={{ animationDelay: '700ms' }}>
           <div class="relative">
-            <span aria-hidden="true" class="absolute inset-0 rounded-lg border-2 border-noor motion-safe:animate-ring" />
+            <span aria-hidden="true" class="absolute inset-0 rounded-lg border-2 border-noor hidden motion-safe:block motion-safe:animate-ring" />
             <button
               type="button"
               onClick={start}

@@ -100,7 +100,7 @@ export function AnswerHeader({ answer, headingRef }: { answer: ScamCheckOut; hea
     <div class={`relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl px-4 py-6 text-center motion-safe:animate-rise ${VERDICT_CARD[spec.tone]}`}>
       <div aria-hidden="true" class="rh-lattice-night absolute inset-0 opacity-60" />
       <span class="relative grid size-36 place-items-center">
-        {spec.tone === 'danger' ? <span aria-hidden="true" class="absolute size-32 rounded-full border-2 border-white/70 motion-safe:animate-ring" /> : null}
+        {spec.tone === 'danger' ? <span aria-hidden="true" class="absolute size-32 rounded-full border-2 border-white/70 hidden motion-safe:block motion-safe:animate-ring" /> : null}
         <span class="grid size-36 place-items-center rounded-full bg-white/15 motion-safe:animate-pop" style={{ animationDelay: '150ms' }}>
           <Pictogram name={spec.icon} size={96} />
         </span>
