@@ -262,8 +262,10 @@ class World:
             return {}
         if who.startswith("key:"):
             return {"Authorization": f"Bearer {side.keys[who.removeprefix('key:')]}"}
-        issued_at, token = side.tokens.get(who, (0.0, ""))
-        if time.monotonic() - issued_at > TOKEN_REFRESH_SECONDS:
+        # Never signed in must mean "sign in now". (A default issue time of 0.0 did not: the monotonic clock counts
+        # from boot, so on a CI runner booted minutes ago 0.0 looked recent and an empty token went out.)
+        issued_at, token = side.tokens.get(who, (None, ""))
+        if issued_at is None or time.monotonic() - issued_at > TOKEN_REFRESH_SECONDS:
             token = self.factory.login(self.client, side.accounts[who])["access_token"]
             side.tokens[who] = (time.monotonic(), token)
             side.tickets.pop(who, None)  # a ticket belongs to one session
