@@ -67,6 +67,9 @@ def runtime_role(conn: Connection) -> ProbeResult:
 
 
 def no_context_sees_nothing(conn: Connection) -> ProbeResult:
+    # The app only ever sets the context per transaction; clear it explicitly anyway, so the probe never depends
+    # on what an earlier user of this pooled connection did.
+    conn.execute(_SET_CONTEXT, {"role": "", "tenant": "", "user": ""})
     sql = ("SELECT (SELECT count(*) FROM persons), (SELECT count(*) FROM cases), (SELECT count(*) FROM audit_log), "
            "(SELECT count(*) FROM api_keys), (SELECT count(*) FROM users)")  # fmt: skip
     counts = dict(zip(("persons", "cases", "audit_log", "api_keys", "users"), conn.execute(text(sql)).one(), strict=True))

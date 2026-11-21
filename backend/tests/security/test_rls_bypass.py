@@ -16,8 +16,9 @@ from sqlalchemy.exc import DBAPIError
 from app.core.db import get_engine
 from app.db.base import Base
 
-_SET = text("SELECT set_config('app.role', :role, false), set_config('app.tenant_id', :tenant, false), "
-            "set_config('app.user_id', :user, false)")  # fmt: skip
+# Transaction-local, like the app: a session-level setting would survive on the pooled connection.
+_SET = text("SELECT set_config('app.role', :role, true), set_config('app.tenant_id', :tenant, true), "
+            "set_config('app.user_id', :user, true)")  # fmt: skip
 
 
 def _as(conn: Connection, role: str, tenant: Any, user: Any) -> None:
