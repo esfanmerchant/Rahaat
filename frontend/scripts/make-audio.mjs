@@ -58,13 +58,17 @@ const args = process.argv.slice(2);
 const force = args.includes('--force');
 const langs = args.filter((arg) => !arg.startsWith('--'));
 const targets = langs.length > 0 ? langs : Object.keys(VOICES);
-const CONCURRENCY = 4;
+const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY) || 4;
+// --adopt: a file that exists for a key the index does not know yet is kept (an earlier run was stopped before it wrote the index).
+const adopt = args.includes('--adopt');
 
 async function dictionary(code) {
   const module = await import(pathToFileURL(join(i18n, `${code}.ts`)).href);
   const dict = module[code];
   if (!dict) throw new Error(`src/shared/i18n/${code}.ts has no export named ${code}`);
-  return dict;
+  // The strings of the lazy chunks (more.{lang}.ts) are recorded too.
+  const more = await import(pathToFileURL(join(i18n, `more.${code}.ts`)).href);
+  return { ...dict, ...(more[`${code}More`] ?? {}) };
 }
 
 function speakable(dict, code) {
@@ -121,7 +125,7 @@ async function run(code) {
   for (const [key, text] of Object.entries(texts)) {
     const digest = hash(voice, text);
     const file = join(dir, `${key}.mp3`);
-    if (!force && previous[key] === digest && existsSync(file) && statSync(file).size > 0) {
+    if (!force && (previous[key] === digest || (adopt && previous[key] === undefined)) && existsSync(file) && statSync(file).size > 0) {
       files[key] = digest;
     } else {
       todo.push({ key, text, digest, file });

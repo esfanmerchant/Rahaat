@@ -4,7 +4,11 @@ import { getPref, setPref } from '../prefs';
 import { en, type Dict, type MessageKey } from './en';
 import { ur } from './ur';
 
+import type { MoreKey } from './more.en';
+
 export type { MessageKey } from './en';
+/** Keys of the main dictionary plus the lazy ones (more.en.ts), which load with their chunk. */
+export type Key = MessageKey | MoreKey;
 
 /** Urdu (default) and English. Sindhi was dropped: nobody on the team can proofread it (docs/DESIGN.md). */
 export type Lang = 'ur' | 'en';
@@ -25,6 +29,13 @@ export const LANGUAGES: readonly LangInfo[] = [
 export const DEFAULT_LANG: Lang = 'ur';
 
 const DICTS: Record<Lang, Dict> = { en, ur };
+const MORE: Record<Lang, Readonly<Record<string, string>>> = { en: {}, ur: {} };
+
+/** A lazy chunk adds its own strings (imported through ./more for its side effect). */
+export function registerStrings(enMore: Readonly<Record<string, string>>, urMore: Readonly<Record<string, string>>): void {
+  MORE.en = enMore;
+  MORE.ur = urMore;
+}
 
 /** The current UI language. Reading `.value` in a component subscribes it. */
 export const lang = signal<Lang>(DEFAULT_LANG);
@@ -65,8 +76,8 @@ export function messageKeyFor(serverKey: string | null | undefined): MessageKey 
 }
 
 /** Translate a key. Interpolates `{name}` placeholders, each bidi-isolated. */
-export function t(key: MessageKey, params?: Params, code: Lang = lang.value): string {
-  const template = DICTS[code][key] ?? en[key] ?? key;
+export function t(key: Key, params?: Params, code: Lang = lang.value): string {
+  const template = (DICTS[code] as Readonly<Record<string, string>>)[key] ?? MORE[code][key] ?? (en as Record<string, string>)[key] ?? MORE.en[key] ?? key;
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (match, name: string) => {
     const value = params[name];

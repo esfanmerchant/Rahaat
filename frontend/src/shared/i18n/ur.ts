@@ -366,4 +366,10 @@ export const ur: Dict = {
   signout_unsent_stay: 'رکیں اور انہیں بھیجیں',
   signout_unsent_go: 'باہر نکلیں اور مٹا دیں',
   login_send_saved: 'اس فون میں محفوظ جواب بھیجنے کے لیے سائن ان کریں۔',
+
+  helper_acting_for: '{name} کی مدد',
+  helper_change: 'خاندان بدلیں',
+  helper_banner_note: '3 منٹ تک ہاتھ نہ لگانے پر یہ خاندان بند ہو جاتا ہے۔',
+  home_rules: 'قواعد کے بارے میں پوچھیں',
+  voice_say: 'اپنا جواب بولیں',
 };

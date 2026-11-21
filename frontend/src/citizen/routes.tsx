@@ -1,7 +1,9 @@
 import type { ComponentChildren } from 'preact';
 import { useLocation } from 'preact-iso';
+import { acting } from '../shared/acting';
 import { homePathFor, isStaffRole, session } from '../shared/api/auth';
 import '../shared/idle'; // lock after idle (citizens and helpers)
+import type { AuthUser } from '../shared/api/types';
 import { ScreenState } from '../shared/components/ScreenState';
 import { lazyRoute, Redirect } from '../shared/routing';
 import { vaultState } from '../shared/vault';
@@ -19,6 +21,9 @@ import { UnlockScreen } from './UnlockScreen';
 // screens do not wait for them. Both count in the citizen budget (check:bundle).
 const ScamPages = lazyRoute<{ parts: readonly string[] }>(() => import('./scam/ScamPages'));
 const MyDataPages = lazyRoute<{ parts: readonly string[] }>(() => import('./mydata/MyDataPages'));
+// Helper Mode (the family list and the family PIN) and "ask about the rules" are lazy too.
+const HelperFamilies = lazyRoute<{ user: AuthUser }>(() => import('./helper/HelperFamilies'));
+const RulesScreen = lazyRoute<Record<string, never>>(() => import('./ask/RulesScreen'));
 
 function Restoring() {
   return (
@@ -35,6 +40,8 @@ export function CitizenRoot() {
   if (current.status === 'signed-in') {
     if (isStaffRole(current.active.role)) return <Redirect to="/staff" />;
     if (vaultState.value === 'locked') return <UnlockScreen user={current.user} />;
+    // A helper on the shared phone first picks a family; the family's own home follows the PIN.
+    if (current.active.role === 'helper' && acting.value === null) return <HelperFamilies user={current.user} />;
     return <HomeScreen user={current.user} />;
   }
   return <StartScreen />;
@@ -56,6 +63,8 @@ function SignedIn({ children }: { children: ComponentChildren }) {
   if (isStaffRole(current.active.role)) return <Redirect to="/staff" />;
   // Data sealed on this phone needs the PIN first (after a reload or an idle lock).
   if (vaultState.value === 'locked') return <UnlockScreen user={current.user} />;
+  // Every family page needs a family: a helper who has not switched yet goes to the list.
+  if (current.active.role === 'helper' && acting.value === null) return <Redirect to="/" />;
   return <>{children}</>;
 }
 
@@ -69,6 +78,8 @@ function citizenPage(path: string) {
   if (first === 'apply') return <ApplyFlow step={second} />;
   if (second !== undefined) return null;
   switch (first) {
+    case 'rules':
+      return <RulesScreen />;
     case 'result':
       return <ResultScreen />;
     case 'track':

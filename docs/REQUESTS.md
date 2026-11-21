@@ -51,10 +51,10 @@ Why: the outbox sends through a small `Transport` (`setTransport` in `frontend/s
 Until then: REST calls, one at a time, with the same idempotency guarantees.
 
 ## "Who looked at my data" for the consent centre
-From: Track D1   To: Track A (whoever builds the access log)   Status: open
+From: Track D1   To: Track A (whoever builds the access log)   Status: done (GET /v1/me/access-log is in use)
 What: the path and response shape of the citizen's access log (per read: who, which department or role, when, for what).
 Why: D1.7 "access log". The place is reserved: `AccessLogSection` and `ACCESS_LOG_READY = false` in `frontend/src/citizen/mydata/parts.tsx`.
-Until then: hidden; nothing is drawn or fetched.
+Until then: hidden; nothing is drawn or fetched. Built: `frontend/src/citizen/mydata/MoreData.tsx`.
 
 ## Invalid UTF-8 byte in the staff queue
 From: Track D1   To: Track D2   Status: open
@@ -66,3 +66,21 @@ From: Track D1   To: lead   Status: open
 What: tick D1.5 (outbox, encrypted local queue, statuses, banner), D1.7 (consent centre, access log reserved), D1.8 (scam checker by paste and speech; screenshot is C8); D1.6 voice answers are done for the scam checker only. ADR text is in the D1 report: the vault key from the PIN, the idle lock keeps sealed unsent work instead of wiping it, a reload asks for the PIN.
 Why: STATUS.md and DECISIONS.md are the lead's files.
 Until then: the rules are in `docs/DESIGN.md` (sections "Scam checker", "Consent centre", "Offline").
+
+## Idempotency-Key on the citizen's data and helper POSTs
+From: Track D1   To: Lead (OpenAPI contract) / Track A   Status: open
+What: declare the optional `Idempotency-Key` header on `POST /v1/me/corrections`, `POST /v1/me/erasure-request` and `POST /v1/me/helpers`, and make a repeat with the same key return the first result (CLAUDE.md: creating POSTs take one).
+Why: the typed client only sends headers the schema names, so these three go without a key today. After a lost response a retry could create a second request (erasure and correction already answer 409 for an open duplicate, which the screens show as "you already asked").
+Until then: the screens treat 409 as "already asked".
+
+## A new family switch should end the previous ticket
+From: Track D1   To: Track A (helpers)   Status: open
+What: confirm that `POST /v1/helper/switch` for a second family makes the first family's ticket useless at once (not only `/switch/end`), and that a ticket is bound to the person it names.
+Why: the app ends the ticket when the helper changes family, but `/switch/end` cannot be sent offline. The phone drops the ticket from memory anyway, so it is only exposed if copied out of memory; one live ticket per helper session would remove the question.
+Until then: the app drops the ticket from memory first and calls `/switch/end` best effort.
+
+## Access log: collapse a helper's repeated reads
+From: Track D1   To: Track A (consent)   Status: open
+What: one helper session opening a family writes a `person.data_viewed` row per list and per read (`applications_list`, `application`, ...). The citizen's log then shows the same helper "looked at your information" many times in a minute.
+Why: a family is better served by one line, "Rubina helped you on 21 November", than twenty identical rows; the demo log gets long fast.
+Until then: every row is shown as the server sends it.

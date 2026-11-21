@@ -66,7 +66,7 @@ async function decideLock(): Promise<void> {
 }
 
 // The key never outlives the session in memory: sign-out, expiry or another person signing in drops it.
-onSessionEnd(() => lockVault('reload'));
+onSessionEnd(() => lockVault('reload'), { sessionOnly: true });
 
 // A sign-in in another tab replaced the cookie: once this tab has the new session, decide on the lock again.
 if (typeof BroadcastChannel !== 'undefined') {

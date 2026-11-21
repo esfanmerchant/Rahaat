@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { audioUnlocked, playingKey, playSpeech, stopAudio, unlockAudio, type SpeechItem } from '../audio';
-import { lang, t, type Lang, type MessageKey } from '../i18n';
+import { lang, t, type Key, type Lang } from '../i18n';
 import { Pictogram } from './Pictogram';
 
 /** A spoken sequence: several clips played in order (review answers, a decision). */
@@ -13,13 +13,13 @@ export interface Speech {
 }
 
 /** The speech for one message key in the current language. */
-export function speechFor(key: MessageKey, code: Lang = lang.value): Speech {
+export function speechFor(key: Key, code: Lang = lang.value): Speech {
   return { id: key, items: [{ key, text: t(key, undefined, code) }], lang: code };
 }
 
 interface AudioPromptProps {
   /** Message key. Plays /audio/{lang}/{prompt}.mp3; the text is t(prompt). */
-  prompt?: MessageKey;
+  prompt?: Key;
   /** A sequence instead of one prompt. */
   speech?: Speech;
   /** Play once when the screen opens (only after the first tap unlocked audio). */

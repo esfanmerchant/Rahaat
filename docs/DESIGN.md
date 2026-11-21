@@ -129,8 +129,42 @@ Wrap calls with `call(api.GET(...))` (`shared/api/problem.ts`): it never throws 
 | `/my-data/{id}/stop` | the explanation first, spoken: the application stops and waits, officers cannot see the information from now on, you can share again. Then "Yes, take it back" (danger) or "No, keep sharing" |
 | `/my-data/{id}/again` | the kinds that will be shared again, and that the application carries on; confirm |
 
-- Every action asks first and says "Done" after, spoken. Helpers do not get the entry until Helper Mode (D1.9) sends `X-Acting-For`; the server answers them 403, shown as permission denied.
-- "Who looked at my information" has a reserved place: `AccessLogSection` in `citizen/mydata/parts.tsx`, with `ACCESS_LOG_READY = false`. It draws and fetches nothing until its endpoint exists, so no half-built screen is reachable.
+- Every action asks first and says "Done" after, spoken. A helper reaches it only while acting for a family (Helper Mode); the server answers 403 where the delegation does not allow it, shown as permission denied.
+- The rest of "My information" is on the list under "More about my information" (lazy chunk `mydata/MoreData.tsx`):
+
+| Path | Screen |
+|---|---|
+| `/my-data/access` | who looked at my information (`GET /v1/me/access-log`, 20 per page, "Show older ones"). Staff appear as role and department only, a helper by name, a partner as "a partner system"; each row has what happened, why (when the server gives a purpose), when, and allowed or stopped |
+| `/my-data/fix` | pick the wrong answer (picture list), say the right one (stepper, four income pictures, yes or no; only the name is typed), pick why (three sentences to tap, so nothing needs typing), `POST /v1/me/corrections`. "A person will look at it. Your answer does not change until they say yes." |
+| `/my-data/download` | `GET /v1/me/export` as a file `rahat-my-data-YYYYMMDD.json`, with a plain warning that it holds private things |
+| `/my-data/delete` | `POST /v1/me/erasure-request` after three plain warnings (a person must say yes; what is deleted; what is kept); "No, keep my information" is the same size |
+| `/my-data/requests` | the corrections and erasure requests with their status: a person will look at it, accepted, not accepted |
+| `/my-data/helpers`, `/helpers/new` | who may help me (scopes, until when, "Stop this helper" with a confirm), and choosing one: phone on the keypad, what they may do, a PIN typed twice |
+
+Choosing helpers and deleting are the person's own: a helper acting for a family does not see them (the server refuses too).
+
+## Helper Mode (D1.9)
+
+One shared phone, up to 40 families. A helper signs in with their own phone and PIN and lands on the family list (`citizen/helper/HelperFamilies.tsx`, a lazy chunk): large cards with the name in Urdu and English, the district, the application status as a picture, whether consent is on, whether the delegation is live; search by name or place; "Show more families" pages the list.
+
+1. Tapping a live family asks for **that family's PIN** (`FamilyPin`, never the helper's). `POST /v1/helper/switch` returns a ticket. A wrong PIN shows "tries left" from `attempts_left`; a lock (`429 pin_locked`) shows the wait and shuts the keypad until it ends; `pin_blocked`, `pin_not_set` and `no_delegation` each have their own plain sentence. PIN digits are never spoken.
+2. From then on `shared/api/client.ts` adds `X-Acting-For` and `X-Helper-Ticket` to every request except `/v1/helper/*` and `/v1/auth/*` (`shared/acting.ts` holds them, in memory only). The **banner** "Helping {name}" with "Change family" is the first thing in `CitizenShell`, so it is on every screen.
+3. Inside the family the normal screens are used (apply, tracker, scam checker, rules, My information). The server decides what the delegation's scopes allow; a 403 shows the permission-denied state. Helpers do not see "Sign out" while acting.
+4. **Wipe.** "Change family", 3 minutes without a touch (`ACTING_IDLE_MS`) and the end of the ticket (15 minutes) all run `endActing()` (`citizen/actingControl.ts`): the family's unsent work is sealed, `acting` is cleared, `wipePerson()` runs every registered clean-up (draft, outbox, consents, scam answers, warnings), audio stops, and `POST /v1/helper/switch/end` stops the ticket. `wipePerson()` runs the session's end handlers except the vault key, so the helper's own vault stays open. A response that arrives for a family already left is thrown away (`actingEpoch` in `shared/api/client.ts`), so it cannot be stored for the next one. Idle and expiry bring the helper back to the list with a sentence saying why.
+5. **Separate queues.** The outbox and the draft are sealed in the helper's vault under `outbox:{person}` and `draft:{person}`; opening a family restores only its own and sends it with its own ticket (`restoreSealed`). Unsent answers of a family stay sealed until the helper opens that family again.
+6. A reload or the 10 minute lock drops the family (memory only); the helper types their own PIN and sees the list.
+
+## Voice answers (D1.6)
+
+Each question screen (household, income, widow, disability, other aid) has "Say your answer" above its pictures (lazy chunk `voice/VoiceAnswer.tsx`; hidden when the phone has no speech recognition). The phone's own recogniser hears it, the transcript goes to `POST /v1/voice/interpret` with the question key and the type it expects, and the answer comes back as a read-back sentence with `audio_keys`. The screen shows the answer as a picture (the number with that many people, the income picture, yes, no or "I do not know") and the sentence, plays the server's clips (a device voice for any clip we do not have, never Urdu with an English voice) and asks "Yes, that is right" or "No, say it again". Only the yes icon writes it: through the outbox, provenance `spoken`, with the confidence the server gave. `fallback` is followed: `say_again` shows the server's sentence and the microphone again; `use_pictures` hides the microphone. Permission denied or no recogniser says so and leaves the pictures; offline or a failed call says so and leaves the pictures; `429` says to wait. The pictures are always there.
+
+## Ask about the rules (D1.12)
+
+`/rules` (home, "Ask about the rules"; lazy chunk `ask/RulesScreen.tsx`). Speak (read back with a device voice, then "Ask this") or type, `POST /v1/ask`. The answer is the policy's own sentences, each with its source in small text (document, version, section), then the notice when the server sends one ("only an officer decides"). A refusal shows the server's "I am not sure. Please ask a person." with the button to the ask-a-person screen. The sentences are read with a device voice in their own language; the notice and the refusal use our recordings by the server's key.
+
+## Strings of the lazy chunks
+
+`shared/i18n/more.en.ts` and `more.ur.ts` hold the strings of Helper Mode, voice, rules and the rest of My information; `shared/i18n/more.ts` registers them when a lazy chunk imports it. `t()` finds them there; the compiler checks the Urdu file against the English one. `make-audio.mjs` records them too. Keep a string in `en.ts` only when the first screens need it. The backend's `VOICE_KEYS` and the rules assistant's `MESSAGES` are in `server-prompts.json` (`server-prompts.mjs` reads them), so their clips exist under the keys the API names.
 
 ## Offline: the outbox and the vault (D1.5, D1.10)
 

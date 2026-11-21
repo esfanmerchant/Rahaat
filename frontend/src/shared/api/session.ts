@@ -37,14 +37,29 @@ export function dropAccessToken(): void {
 }
 
 const endHandlers = new Set<() => void>();
+/** Handlers that belong to the session itself (the vault key), not to one person's data. */
+const sessionOnly = new Set<() => void>();
 
 /**
  * Register a function that wipes in-memory state when the session ends or the
  * person changes (logout, expiry, a login in another tab). Returns an unsubscribe.
  */
-export function onSessionEnd(handler: () => void): () => void {
+export function onSessionEnd(handler: () => void, options: { sessionOnly?: boolean } = {}): () => void {
   endHandlers.add(handler);
-  return () => endHandlers.delete(handler);
+  if (options.sessionOnly) sessionOnly.add(handler);
+  return () => {
+    endHandlers.delete(handler);
+    sessionOnly.delete(handler);
+  };
+}
+
+/**
+ * Wipe everything held in memory for one person (drafts, answers, lists, the
+ * queue) while the session and the vault key stay: Helper Mode, on every
+ * switch from one family to the next.
+ */
+export function wipePerson(): void {
+  runEndHandlers(false);
 }
 
 export function applyAuth(out: AuthOut): void {
@@ -84,8 +99,9 @@ export function clearAuth(reason: 'none' | 'expired' | 'logout' | 'offline' | 'e
   if (wasSignedIn) runEndHandlers();
 }
 
-function runEndHandlers(): void {
+function runEndHandlers(all = true): void {
   for (const handler of endHandlers) {
+    if (!all && sessionOnly.has(handler)) continue;
     try {
       handler();
     } catch {

@@ -114,17 +114,3 @@ export function ConsentCard({ consent, children }: { consent: ConsentOut; childr
     </article>
   );
 }
-
-/**
- * RESERVED: "Who looked at my information" (the access log). Another track is
- * building its endpoint now; its shape is not known, so nothing is drawn or
- * fetched yet. When it lands, render the list here (each read: who, when, why)
- * and turn on ACCESS_LOG_READY. Until then the section stays hidden, so no
- * half-built screen is reachable.
- */
-export const ACCESS_LOG_READY = false;
-
-export function AccessLogSection() {
-  if (!ACCESS_LOG_READY) return null;
-  return null;
-}

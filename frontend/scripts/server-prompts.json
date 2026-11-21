@@ -1,4 +1,16 @@
 {
+ "ask_cannot_act": {
+  "en": "I can only answer questions about the Rahat rules. A person decides on applications.",
+  "ur": "میں صرف راحت کے قواعد کے بارے میں سوالوں کے جواب دے سکتا ہوں۔ درخواستوں کا فیصلہ ایک شخص کرتا ہے۔"
+ },
+ "ask_no_promise": {
+  "en": "Only an officer can decide on an application. This answer is not a promise of payment.",
+  "ur": "درخواست کا فیصلہ صرف ایک افسر کر سکتا ہے۔ یہ جواب رقم کا وعدہ نہیں ہے۔"
+ },
+ "ask_not_sure": {
+  "en": "I am not sure. Please ask a person.",
+  "ur": "مجھے یقین نہیں ہے۔ کسی شخص سے پوچھیں۔"
+ },
  "next.ask_again": {
   "en": "If this is wrong, ask a person to check again.",
   "ur": "اگر یہ غلط ہے تو کسی فرد سے دوبارہ جانچ کا کہیں۔"
@@ -258,5 +270,37 @@
  "scam.todo.not_sure": {
   "en": "Do not act on it yet; tap Ask a person and an officer will check it.",
   "ur": "ابھی اس پر عمل نہ کریں؛ افسر سے پوچھیں دبائیں، افسر اسے دیکھے گا۔"
+ },
+ "voice_is_that_right": {
+  "en": "Is that right?",
+  "ur": "کیا یہ ٹھیک ہے؟"
+ },
+ "voice_monthly": {
+  "en": "Please say the money for one whole month, or tap a picture.",
+  "ur": "پورے ایک مہینے کے پیسے بتائیں، یا تصویر دبائیں۔"
+ },
+ "voice_one_answer": {
+  "en": "I heard two different answers. Please say only one, or tap a picture.",
+  "ur": "مجھے دو مختلف جواب سنائی دیے۔ صرف ایک جواب بولیں، یا تصویر دبائیں۔"
+ },
+ "voice_people": {
+  "en": "people",
+  "ur": "لوگ"
+ },
+ "voice_person": {
+  "en": "person",
+  "ur": "فرد"
+ },
+ "voice_say_again": {
+  "en": "Sorry, I did not understand. Please say it again, or tap a picture.",
+  "ur": "معاف کیجیے، سمجھ نہیں آیا۔ دوبارہ بولیں، یا تصویر دبائیں۔"
+ },
+ "voice_use_pictures": {
+  "en": "Let us use the pictures. Tap the answer that is right for you.",
+  "ur": "آئیے تصویروں سے جواب دیں۔ جو جواب ٹھیک ہو، اس کی تصویر دبائیں۔"
+ },
+ "voice_you_said": {
+  "en": "You said",
+  "ur": "آپ نے کہا"
  }
 }

@@ -1,10 +1,20 @@
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import type { IncomeBand } from '../../shared/api/types';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { lang, t, type MessageKey } from '../../shared/i18n';
-import { answer, answerName, draft, nextStep, stepPath, type AnswerField, type StepId, type Tri } from './flow';
+import { lazyRoute } from '../../shared/routing';
+import { speechInputAvailable } from '../../shared/speechInput';
+import type { VoiceAnswerProps, VoiceValue } from '../voice/VoiceAnswer';
+import { answer, answerName, answerSpoken, draft, nextStep, stepPath, type AnswerField, type StepId, type Tri } from './flow';
 import { AnswerButton, AnswerGroup, NextButton, Notice, numberKey, SaveStatus, sayKey, StepLayout } from './parts';
+
+// Saying the answer is a lazy chunk; the pictures below it never wait for it.
+const VoiceAnswer = lazyRoute<VoiceAnswerProps>(() => import('../voice/VoiceAnswer'));
+
+function Voice(props: VoiceAnswerProps) {
+  return speechInputAvailable() ? <VoiceAnswer {...props} /> : null;
+}
 
 function useNext(step: StepId): () => void {
   const { route } = useLocation();
@@ -59,6 +69,8 @@ export function HouseholdStep() {
   const next = useNext('household');
   const saved = draft.value?.answers.household_size;
   const [count, setCount] = useState(saved ?? 1);
+  // A confirmed spoken answer is already written (provenance spoken): Next must not write it again as tapped.
+  const spokenCount = useRef<number | null>(null);
 
   const change = (delta: number): void => {
     const value = Math.min(MAX_PEOPLE, Math.max(MIN_PEOPLE, count + delta));
@@ -67,8 +79,19 @@ export function HouseholdStep() {
     if (key) sayKey(key);
   };
   const confirm = (): void => {
-    answer('household_size', count);
+    if (spokenCount.current !== count) answer('household_size', count);
     next();
+  };
+  const spoken = (value: VoiceValue, confidence: number): void => {
+    if (typeof value !== 'number') {
+      spokenCount.current = null;
+      answerSpoken('household_size', null, 0);
+      return;
+    }
+    const people = Math.min(MAX_PEOPLE, Math.max(MIN_PEOPLE, Math.round(value)));
+    setCount(people);
+    spokenCount.current = people;
+    answerSpoken('household_size', people, confidence);
   };
 
   const counterButton =
@@ -76,6 +99,7 @@ export function HouseholdStep() {
   return (
     <StepLayout step="household" prompt="household_prompt" icon="family" title={t('household_title')}>
       <p class="text-lg text-ink-muted">{t('household_prompt')}</p>
+      <Voice question="household_size" expected="number" onAnswer={spoken} />
       {/* Numbers run left to right, as on a phone keypad, in every language. */}
       <div dir="ltr" class="flex items-center justify-between gap-3">
         <button
@@ -126,6 +150,14 @@ export function IncomeStep() {
   const chosen = draft.value?.answers.income_band;
   return (
     <StepLayout step="income" prompt="income_prompt" icon="payment" title={t('income_title')}>
+      <Voice
+        question="income_band"
+        expected="income_band"
+        onAnswer={(value, confidence) => {
+          const band = INCOME_BANDS.find((item) => item.value === value);
+          answerSpoken('income_band', band ? band.value : null, band ? confidence : 0);
+        }}
+      />
       <AnswerGroup>
         {INCOME_BANDS.map((band) => (
           <AnswerButton
@@ -176,6 +208,11 @@ export function TriStep({ spec }: { spec: TriStepSpec }) {
       <div class="flex justify-center">
         <Pictogram name={spec.icon} size={96} class="text-primary" />
       </div>
+      <Voice
+        question={spec.field}
+        expected="yes_no"
+        onAnswer={(value, confidence) => answerSpoken(spec.field, typeof value === 'boolean' ? value : null, typeof value === 'boolean' ? confidence : 0)}
+      />
       <AnswerGroup>
         {TRI_ANSWERS.map((option) => (
           <AnswerButton
