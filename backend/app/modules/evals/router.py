@@ -20,8 +20,9 @@ from sqlalchemy.orm import Session
 from app.contracts.common import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.deps import Principal, get_db
 from app.core.policy import Policy
-from app.modules.evals import service
+from app.modules.evals import service, summary
 from app.modules.evals.schemas import CostMatrixIn, CostMatrixOut, CostMatrixSave, DecisionAnalysisOut, EvalRunList, RunIn
+from app.modules.evals.summary import EvalSummaryOut
 
 router = APIRouter(tags=["evals"])
 _read = Policy("evals:read", ["admin", "auditor"], description="Threshold analysis, eval runs and the evaluation summary")
@@ -56,6 +57,11 @@ def list_runs(
     cursor: str | None = Query(None, max_length=120),
 ) -> EvalRunList:
     return service.list_runs(db, principal, kind=kind, limit=limit, before=cursor)
+
+
+@router.get("/v1/evals/summary", response_model=EvalSummaryOut, summary="Accuracy, mistakes, abstention, silent guesses, latency, cost")
+def eval_summary(principal: Principal = Depends(_read), db: Session = Depends(get_db)) -> EvalSummaryOut:
+    return summary.summary(db, principal)
 
 
 @router.get("/v1/evals/names", summary="Dedupe bands measured on 200+ labelled messy record pairs")
