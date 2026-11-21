@@ -63,8 +63,10 @@ PROOF_NAMES: dict[str, dict[str, str]] = {
 # Messages the person asked for at sign-up: sent at once, carry their own code, no verify code appended.
 ONE_TIME_TEMPLATES = frozenset({"registration_code", "registration_exists"})
 
-LANGS = ("ur", "en")
-CODE_SUFFIX = {"en": " Code {code}", "ur": " کوڈ {code}"}
+# "ru" is Roman Urdu (Urdu in Latin letters), used by the feature-phone channel. It has no entries in TEMPLATES:
+# `render` falls back to English, and the channel writes its own keyed texts (modules/ussd/texts.py).
+LANGS = ("ur", "en", "ru")
+CODE_SUFFIX = {"en": " Code {code}", "ur": " کوڈ {code}", "ru": " Code {code}"}
 CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"  # no 0/O, 1/I/L: easy to read out on the phone
 CODE_LENGTH = 6
 
@@ -105,7 +107,7 @@ def render(template: str, lang: str, payload: dict[str, Any]) -> str:
         "proof": PROOF_NAMES.get(proof_kind, PROOF_NAMES["other"])[lang],
         "code": re.sub(r"\D", "", str(payload.get("code") or ""))[:8],
     }
-    text = TEMPLATES[template][lang].format(**values)
+    text = (TEMPLATES[template].get(lang) or TEMPLATES[template]["en"]).format(**values)
     return _SPACES.sub(" ", _SPACE_BEFORE_STOP.sub(r"\1", text)).strip()
 
 

@@ -54,6 +54,10 @@ API_SCOPES: Final[dict[str, ApiScope]] = {
                                "allows. Never the case file.", personal_data=True),  # fmt: skip
         ApiScope("payments:read", "Read payments: amount, status and payment reference. No names.", personal_data=False),
         ApiScope("scam:check", "Check a message for signs of a scam.", personal_data=False),
+        ApiScope("channels:ussd", "Feature-phone channel: carry USSD sessions of mock numbers (status, message check, stop "
+                                  "sharing, callback). The person proves themselves with a code or PIN.", personal_data=True),
+        ApiScope("channels:sms", "Feature-phone channel: carry inbound SMS commands of mock numbers and send the replies.",
+                 personal_data=True),
     )
 }
 

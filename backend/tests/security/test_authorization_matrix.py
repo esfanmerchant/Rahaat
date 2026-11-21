@@ -22,6 +22,9 @@ EXPECTED_PUBLIC = {
     "POST /v1/people/register/start", "POST /v1/people/register/complete", "GET /{full_path:path}",
     "GET /v1/admin/jobs/drain",  # Vercel Cron: bearer CRON_SECRET compared in constant time; 404 while the secret is unset
     "GET /v1/public/pulse",  # aggregate counts and a synthetic replay for /live; no personal data; rate limited per network
+    # Feature-phone simulator relay: mock numbers only, runs the same code as the keyed channel with a server-side demo
+    # channel, rate limited per network, and answers 404 unless DEMO_MODE is on (like /v1/demo/accounts).
+    "POST /v1/demo/ussd", "POST /v1/demo/sms", "GET /v1/demo/sms", "GET /v1/demo/ussd/personas",
     "POST /v1/ask",  # rules assistant: answers only from approved policy text, no personal data, per-address rate limits
 }  # fmt: skip
 
@@ -47,7 +50,8 @@ def test_every_route_declares_a_policy_and_public_routes_are_an_explicit_list() 
 def test_api_keys_are_admitted_only_by_scope_on_a_small_read_surface() -> None:
     keyed = {support.route_id(r): r["api_scopes"] for r in support.registry() if r["api_scopes"]}
     assert keyed, "no route admits API keys"
-    assert all(route.startswith("GET ") or "scam" in route for route in keyed), f"keys reach a write route: {keyed}"
+    # Writes by key: the scam check, and the feature-phone channel (a key can carry the line; the person proves themself).
+    assert all(route.startswith("GET ") or "scam" in route or "/v1/channels/" in route for route in keyed), f"keys reach a write route: {keyed}"
 
 
 @pytest.mark.parametrize("route", PROTECTED, ids=support.route_id)

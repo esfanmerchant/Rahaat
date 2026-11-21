@@ -19,6 +19,11 @@ from tests.security import support
 from tests.security.support import World
 
 KEYED = [r for r in support.registry() if r["api_scopes"]]
+# The feature-phone channel routes are POSTs: the aggregator sends the caller's mock number and the text.
+CHANNEL_BODIES = {
+    "/v1/channels/ussd": {"session_id": "security-probe", "msisdn": "0999-0000000", "text": ""},
+    "/v1/channels/sms/inbound": {"msisdn": "0999-0000000", "text": "HELP"},
+}
 
 
 def _fresh_key(side: support.Side, scopes: list[str]) -> tuple[str, uuid.UUID]:
@@ -43,11 +48,12 @@ def test_the_right_scope_opens_a_route_and_revocation_or_expiry_close_it_at_once
     for ending in ("revoke", "expire"):
         raw, key_id = _fresh_key(world.a, list(route["api_scopes"]))
         headers = {"Authorization": f"Bearer {raw}"}
-        assert world.client.request(route["method"], path, headers=headers).status_code == 200
+        body = CHANNEL_BODIES.get(route["path"])
+        assert world.client.request(route["method"], path, headers=headers, json=body).status_code == 200
         with system_session() as db:
             values = {"revoked_at": datetime.now(UTC)} if ending == "revoke" else {"expires_at": datetime.now(UTC) - timedelta(seconds=1)}
             db.execute(update(models.ApiKey).where(models.ApiKey.id == key_id).values(**values))
-        stopped = world.client.request(route["method"], path, headers=headers)
+        stopped = world.client.request(route["method"], path, headers=headers, json=body)
         expected = "api_key_revoked" if ending == "revoke" else "api_key_expired"
         assert stopped.status_code == 401 and stopped.json()["code"] == expected, f"{ending}: {stopped.text}"
 
