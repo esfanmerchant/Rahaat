@@ -440,10 +440,12 @@ def citizen_view(check: DocumentCheck) -> DocumentCitizenView:
 def providers() -> dict[str, str]:
     """Which document-AI providers are active on this host, for /v1/system/health."""
     from app.modules.docs_ai import issuer
-    from app.modules.docs_ai.ocr import default_engine
+    from app.modules.docs_ai.ocr import RapidOcr, TesseractOcr, default_engine
 
     return {
-        "ocr_tesseract": "available" if default_engine().available() else "missing",
+        "ocr_rapidocr": "available" if RapidOcr().available() else "missing",
+        "ocr_tesseract": "available" if TesseractOcr().available() else "missing",
+        "ocr_engine": default_engine().name,
         "qr_opencv": "available",
         "ela": "available",
         "issuer_keys": ",".join(issuer.public_keys()),

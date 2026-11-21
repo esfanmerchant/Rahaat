@@ -12,6 +12,15 @@ from app.core.mockdata import make_mock_id
 from app.modules.docs_ai.ocr import OcrLine
 from app.modules.docs_ai.payload import CardFields
 
+
+@pytest.fixture(scope="session", autouse=True)
+def _ocr_model_loaded() -> None:
+    """Load the OCR model once up front, so timing tests measure the check and not a two-second model load."""
+    from app.modules.docs_ai.ocr import default_engine
+
+    default_engine().available()
+
+
 requires_tesseract = pytest.mark.skipif(shutil.which("tesseract") is None, reason="Tesseract binary not installed on this host")
 
 PERSON = CardFields("Zainab Bibi", make_mock_id(1000201), "1978-03-14", "female", "Karachi East")
