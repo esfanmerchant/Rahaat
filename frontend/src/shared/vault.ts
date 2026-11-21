@@ -268,9 +268,8 @@ export async function unlock(userId: string, pin: string): Promise<'ok' | 'wrong
     }
     const result = await openWith(record, pin);
     if (!result || result.owner.user.id !== userId) {
-      const wiped = await countFailure(record);
-      if (wiped) vaultState.value = 'none';
-      return wiped ? 'wiped' : 'wrong';
+      // Wiped: the gate stays shut; the caller signs the person out before anything else shows.
+      return (await countFailure(record)) ? 'wiped' : 'wrong';
     }
     const fresh = { ...record, failures: 0, usedAt: Date.now() };
     await (await db()).put('vaults', fresh);

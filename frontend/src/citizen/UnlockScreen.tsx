@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'preact/hooks';
+import { useLocation } from 'preact-iso';
 import { playPrompt } from '../shared/audio';
 import { loginNotice, logout } from '../shared/api/auth';
 import type { AuthUser } from '../shared/api/types';
@@ -18,6 +19,7 @@ import { PIN_MAX, PIN_MIN } from './phone';
  * PIN digits are never spoken. Five wrong PINs delete the sealed data.
  */
 export function UnlockScreen({ user }: { user: AuthUser }) {
+  const { route } = useLocation();
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<MessageKey | null>(lockReason.peek() === 'idle' ? 'unlock_idle' : null);
@@ -60,6 +62,7 @@ export function UnlockScreen({ user }: { user: AuthUser }) {
       }
       loginNotice.value = 'unlock_wiped';
       await logout();
+      route('/login', true); // the sign-in screen says what happened
     });
   }, [pin, user.id, code]);
 

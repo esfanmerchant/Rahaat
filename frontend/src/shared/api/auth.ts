@@ -158,8 +158,7 @@ export async function switchTenant(tenantId: string, role?: Role): Promise<Resul
   return result;
 }
 
-async function serverLogout(): Promise<boolean> {
-  const token = getAccessToken();
+async function serverLogout(token: string | null = getAccessToken()): Promise<boolean> {
   try {
     const response = await fetch('/v1/auth/logout', {
       method: 'POST',
@@ -181,9 +180,12 @@ async function serverLogout(): Promise<boolean> {
  */
 export async function logout(options: { keepVault?: boolean } = {}): Promise<void> {
   const now = session.peek();
-  if (now.status === 'signed-in' && !options.keepVault) await wipeVault(now.user.id);
-  const reached = await serverLogout();
-  if (!reached) await setPref('pendingLogout', true);
+  const token = getAccessToken();
+  // Memory and screens first, so nothing of the person shows while the server is asked.
   clearAuth('logout');
   broadcast({ type: 'logout' });
+  // Noted before the server call: if the app closes now, the next start finishes the logout.
+  await setPref('pendingLogout', true);
+  if (now.status === 'signed-in' && !options.keepVault) await wipeVault(now.user.id);
+  if (await serverLogout(token)) await deletePref('pendingLogout');
 }
