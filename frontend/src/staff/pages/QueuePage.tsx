@@ -1,50 +1,59 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
-import { Badge, ConfBar, fmtAge, humanize, INPUT, TD, Th, slaText, useLoad, useNow, type CaseSummary } from '../ui';
+import { LoadMore, usePaged } from '../kit';
+import { Badge, ConfBar, fmtAge, humanize, INPUT, TD, Th, slaText, useNow, type CaseSummary } from '../ui';
 
 type SortKey = 'priority' | 'confidence' | 'age';
+type StatusFilter = 'active' | 'all' | CaseSummary['status'];
+type KindFilter = '' | CaseSummary['kind'];
 
-/** Officer queue: one dense table, cases opened one at a time. No bulk actions exist here. */
+const STATUSES: StatusFilter[] = ['active', 'open', 'assigned', 'in_review', 'waiting_proof', 'escalated', 'resolved', 'closed', 'all'];
+const KINDS: CaseSummary['kind'][] = ['application_review', 'duplicate_review', 'document_review', 'complaint', 'appeal', 'correction', 'scam_review'];
+const SORT_HELP: Record<SortKey, string> = {
+  priority: 'most urgent first (0 is the most urgent)',
+  confidence: 'least sure first',
+  age: 'oldest first',
+};
+
+/**
+ * Officer queue: one dense table, cases opened one at a time. Filters, sort and paging are the server's
+ * (GET /v1/cases), so what is shown is what the queue holds, not what one page happened to contain.
+ * No bulk actions exist here.
+ */
 export function QueuePage() {
   const { route } = useLocation();
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
-  const [loaded, reload] = useLoad(() => call(api.GET('/v1/cases')), []);
   const now = useNow();
-  // Priority 0 is the most urgent, so the default sort is ascending: urgent cases first.
   const [sortKey, setSortKey] = useState<SortKey>('priority');
-  const [dir, setDir] = useState<'asc' | 'desc'>('asc');
-  const [status, setStatus] = useState('');
-  const [kind, setKind] = useState('');
+  const [status, setStatus] = useState<StatusFilter>('active');
+  const [kind, setKind] = useState<KindFilter>('');
+  const [assignee, setAssignee] = useState('');
   const [cursor, setCursor] = useState(0);
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const items: CaseSummary[] = loaded.state === 'ok' ? loaded.data.items : [];
-  const statuses = useMemo(() => [...new Set(items.map((c) => c.status))].sort(), [items]);
-  const kinds = useMemo(() => [...new Set(items.map((c) => c.kind))].sort(), [items]);
+  const list = usePaged<CaseSummary>(
+    (after) =>
+      call(
+        api.GET('/v1/cases', {
+          params: { query: { status, sort: sortKey, limit: 25, ...(kind ? { kind } : {}), ...(assignee ? { assignee } : {}), ...(after ? { cursor: String(after) } : {}) } },
+        }),
+      ),
+    [status, kind, assignee, sortKey],
+  );
+  const rows = list.items;
+  const reload = list.reload;
+  const filtered = status !== 'active' || kind !== '' || assignee !== '';
 
-  const rows = useMemo(() => {
-    const filtered = items.filter((c) => (!status || c.status === status) && (!kind || c.kind === kind));
-    const value = (c: CaseSummary): number => (sortKey === 'priority' ? c.priority : sortKey === 'age' ? c.age_minutes : (c.confidence ?? -1));
-    const sign = dir === 'asc' ? 1 : -1;
-    return [...filtered].sort((a, b) => sign * (value(a) - value(b)) || a.id.localeCompare(b.id));
-  }, [items, status, kind, sortKey, dir]);
-
+  useEffect(() => {
+    setCursor(0);
+  }, [status, kind, assignee, sortKey]);
   useEffect(() => {
     if (cursor >= rows.length) setCursor(Math.max(0, rows.length - 1));
   }, [rows.length, cursor]);
-
-  const sortBy = (key: SortKey) => {
-    if (key === sortKey) setDir(dir === 'asc' ? 'desc' : 'asc');
-    else {
-      setSortKey(key);
-      // First click: most urgent, least confident, or oldest first.
-      setDir(key === 'age' ? 'desc' : 'asc');
-    }
-  };
 
   const onKeyDown = (event: KeyboardEvent) => {
     const el = event.target as HTMLElement;
@@ -83,24 +92,39 @@ export function QueuePage() {
         </h1>
         <label class="flex items-center gap-1">
           Status
-          <select class={INPUT} value={status} onChange={(e) => setStatus(e.currentTarget.value)}>
-            <option value="">All</option>
-            {statuses.map((s) => (
-              <option key={s} value={s}>
-                {humanize(s)}
+          <select class={INPUT} value={status} onChange={(e) => setStatus(e.currentTarget.value as StatusFilter)}>
+            {STATUSES.map((st) => (
+              <option key={st} value={st}>
+                {st === 'active' ? 'Active (default)' : humanize(st)}
               </option>
             ))}
           </select>
         </label>
         <label class="flex items-center gap-1">
           Kind
-          <select class={INPUT} value={kind} onChange={(e) => setKind(e.currentTarget.value)}>
+          <select class={INPUT} value={kind} onChange={(e) => setKind(e.currentTarget.value as KindFilter)}>
             <option value="">All</option>
-            {kinds.map((k) => (
+            {KINDS.map((k) => (
               <option key={k} value={k}>
                 {humanize(k)}
               </option>
             ))}
+          </select>
+        </label>
+        <label class="flex items-center gap-1">
+          Assignee
+          <select class={INPUT} value={assignee} onChange={(e) => setAssignee(e.currentTarget.value)}>
+            <option value="">Anyone</option>
+            <option value="me">Me</option>
+            <option value="unassigned">Unassigned</option>
+          </select>
+        </label>
+        <label class="flex items-center gap-1">
+          Sort
+          <select class={INPUT} value={sortKey} onChange={(e) => setSortKey(e.currentTarget.value as SortKey)} aria-describedby="sort-help">
+            <option value="priority">Priority</option>
+            <option value="confidence">Confidence</option>
+            <option value="age">Age</option>
           </select>
         </label>
         <button type="button" class="h-8 rounded-sm border border-line-strong px-3 hover:bg-sunken" onClick={reload}>
@@ -109,28 +133,32 @@ export function QueuePage() {
         <span class="ms-auto text-xs text-ink-subtle">j and k move, Enter opens. Cases are handled one at a time.</span>
       </div>
 
-      {loaded.state === 'loading' ? <ScreenState kind="loading" density="staff" body="Loading the queueâ€¦" /> : null}
-      {loaded.state === 'fail' ? <FailureState failure={loaded.failure} density="staff" heading="h2" onRetry={reload} /> : null}
-      {loaded.state === 'ok' && items.length === 0 ? (
-        <ScreenState kind="empty" density="staff" heading="h2" title="The queue is empty" body="No cases are waiting for review. New cases appear here when the system hands one over." />
-      ) : null}
-      {loaded.state === 'ok' && items.length > 0 && rows.length === 0 ? (
-        <ScreenState kind="empty" density="staff" heading="h2" title="No cases match these filters" body="Clear a filter to see more." />
+      <p id="sort-help" class="text-xs text-ink-subtle">
+        Sorted by {sortKey}: {SORT_HELP[sortKey]}.
+      </p>
+      {list.status === 'loading' ? <ScreenState kind="loading" density="staff" body="Loading the queue…" /> : null}
+      {list.status === 'fail' && list.failure ? <FailureState failure={list.failure} density="staff" heading="h2" onRetry={reload} /> : null}
+      {list.status === 'ok' && rows.length === 0 ? (
+        filtered ? (
+          <ScreenState kind="empty" density="staff" heading="h2" title="No cases match these filters" body="Clear a filter to see more." />
+        ) : (
+          <ScreenState kind="empty" density="staff" heading="h2" title="The queue is empty" body="No cases are waiting for review. New cases appear here when the system hands one over." />
+        )
       ) : null}
 
       {rows.length > 0 ? (
         <div class="overflow-x-auto border border-line">
           <table ref={tableRef} class="w-full border-collapse text-sm">
-            <caption class="sr-only">Cases waiting for a person, sortable by priority, confidence and age</caption>
+            <caption class="sr-only">Cases, sorted by the server</caption>
             <thead>
               <tr>
-                <Th sort onSort={() => sortBy('priority')} active={sortKey === 'priority'} dir={dir}>Priority</Th>
+                <Th>Priority</Th>
                 <Th>Kind</Th>
                 <Th>Subject</Th>
-                <Th sort onSort={() => sortBy('confidence')} active={sortKey === 'confidence'} dir={dir}>Confidence</Th>
+                <Th>Confidence</Th>
                 <Th>Why opened</Th>
                 <Th>Status</Th>
-                <Th sort onSort={() => sortBy('age')} active={sortKey === 'age'} dir={dir}>Age</Th>
+                <Th>Age</Th>
                 <Th>SLA</Th>
                 <Th>Assignee</Th>
               </tr>
@@ -176,9 +204,7 @@ export function QueuePage() {
           </table>
         </div>
       ) : null}
-      {loaded.state === 'ok' && loaded.data.next_cursor ? (
-        <p class="text-xs text-ink-subtle">More cases exist than are shown (the list endpoint takes no cursor yet).</p>
-      ) : null}
+      <LoadMore next={list.next} busy={list.loadingMore} onMore={list.more} />
     </section>
   );
 }
