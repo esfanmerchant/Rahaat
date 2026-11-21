@@ -20,6 +20,7 @@ EXPECTED_PUBLIC = {
     "GET /healthz", "GET /readyz", "GET /metrics", "GET /v1/system/info", "GET /v1/demo/accounts",
     "POST /v1/auth/login", "POST /v1/auth/refresh", "POST /v1/auth/logout", "POST /v1/notifications/verify",
     "POST /v1/people/register/start", "POST /v1/people/register/complete", "GET /{full_path:path}",
+    "POST /v1/ask",  # rules assistant: answers only from approved policy text, no personal data, per-address rate limits
 }  # fmt: skip
 
 

@@ -26,13 +26,15 @@ from sqlalchemy import select, text
 from app.core import apikeys
 from app.core.db import system_session
 from app.core.policy import describe_routes
-from app.core.security import decode_access_token
+from app.core.security import decode_access_token, hash_secret
 from app.db import models
 from app.db.base import Base
 from app.modules.cases import testing as case_data
+from app.seed import RULES_V1
 
 PARAM = re.compile(r"\{([a-z_]+)\}")
 ROLES = ("citizen", "helper", "officer", "admin", "auditor")
+FAMILY_PIN = "4826"  # the PIN every family in this suite gave its helper
 TOKEN_REFRESH_SECONDS = 300  # access tokens live 10 minutes; sign in again well before that
 
 
@@ -152,6 +154,7 @@ class Side:
     key_scopes: dict[str, list[str]]
     tenant: Any = None  # the factory's tenant row, to add more accounts later
     tokens: dict[str, tuple[float, str]] = field(default_factory=dict)
+    tickets: dict[str, str] = field(default_factory=dict)  # role -> switch ticket of the helper's current session
 
     @property
     def user_ids(self) -> list[uuid.UUID]:
@@ -166,6 +169,35 @@ class Side:
         return found
 
 
+def _review_case(tenant_id: uuid.UUID, person_id: uuid.UUID) -> dict[str, uuid.UUID]:
+    """`case_data.review_case`, but on a rule version that passes the validator (the test helper's `all: []` does not).
+
+    A published version cannot be edited, so the program is made here with the seed's rules, and the case on top of it.
+    """
+    with system_session() as db:
+        program = models.Program(id=uuid.uuid4(), tenant_id=tenant_id, slug=f"p-{uuid.uuid4().hex[:8]}", name="Security suite program")
+        db.add(program)
+        db.flush()
+        rule_set = models.RuleSet(id=uuid.uuid4(), tenant_id=tenant_id, program_id=program.id, name="Security suite rules")
+        db.add(rule_set)
+        db.flush()
+        version = models.RuleVersion(id=uuid.uuid4(), tenant_id=tenant_id, rule_set_id=rule_set.id, version_no=1, status="published",
+                                     dsl=RULES_V1)  # fmt: skip
+        db.add(version)
+        db.flush()
+        rule_set.active_version_id = version.id
+        program_id, version_id = program.id, version.id
+    application_id = case_data.application(tenant_id, person_id, program_id)
+    decision_id = case_data.decision(tenant_id, application_id, person_id, version_id)
+    with system_session() as db:
+        case = case_data.open_case(db, tenant_id=tenant_id, kind="application_review", opened_reason="income_unverified",
+                                   application_id=application_id, person_id=person_id, decision_id=decision_id,
+                                   handoff=case_data.handoff(), confidence=0.81, priority=40)  # fmt: skip
+        case_id = case.id
+    return {"case_id": case_id, "application_id": application_id, "decision_id": decision_id, "program_id": program_id,
+            "rule_version_id": version_id}  # fmt: skip
+
+
 def _build_side(client: TestClient, factory: Any, label: str) -> Side:
     tenant = factory.tenant(f"Security suite {label}")
     accounts = {role: factory.account(tenant, role) for role in ROLES}
@@ -173,13 +205,24 @@ def _build_side(client: TestClient, factory: Any, label: str) -> Side:
     accounts["admin2"] = factory.account(tenant, "admin")
     citizen = accounts["citizen"]
     now = datetime.now(UTC)
-    review = case_data.review_case(tenant.id, citizen.person_id)
+    review = _review_case(tenant.id, citizen.person_id)
     keys: dict[str, str] = {}
     key_scopes = {"payments": ["payments:read"], "cases": ["cases:read"]}
     key_ids: dict[str, uuid.UUID] = {}
+    other = factory.account(tenant, "citizen")  # a second person: the other half of a duplicate pair
     with system_session() as db:
-        db.add(models.HelperDelegation(tenant_id=tenant.id, helper_user_id=accounts["helper"].user_id, person_id=citizen.person_id,
-                                       scopes=["track", "apply", "upload"], expires_at=now + timedelta(days=1)))  # fmt: skip
+        delegation = models.HelperDelegation(id=uuid.uuid4(), tenant_id=tenant.id, helper_user_id=accounts["helper"].user_id,
+                                             person_id=citizen.person_id, scopes=["track", "apply", "upload"],
+                                             pin_hash=hash_secret(FAMILY_PIN), expires_at=now + timedelta(days=1))  # fmt: skip
+        candidate = models.DuplicateCandidate(id=uuid.uuid4(), tenant_id=tenant.id, person_a_id=citizen.person_id, person_b_id=other.person_id,
+                                              score=0.7, band="possible", evidence={}, status="open")  # fmt: skip
+        run = models.TwinRun(id=uuid.uuid4(), tenant_id=tenant.id, draft_version_id=review["rule_version_id"], status="done", summary={})
+        report = models.ScamReport(id=uuid.uuid4(), tenant_id=tenant.id, reporter_person_id=citizen.person_id, channel="text",
+                                   text_redacted="[security probe]", text_hash="0" * 64, label="unknown", confidence=0.5, route="human",
+                                   district="Lahore", classification={"source": "security"})  # fmt: skip
+        warning = models.PublicWarning(id=uuid.uuid4(), tenant_id=tenant.id, title="Security probe", body_en="Probe.", district="Lahore",
+                                       status="published", published_at=now)  # fmt: skip
+        db.add_all([delegation, candidate, run, report, warning])
         document = models.Document(id=uuid.uuid4(), tenant_id=tenant.id, application_id=review["application_id"], person_id=citizen.person_id,
                                    kind="rahat_id", storage_key=f"security-{uuid.uuid4().hex}.png", sha256="0" * 64, mime="image/png",
                                    size_bytes=68)  # fmt: skip
@@ -200,6 +243,7 @@ def _build_side(client: TestClient, factory: Any, label: str) -> Side:
         "case_id": review["case_id"], "application_id": review["application_id"], "decision_id": review["decision_id"],
         "version_id": review["rule_version_id"], "document_id": document.id, "approval_id": approval.id, "job_id": job.id,
         "consent_id": consent_id, "session_id": session_id, "key_id": key_ids["payments"],
+        "candidate_id": candidate.id, "run_id": run.id, "report_id": report.id, "warning_id": warning.id, "delegation_id": delegation.id,
     }  # fmt: skip
     return Side(label=label, tenant_id=tenant.id, accounts=accounts, ids=ids, keys=keys, key_scopes=key_scopes, tenant=tenant)
 
@@ -222,10 +266,20 @@ class World:
         if time.monotonic() - issued_at > TOKEN_REFRESH_SECONDS:
             token = self.factory.login(self.client, side.accounts[who])["access_token"]
             side.tokens[who] = (time.monotonic(), token)
+            side.tickets.pop(who, None)  # a ticket belongs to one session
         headers = {"Authorization": f"Bearer {token}"}
         if who == "helper":
+            if who not in side.tickets:
+                side.tickets[who] = self.switch(side, headers, side.accounts["citizen"].person_id)
             headers["X-Acting-For"] = str(side.accounts["citizen"].person_id)
+            headers["X-Helper-Ticket"] = side.tickets[who]
         return headers
+
+    def switch(self, side: Side, headers: dict[str, str], person_id: uuid.UUID, pin: str = FAMILY_PIN) -> str:
+        """The helper enters the family's PIN and gets the ticket that every request for that person must carry."""
+        response = self.client.post("/v1/helper/switch", json={"person_id": str(person_id), "pin": pin}, headers=headers)
+        assert response.status_code == 200, f"helper switch failed: {response.text}"
+        return str(response.json()["ticket"])
 
     def warm(self) -> None:
         """Sign everyone in now, so no sign-in happens between two fingerprints."""
