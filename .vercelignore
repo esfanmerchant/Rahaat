@@ -1,0 +1,23 @@
+# Keep the upload small and keep secrets and other checkouts out of it.
+.git
+.github
+.claude
+.wt
+.live
+.env
+.env.*
+!.env.example
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.devdb
+backend/var
+frontend/dist
+docs
+deploy/azure-vm
+deploy/hf-space
+deploy/local
+*.pdf

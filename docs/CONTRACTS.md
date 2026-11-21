@@ -160,3 +160,14 @@ Each test run gets its own throwaway database, so several runs at once do not di
 - `Policy(name, roles, api_scopes=[...], cost=n)` admits API keys by scope only; `Cost(n)` sets a route's rate-limit cost; `Public(reason)` routes are rate limited too. `get_db` depends on `get_credential`; `get_claims` refuses API keys. `Principal.api_key` and `Principal.scopes` are new.
 - A new route is covered by the authorisation matrix in `backend/tests/security` automatically.
 - Look objects up by id **and** tenant, even though RLS also filters: two lookups did not, and the suite showed they relied on RLS alone.
+
+## Serverless hosting (Vercel) settings
+
+All default to today's behaviour. See `deploy/vercel/README.md` and DECISIONS 19.
+
+- `JOBS_MODE=thread|inline`: `inline` starts no worker thread (`settings.job_thread_enabled` is false). `jobs.service.enqueue` marks the request (`core.context.note_job_enqueued`); the middleware then runs `jobs.inline.drain()` before the final response byte. Handlers must not assume a long-lived process.
+- `GET /v1/admin/jobs/drain`: `Public` route guarded by `Authorization: Bearer $CRON_SECRET`; 404 while `CRON_SECRET` is unset.
+- `MOCKS_IN_PROCESS=true`: `integrations.settings.transport_effective()` returns `inprocess` unless `MOCK_TRANSPORT` says otherwise. Mock state (failure injection, SMS outbox, payment ledger) lives in each instance's memory.
+- `CLIENT_IP_HEADER`: when set, `current_client_ip()` is the first address of that header. Set it only where the platform overwrites the header.
+- `STARTUP_WARMUP=false`: only the `jobs` lifecycle hook runs at start; other hooks (evidence model, OCR, corpus, scam model) load on first use.
+
