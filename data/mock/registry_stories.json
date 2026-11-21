@@ -1,0 +1,32 @@
+{
+  "_about": "Invented registry stories for the demo citizens in backend/app/demo_accounts.py. Keyed by the demo name; the mock ID, date of birth and district come from demo_citizens(). 'this_month' means the first day of the current month. Prototype data only.",
+  "stories": {
+    "Zainab Bibi": {
+      "household_size": 5,
+      "verified_income_pkr": null,
+      "income_as_of": null,
+      "receives_other_aid": false,
+      "is_widow": true,
+      "has_disability": false,
+      "note": "Widow, household of five, no income record: the income rule cannot be checked, so a person decides."
+    },
+    "Aslam Khan": {
+      "household_size": 6,
+      "verified_income_pkr": 24000,
+      "income_as_of": "this_month",
+      "receives_other_aid": false,
+      "is_widow": false,
+      "has_disability": false,
+      "note": "Income Rs 24,000 recorded this month, household of six, no other aid: the confident approval."
+    },
+    "Rukhsana Parveen": {
+      "household_size": 4,
+      "verified_income_pkr": 41000,
+      "income_as_of": "this_month",
+      "receives_other_aid": false,
+      "is_widow": false,
+      "has_disability": false,
+      "note": "Verified income Rs 41,000, above the Rs 30,000 cap: a hard rule fails on verified input."
+    }
+  }
+}
