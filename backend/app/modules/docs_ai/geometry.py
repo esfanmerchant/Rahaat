@@ -208,7 +208,8 @@ def _reference_gray() -> np.ndarray:
     from app.modules.docs_ai.payload import CardFields
 
     fields = CardFields("Reference Card", "00000-0000000-0", "2000-01-01", "other", "Reference")
-    card = render_card(fields, "RC1|reference", key_id="reference")
+    with L.RENDER_LOCK:
+        card = render_card(fields, "RC1|reference", key_id="reference")
     return np.asarray(cv2.cvtColor(np.asarray(card), cv2.COLOR_RGB2GRAY), dtype=np.float32)
 
 

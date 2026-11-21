@@ -84,6 +84,11 @@ class _Template:
 
 @lru_cache(maxsize=256)
 def _template(field_name: str, value: str) -> _Template | None:
+    with L.RENDER_LOCK:  # font metrics and drawing share one FreeType face
+        return _build_template(field_name, value)
+
+
+def _build_template(field_name: str, value: str) -> _Template | None:
     text = L.display_value(field_name, value)
     size = L.value_font_size(text)
     font = L.font(size)
@@ -111,12 +116,13 @@ def _template(field_name: str, value: str) -> _Template | None:
 @lru_cache(maxsize=512)
 def _digit_cells(size: int, left: float, rows: tuple[int, int], cols: tuple[int, int]) -> dict[str, np.ndarray]:
     """Each digit drawn alone at one glyph position and cropped like that glyph's cell (the font's digits are tabular)."""
-    font = L.font(size)
     out = {}
-    for d in "0123456789":
-        img = Image.new("L", (cols[1] + 4, 90), PRINT_BACKGROUND)
-        ImageDraw.Draw(img).text((left, 20), d, font=font, fill=PRINT_FILL)
-        out[d] = np.asarray(img, dtype=np.float32)[rows[0] : rows[1], cols[0] : cols[1]].copy()
+    with L.RENDER_LOCK:
+        font = L.font(size)
+        for d in "0123456789":
+            img = Image.new("L", (cols[1] + 4, 90), PRINT_BACKGROUND)
+            ImageDraw.Draw(img).text((left, 20), d, font=font, fill=PRINT_FILL)
+            out[d] = np.asarray(img, dtype=np.float32)[rows[0] : rows[1], cols[0] : cols[1]].copy()
     return out
 
 
@@ -142,7 +148,8 @@ def _label_templates() -> tuple[tuple[np.ndarray, tuple[int, int]], ...]:
     out = []
     for i, (_, label) in enumerate(L.FIELDS):
         img = Image.new("L", (L.CARD_W, 60), PRINT_BACKGROUND)
-        ImageDraw.Draw(img).text((L.FIELD_X, 20), label, font=L.font(L.LABEL_SIZE), fill=104)
+        with L.RENDER_LOCK:
+            ImageDraw.Draw(img).text((L.FIELD_X, 20), label, font=L.font(L.LABEL_SIZE), fill=104)
         arr = np.asarray(img, dtype=np.float32)
         ys, xs = np.where(arr < 200)
         y0, y1, x0, x1 = int(ys.min()) - 3, int(ys.max()) + 4, int(xs.min()) - 3, int(xs.max()) + 4

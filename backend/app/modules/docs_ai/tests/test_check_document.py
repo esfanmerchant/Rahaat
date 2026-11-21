@@ -248,3 +248,15 @@ def test_providers_report_ocr_state() -> None:
     info = providers()
     assert info["ocr_tesseract"] in ("available", "missing")
     assert info["qr_opencv"] == "available"
+
+
+def test_concurrent_checks_agree_with_sequential_ones(images: dict[str, bytes]) -> None:
+    """FastAPI runs sync handlers in a thread pool; shared fonts and caches must not mix results up."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    names = ["clean", "altered", "altered_id_digit", "wrong_qr", "glare", "bad_signature"]
+    expected = {n: run(images[n]).model_dump() for n in names}
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda n: (n, run(images[n]).model_dump()), names * 2))
+    for name, result in results:
+        assert result == expected[name], name

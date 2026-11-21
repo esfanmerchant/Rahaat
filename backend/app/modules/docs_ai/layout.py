@@ -7,6 +7,7 @@ All coordinates are pixels on the canonical 1000 x 630 card (about the ID-1 aspe
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -95,6 +96,11 @@ def field_index(name: str) -> int:
         if key == name:
             return i
     raise KeyError(name)
+
+
+# Pillow's FreeType faces are shared and not safe to draw with from two threads at once (FastAPI runs sync
+# handlers in a thread pool), so the checker serialises its template rendering on this lock.
+RENDER_LOCK = threading.Lock()
 
 
 @lru_cache(maxsize=64)
