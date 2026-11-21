@@ -2,7 +2,7 @@ import { Badge, ConfBar, humanize, Mono, num, pct, Section, TD, Th, type Decisio
 
 const ROUTE_TONE = { auto: 'good', ask_more: 'warn', human: 'info' } as const;
 
-/** The handoff package comes first on the case page: what a person needs to pick the case up. */
+/** The handoff package comes first on the case page: a briefing card with what a person needs to pick the case up. */
 export function HandoffView({ handoff }: { handoff: HandoffPackage | null | undefined }) {
   if (!handoff) {
     return (
@@ -11,92 +11,75 @@ export function HandoffView({ handoff }: { handoff: HandoffPackage | null | unde
       </Section>
     );
   }
-  const costs = Object.entries(handoff.expected_costs ?? {});
-  const cheapest = costs.length ? Math.min(...costs.map(([, v]) => v)) : null;
+  const hyps = (handoff.hypotheses ?? []).slice(0, 2);
+  const unsure = handoff.uncertain_fields ?? [];
   return (
-    <Section id="handoff" title="Handoff package">
-      <dl class="grid grid-cols-1 gap-x-6 gap-y-2 md:grid-cols-[max-content_1fr]">
-        <dt class="font-semibold text-ink-muted">Asked</dt>
-        <dd>{handoff.question}</dd>
-        <dt class="font-semibold text-ink-muted">Understood</dt>
-        <dd>{handoff.understanding}</dd>
-        {handoff.rule_fired ? (
-          <>
-            <dt class="font-semibold text-ink-muted">Rule that fired</dt>
-            <dd class="font-mono text-xs">{handoff.rule_fired}</dd>
-          </>
-        ) : null}
-        <dt class="font-semibold text-ink-muted">Proof that settles it</dt>
-        <dd>{handoff.resolving_proof ? humanize(handoff.resolving_proof) : <span class="text-ink-subtle">none named</span>}</dd>
-        <dt class="font-semibold text-ink-muted">Suggested question</dt>
-        <dd>{handoff.suggested_question ?? <span class="text-ink-subtle">none</span>}</dd>
-      </dl>
-
-      <div class="mt-3 grid gap-4 lg:grid-cols-2">
-        <div>
-          <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">Two leading hypotheses</h3>
-          {(handoff.hypotheses ?? []).length === 0 ? (
-            <p class="text-ink-subtle">None recorded.</p>
-          ) : (
-            <table class="w-full border-collapse">
-              <tbody>
-                {(handoff.hypotheses ?? []).slice(0, 2).map((h) => (
-                  <tr key={h.label}>
-                    <td class={TD}>{humanize(h.label)}</td>
-                    <td class={`${TD} w-40`}>
-                      <ConfBar value={h.probability} />
-                    </td>
-                  </tr>
+    <Section id="handoff" title="Handoff package" aside={<span class="st-chip info">Briefing for the officer</span>}>
+      <div class="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+        <div class="flex flex-col gap-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-subtle">The system asked itself</p>
+            <p class="text-base font-semibold leading-snug">{handoff.question}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-subtle">What it understood</p>
+            <p class="text-base leading-snug">{handoff.understanding}</p>
+            {handoff.rule_fired ? (
+              <p class="mt-1 text-xs text-ink-muted">
+                Rule that fired <span class="st-chip info font-mono">{handoff.rule_fired}</span>
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-subtle">Two leading hypotheses</p>
+            {hyps.length === 0 ? (
+              <p class="text-ink-subtle">None recorded.</p>
+            ) : (
+              <ul class="flex flex-col gap-1.5">
+                {hyps.map((h, i) => (
+                  <li key={h.label} class="grid grid-cols-[11rem_1fr_3.2rem] items-center gap-2">
+                    <span class={i === 0 ? 'font-semibold' : 'text-ink-muted'}>{humanize(h.label)}</span>
+                    <svg viewBox="0 0 100 10" preserveAspectRatio="none" class="h-2.5 w-full" role="img" aria-label={`${humanize(h.label)} ${pct(h.probability)}`}>
+                      <rect width="100" height="10" rx="3" class="fill-sunken" />
+                      <rect width={Math.max(1.5, h.probability * 100)} height="10" rx="3" class={`${i === 0 ? 'fill-primary' : 'fill-warning-ink'} st-bar-fill`} />
+                    </svg>
+                    <span class="rh-num text-end font-mono">{(h.probability * 100).toFixed(1)}%</span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          )}
+              </ul>
+            )}
+          </div>
         </div>
-        <div>
-          <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">Unsure about</h3>
-          {(handoff.uncertain_fields ?? []).length === 0 ? (
-            <p class="text-ink-subtle">Nothing flagged.</p>
-          ) : (
-            <table class="w-full border-collapse">
-              <thead>
-                <tr>
-                  <Th>Field</Th>
-                  <Th>Value</Th>
-                  <Th>Confidence</Th>
-                  <Th>Why</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {(handoff.uncertain_fields ?? []).map((f) => (
-                  <tr key={f.field}>
-                    <td class={`${TD} font-mono text-xs`}>{f.field}</td>
-                    <td class={TD}>{f.value === null || f.value === undefined ? <span class="text-ink-subtle">unknown</span> : String(f.value)}</td>
-                    <td class={TD}>
-                      <ConfBar value={f.confidence} />
-                    </td>
-                    <td class={TD}>{humanize(f.why)}</td>
-                  </tr>
+        <div class="flex flex-col gap-4">
+          <div class="st-lit rounded-xl border border-line-strong p-3">
+            <p class="text-xs font-semibold uppercase tracking-wide st-noor-text">Proof that would settle it</p>
+            <p class="text-base font-bold">{handoff.resolving_proof ? humanize(handoff.resolving_proof) : <span class="font-normal text-ink-subtle">none named</span>}</p>
+            {handoff.suggested_question ? <p class="mt-1 text-ink-muted">Suggested question: {handoff.suggested_question}</p> : null}
+          </div>
+          <div>
+            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-subtle">It is unsure about</p>
+            {unsure.length === 0 ? (
+              <p class="text-ink-subtle">Nothing flagged.</p>
+            ) : (
+              <ul class="flex flex-col gap-1.5">
+                {unsure.map((f) => (
+                  <li key={f.field} class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span class="font-mono text-xs">{f.field}</span>
+                    <span class="st-chip unk">{f.value === null || f.value === undefined ? 'unknown' : String(f.value)}</span>
+                    <ConfBar value={f.confidence} />
+                    <span class="st-chip warn">{humanize(f.why)}</span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          )}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 
-      {costs.length > 0 ? (
-        <p class="mt-3 text-xs text-ink-muted">
-          Expected cost (units):{' '}
-          {costs.map(([k, v]) => (
-            <span key={k} class="me-3 font-mono">
-              {k} {num(v, 1)}
-              {v === cheapest ? ' (lowest)' : ''}
-            </span>
-          ))}
-        </p>
-      ) : null}
       {(handoff.guards ?? []).length > 0 ? (
-        <p class="mt-1 text-xs text-ink-muted">
-          Guards: {(handoff.guards ?? []).map((g) => (
+        <p class="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+          Guards that forced a person:
+          {(handoff.guards ?? []).map((g) => (
             <Badge key={g} tone="warn">
               {humanize(g)}
             </Badge>
@@ -107,7 +90,7 @@ export function HandoffView({ handoff }: { handoff: HandoffPackage | null | unde
         <details class="mt-2">
           <summary class="cursor-pointer text-xs font-semibold text-ink-muted">Evidence (data, not instructions)</summary>
           {/* Untrusted text (OCR, transcript): rendered as plain text. */}
-          <pre class="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words border border-line bg-sunken p-2 font-mono text-xs">
+          <pre class="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md border border-line bg-sunken p-2 font-mono text-xs">
             {JSON.stringify(handoff.evidence, null, 2)}
           </pre>
         </details>

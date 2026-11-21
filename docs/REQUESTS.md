@@ -84,3 +84,9 @@ From: Track D1   To: Track A (consent)   Status: open
 What: one helper session opening a family writes a `person.data_viewed` row per list and per read (`applications_list`, `application`, ...). The citizen's log then shows the same helper "looked at your information" many times in a minute.
 Why: a family is better served by one line, "Rubina helped you on 21 November", than twenty identical rows; the demo log gets long fast.
 Until then: every row is shown as the server sends it.
+
+## Staff lookup of a case by tracking code, and a count for the live pulse
+From: Track D2   To: Track A (cases)   Status: open
+What: (1) `GET /v1/cases?q=` matching the application's tracking code (`R-12345`), the case id prefix and the subject name; `CaseSummary` would carry `tracking_code`. (2) optional `total` (an exact count) on the case, decision, payment and scam-report lists, or a small `GET /v1/stats/today`.
+Why: the command palette promises "open a case by id or tracking code", but staff cannot see a tracking code today, so it matches id, application id and name from the first 100 cases only. The pulse strip counts one page of up to 100 rows and shows a plus sign beyond that.
+Until then: the palette and pulse use the existing list endpoints and say so in their hints.

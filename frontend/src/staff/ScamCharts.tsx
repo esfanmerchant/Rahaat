@@ -46,7 +46,7 @@ export function TileGrid({ title, rows, counts, max, hiddenGroups, selected, onS
   const w = cols * (TILE_W + GAP) + GAP;
   const h = rows.length * (TILE_H + GAP) + GAP;
   return (
-    <figure class="m-0">
+    <figure class="st-chart m-0">
       <figcaption class="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">{title}</figcaption>
       <svg viewBox={`0 0 ${w} ${h}`} class="block w-full max-w-[640px]" role="group" aria-label={`${title} district tiles`}>
         <defs>
@@ -85,7 +85,7 @@ export function TileGrid({ title, rows, counts, max, hiddenGroups, selected, onS
               >
                 <title>{label}</title>
                 {visible ? (
-                  <rect x={x} y={y} width={TILE_W} height={TILE_H} class="fill-danger" fill-opacity={LEVEL_OPACITY[level]} />
+                  <rect x={x} y={y} width={TILE_W} height={TILE_H} class="fill-danger st-pt" style={{ animationDelay: `${(r * 6 + c) * 25}ms` }} fill-opacity={LEVEL_OPACITY[level]} />
                 ) : (
                   <rect x={x} y={y} width={TILE_W} height={TILE_H} fill={hiddenTile ? `url(#${id}-hide)` : undefined} class={hiddenTile ? '' : 'fill-sunken'} />
                 )}
@@ -177,7 +177,7 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
   const ticks = [0, Math.round(max / 2), max];
   const every = Math.max(1, Math.ceil(n / 7));
   return (
-    <figure class="m-0 flex flex-col gap-1">
+    <figure class="st-chart m-0 flex flex-col gap-1">
       <svg viewBox={`0 0 ${W} ${H}`} class="block w-full" role="img" aria-label={`Reports per day by type over the last ${trends.days} days`}>
         {ticks.map((t) => (
           <g key={t}>
@@ -209,7 +209,7 @@ export function TrendChart({ trends, only }: { trends: TrendsOut; only: string |
             <g key={s.label}>
               {runs.map((pts, k) =>
                 pts.includes(' ') ? (
-                  <polyline key={k} points={pts} fill="none" class={st.cls} stroke-width="2" stroke-dasharray={st.dash} />
+                  <polyline key={k} points={pts} fill="none" class={`${st.cls} ${st.dash ? 'st-fade' : 'st-line'}`} pathLength={st.dash ? undefined : 100} stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray={st.dash} />
                 ) : (
                   <circle key={k} cx={pts.split(',')[0]} cy={pts.split(',')[1]} r="2.5" class={`${st.cls} fill-paper`} stroke-width="2" />
                 ),

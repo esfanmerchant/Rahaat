@@ -1,0 +1,539 @@
+/*
+ * Staff console theme: "Noor" night and day (docs/DESIGN.md, Visual language v2).
+ *
+ * The shared tokens (src/shared/tokens.css) are the paper palette. The staff root carries data-theme="night"
+ * or "day"; night re-points the same CSS variables, so every existing utility (bg-paper, text-ink, border-line,
+ * bg-sunken, ...) re-themes without touching a component. Nothing in src/shared is edited.
+ *
+ * Some tokens are used both as a background under white text and as a text colour (primary, danger, info,
+ * warning-ink). On night one value cannot do both, so the variable keeps the background value and the text
+ * and stroke utilities are re-pointed below to the text-safe variables (--st-ok, --st-bad, --st-info, --st-warn).
+ *
+ * Contrast (WCAG 2.x, computed from these values; AA needs 4.5:1 for text, 3:1 for UI):
+ *   night: ink on paper 16.6, muted on paper 12.0, subtle on surface 7.1, --st-ok on primary-soft 9.0,
+ *          --st-bad on danger-soft 6.6, --st-info on info-soft 6.4, --st-warn on warning-soft 7.9,
+ *          white on primary button 6.6, white on danger button 7.4, input border 5.2, focus ring 13.3.
+ *   day:   the shared paper palette, unchanged (see tokens.css); --st-noor-text on paper 8.7.
+ */
+
+html[data-theme="night"],
+[data-theme="night"] {
+  color-scheme: dark;
+  --color-paper: #0b1026;
+  --color-surface: #151e47;
+  --color-sunken: #111939;
+  --color-ink: #eef0ff;
+  --color-ink-muted: #c7cdee;
+  --color-ink-subtle: #a3abd6;
+  --color-line: #26306a;
+  --color-line-strong: #7683c9;
+  --color-primary-soft: #0d2f2b;
+  --color-danger-soft: #3b1220;
+  --color-warning-soft: #33260a;
+  --color-warning-ink: #f5b13a;
+  --color-info: #8ea2ff;
+  --color-info-strong: #8ea2ff;
+  --color-info-soft: #172152;
+  --color-focus: #ffd36e;
+  --color-chrome: #070b1d;
+
+  --st-page: #070b1d;
+  --st-panel: #0b1026;
+  --st-panel-2: #111939;
+  --st-edge: #26306a;
+  --st-ok: #4ee6a6;
+  --st-bad: #ff7d92;
+  --st-info: #8ea2ff;
+  --st-warn: #f5b13a;
+  --st-noor: #ffd36e;
+  --st-noor-text: #ffd36e;
+  --st-grid: #26306a;
+  --st-glow-ok: rgb(78 230 166 / 0.55);
+  --st-glow-bad: rgb(255 107 129 / 0.55);
+  --st-glow-noor: rgb(255 211 110 / 0.6);
+  --st-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -18px rgb(0 0 0 / 0.8);
+}
+
+html[data-theme="day"],
+[data-theme="day"] {
+  color-scheme: light;
+  --st-page: #f1ece0;
+  --st-panel: #fffdf8;
+  --st-panel-2: #f6f1e7;
+  --st-edge: #e2d9c8;
+  --st-ok: #064b31;
+  --st-bad: #a3203a;
+  --st-info: #1a2f78;
+  --st-warn: #6a4100;
+  --st-noor: #b8860b;
+  --st-noor-text: #6a4100;
+  --st-grid: #e2d9c8;
+  --st-glow-ok: rgb(11 106 70 / 0.35);
+  --st-glow-bad: rgb(163 32 58 / 0.3);
+  --st-glow-noor: rgb(184 134 11 / 0.4);
+  --st-shadow: 0 1px 2px rgb(20 22 38 / 0.06), 0 10px 28px -16px rgb(20 22 38 / 0.25);
+}
+
+/* The staff root fills the page and paints the page colour, so no paper shows at the edges. */
+.st-root {
+  background-color: var(--st-page);
+  color: var(--color-ink);
+  min-height: 100dvh;
+}
+
+/* Text and line utilities that are also backgrounds elsewhere: re-pointed on night only. */
+[data-theme="night"] .text-primary,
+[data-theme="night"] .text-primary-strong {
+  color: var(--st-ok);
+}
+[data-theme="night"] .text-danger,
+[data-theme="night"] .hover\:text-danger:hover,
+[data-theme="night"] .active\:text-danger:active {
+  color: var(--st-bad);
+}
+[data-theme="night"] .text-info,
+[data-theme="night"] .text-info-strong {
+  color: var(--st-info);
+}
+[data-theme="night"] .text-warning-ink {
+  color: var(--st-warn);
+}
+[data-theme="night"] .border-primary,
+[data-theme="night"] .border-primary-strong {
+  border-color: #2fbf86;
+}
+[data-theme="night"] .border-danger {
+  border-color: #e0526b;
+}
+[data-theme="night"] .border-warning-ink {
+  border-color: #b87a10;
+}
+[data-theme="night"] .fill-primary {
+  fill: var(--st-ok);
+}
+[data-theme="night"] .stroke-primary {
+  stroke: var(--st-ok);
+}
+[data-theme="night"] .fill-danger {
+  fill: var(--st-bad);
+}
+[data-theme="night"] .stroke-danger {
+  stroke: var(--st-bad);
+}
+[data-theme="night"] .fill-warning-ink {
+  fill: var(--st-warn);
+}
+[data-theme="night"] .stroke-warning-ink {
+  stroke: var(--st-warn);
+}
+[data-theme="night"] .bg-warning-ink {
+  background-color: var(--st-warn);
+}
+/* Selected rows and soft panels get a lit edge on night. */
+[data-theme="night"] .bg-info-soft {
+  background-color: var(--color-info-soft);
+}
+
+/* Tile labels on a bright night fill need dark text. */
+[data-theme="night"] .fill-white {
+  fill: #070b1d;
+}
+
+/* Native form controls follow the theme. */
+[data-theme="night"] select,
+[data-theme="night"] input,
+[data-theme="night"] textarea {
+  color-scheme: dark;
+}
+[data-theme="night"] ::selection {
+  background: #3b4a9a;
+  color: #fff;
+}
+
+.st-noor-text {
+  color: var(--st-noor-text);
+}
+
+/* ---------- Shell ---------- */
+.st-bar {
+  background-color: #070b1d;
+  background-image: linear-gradient(180deg, rgb(255 211 110 / 0.07), transparent 70%);
+  border-bottom: 1px solid #26306a;
+  color: #eef0ff;
+}
+.st-bar a {
+  color: inherit;
+}
+.st-bar .st-bar-muted {
+  color: #a7aed6;
+}
+.st-pulse {
+  background-color: #0b1026;
+  border-bottom: 1px solid #26306a;
+  color: #eef0ff;
+}
+[data-theme="day"] .st-pulse {
+  background-color: #121a3c;
+}
+.st-stat {
+  position: relative;
+  padding-inline: 0.9rem;
+  border-inline-start: 1px solid #26306a;
+}
+.st-stat:first-child {
+  border-inline-start: 0;
+}
+.st-nav {
+  background-color: var(--st-panel-2);
+  border-inline-end: 1px solid var(--st-edge);
+}
+.st-nav a {
+  position: relative;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.st-nav a[aria-current="page"] {
+  background-color: var(--color-info-soft);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+[data-theme="day"] .st-nav a[aria-current="page"] {
+  background-color: #e7ebf8;
+  color: #141626;
+}
+.st-nav a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-block: 4px;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--st-noor);
+  box-shadow: 0 0 10px var(--st-glow-noor);
+}
+.st-nav a:hover:not([aria-current="page"]) {
+  background-color: var(--color-surface);
+}
+
+/* ---------- Panels ---------- */
+.st-panel {
+  background-color: var(--st-panel);
+  border: 1px solid var(--st-edge);
+  border-radius: 10px;
+  box-shadow: var(--st-shadow);
+}
+.st-panel-head {
+  background-color: var(--st-panel-2);
+  border-bottom: 1px solid var(--st-edge);
+  border-radius: 10px 10px 0 0;
+}
+.st-lit {
+  box-shadow: 0 0 0 1px var(--st-glow-noor), 0 0 30px -10px var(--st-glow-noor);
+}
+
+/* ---------- Tables ---------- */
+.st-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--st-panel-2);
+  box-shadow: 0 1px 0 var(--color-line-strong);
+}
+.st-table tbody tr {
+  transition: background-color 120ms var(--ease-out);
+}
+.st-row-in {
+  animation: st-row-in 380ms var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 28ms);
+}
+@keyframes st-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.st-cursor {
+  background-color: var(--color-info-soft);
+  box-shadow: inset 3px 0 0 var(--st-noor);
+}
+[data-theme="day"] .st-cursor {
+  background-color: #e7ebf8;
+}
+
+/* Priority heat: a short bar whose fill and colour follow urgency. */
+.st-heat {
+  display: inline-block;
+  width: 44px;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--st-grid);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.st-heat > i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transform-origin: left;
+  animation: st-grow 600ms var(--ease-out) both;
+}
+@keyframes st-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.st-h0 { background: var(--st-bad); box-shadow: 0 0 8px var(--st-glow-bad); }
+.st-h1 { background: #e8743b; }
+.st-h2 { background: var(--st-warn); }
+.st-h3 { background: var(--st-info); }
+.st-h4 { background: var(--st-grid); }
+
+/* Chips: a tone says what a value means, never the colour alone (the text says it too). */
+.st-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.35rem;
+  white-space: nowrap;
+  color: var(--color-ink-muted);
+}
+.st-chip.ok { border-color: var(--st-ok); color: var(--st-ok); background: var(--color-primary-soft); }
+.st-chip.bad { border-color: var(--st-bad); color: var(--st-bad); background: var(--color-danger-soft); }
+.st-chip.warn { border-color: var(--st-warn); color: var(--st-warn); background: var(--color-warning-soft); }
+.st-chip.info { border-color: var(--st-info); color: var(--st-info); background: var(--color-info-soft); }
+.st-chip.unk { border-style: dashed; color: var(--color-ink-muted); background: transparent; }
+.st-chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Age warms with time. */
+.st-age-0 { color: var(--color-ink-muted); }
+.st-age-1 { color: var(--st-warn); border-color: var(--st-warn); }
+.st-age-2 { color: #e8743b; border-color: #e8743b; }
+.st-age-3 { color: var(--st-bad); border-color: var(--st-bad); background: var(--color-danger-soft); }
+[data-theme="day"] .st-age-2 { color: #8a3a0b; border-color: #8a3a0b; }
+
+/* ---------- Decision anatomy ---------- */
+.st-prob {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, rgb(255 107 129 / 0.45) 0 var(--rej, 20%), rgb(142 162 255 / 0.2) var(--rej, 20%) var(--app, 80%), rgb(78 230 166 / 0.5) var(--app, 80%) 100%);
+  border: 1px solid var(--st-edge);
+}
+[data-theme="day"] .st-prob {
+  background: linear-gradient(90deg, rgb(163 32 58 / 0.25) 0 var(--rej, 20%), rgb(242 165 30 / 0.3) var(--rej, 20%) var(--app, 80%), rgb(11 106 70 / 0.28) var(--app, 80%) 100%);
+}
+.st-marker {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--st-noor);
+  border: 2px solid var(--color-paper);
+  box-shadow: 0 0 0 1px var(--st-noor), 0 0 18px 3px var(--st-glow-noor);
+  transform: translateX(var(--tx, 0px));
+  animation: st-marker 1200ms var(--ease-out) 200ms both;
+}
+@keyframes st-marker {
+  from {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(var(--tx, 0px));
+    opacity: 1;
+  }
+}
+.st-tick {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 0;
+  border-inline-start: 2px dashed var(--color-ink-muted);
+}
+.st-bar-fill {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: st-grow 800ms var(--ease-out) both;
+}
+
+/* ---------- Audit chain ---------- */
+.st-block {
+  position: relative;
+  flex: 0 0 auto;
+  width: 92px;
+  border: 1px solid var(--st-edge);
+  border-radius: 8px;
+  background: var(--st-panel);
+  padding: 0.3rem 0.4rem;
+  transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background-color 180ms var(--ease-out);
+}
+.st-block.ok {
+  border-color: var(--st-ok);
+  box-shadow: 0 0 14px -4px var(--st-glow-ok);
+}
+.st-block.bad {
+  border-color: var(--st-bad);
+  background: var(--color-danger-soft);
+  box-shadow: 0 0 0 1px var(--st-bad), 0 0 26px 2px var(--st-glow-bad);
+}
+.st-link {
+  flex: 0 0 14px;
+  height: 2px;
+  align-self: center;
+  background: var(--st-edge);
+  transition: background-color 180ms var(--ease-out);
+}
+.st-link.ok {
+  background: var(--st-ok);
+}
+.st-link.bad {
+  background: var(--st-bad);
+}
+.st-seal {
+  animation: rh-pop 640ms var(--ease-spring) both;
+}
+
+/* ---------- Command palette ---------- */
+.st-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(4 6 18 / 0.66);
+  animation: rh-fade 140ms var(--ease-out) both;
+}
+.st-sheet {
+  background: var(--st-panel);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.7), 0 0 0 1px var(--st-glow-noor);
+  animation: rh-rise 220ms var(--ease-out) both;
+}
+.st-opt[aria-selected="true"] {
+  background-color: var(--color-info-soft);
+  box-shadow: inset 3px 0 0 var(--st-noor);
+}
+[data-theme="day"] .st-opt[aria-selected="true"] {
+  background-color: #e7ebf8;
+}
+kbd.st-kbd {
+  border: 1px solid var(--color-line-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-ink-muted);
+}
+
+/* ---------- Charts ---------- */
+.st-chart .st-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: rh-draw 1100ms var(--ease-in-out) both;
+}
+.st-chart .st-fade {
+  animation: rh-fade 700ms var(--ease-out) 500ms both;
+}
+.st-chart .st-bar-in {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: st-grow 800ms var(--ease-out) both;
+}
+.st-chart .st-pt {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rh-pop 560ms var(--ease-spring) both;
+}
+.st-tip {
+  pointer-events: none;
+  position: absolute;
+  z-index: 5;
+  max-width: 16rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 6px;
+  background: var(--st-panel);
+  color: var(--color-ink);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  box-shadow: var(--st-shadow);
+}
+
+/* ---------- Live ---------- */
+.st-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ee6a6;
+  position: relative;
+}
+.st-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #4ee6a6;
+  animation: rh-ring 1.8s var(--ease-out) infinite;
+}
+.st-sweep {
+  animation: st-sweep 520ms var(--ease-out) both;
+}
+@keyframes st-sweep {
+  from {
+    opacity: 0.2;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Reduced motion: no loops, no travel; state changes are plain fades. */
+@media (prefers-reduced-motion: reduce) {
+  .st-live::after {
+    animation: none;
+    opacity: 0;
+  }
+  .st-row-in,
+  .st-heat > i,
+  .st-bar-fill,
+  .st-marker,
+  .st-sweep,
+  .st-chart .st-bar-in,
+  .st-chart .st-pt,
+  .st-chart .st-line,
+  .st-seal {
+    animation: rh-fade 180ms linear both !important;
+    animation-delay: 0ms !important;
+  }
+  .st-chart .st-line {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The top bar is night in both themes, so its key caps use night colours. */
+.st-bar kbd.st-kbd {
+  color: #a7aed6;
+  border-color: #2a3570;
+}

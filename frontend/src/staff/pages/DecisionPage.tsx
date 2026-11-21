@@ -4,6 +4,7 @@ import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { Badge, humanize, Section, useLoad, type DecisionTrace, type DecisionUserView } from '../ui';
 import { ReplayBox } from './DecisionList';
+import { DecisionAnatomy } from './Anatomy';
 import { HashFacts, TraceView } from './parts';
 
 export function DecisionPage({ id }: { id: string }) {
@@ -42,6 +43,8 @@ export function DecisionPage({ id }: { id: string }) {
       <Section id="hashes" title="Identity of this decision">
         <HashFacts trace={trace} />
       </Section>
+
+      <DecisionAnatomy trace={trace} />
 
       <div class="grid items-start gap-4 xl:grid-cols-[minmax(18rem,24rem)_1fr]">
         <Section id="citizen" title="What the citizen was told">
@@ -86,7 +89,7 @@ export function DecisionPage({ id }: { id: string }) {
       ) : null}
 
       <Section id="verify" title="Replay and verification">
-        <ReplayBox id={trace.decision_id} />
+        <ReplayBox id={trace.decision_id} facts={{ inputHash: trace.input_hash, engine: trace.engine_version, model: trace.model_version, ruleVersion: trace.rule_version_no, outcome: trace.outcome }} />
       </Section>
     </article>
   );

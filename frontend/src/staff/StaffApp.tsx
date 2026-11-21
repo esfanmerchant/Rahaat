@@ -31,6 +31,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { RulesPage } from './pages/RulesPage';
 import { StaffLogin } from './StaffLogin';
 import { StaffShell, StaffSignOutButton } from './StaffShell';
+import { StaffRoot } from './theme';
 
 /**
  * Staff console, lazy-loaded at /staff and /staff/*. Its code never ships in
@@ -39,6 +40,7 @@ import { StaffShell, StaffSignOutButton } from './StaffShell';
 export default function StaffApp() {
   useTemporaryLang('en');
   return (
+    <StaffRoot>
     <ErrorBoundary density="staff">
       <Router>
         <Route path="/login" component={StaffLoginRoute} />
@@ -49,12 +51,13 @@ export default function StaffApp() {
         <Route default component={StaffNotFound} />
       </Router>
     </ErrorBoundary>
+    </StaffRoot>
   );
 }
 
 function Bare({ children }: { children?: ComponentChildren }) {
   return (
-    <div class="flex min-h-dvh flex-col bg-paper text-sm text-ink">
+    <div class="flex min-h-dvh flex-col">
       <main class="mx-auto w-full max-w-3xl flex-1 p-4">{children}</main>
       <PrototypeFooter density="staff" />
     </div>
