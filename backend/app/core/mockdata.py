@@ -12,7 +12,9 @@ MOCK_ID_PREFIX = "00000"
 MOCK_PHONE_PREFIX = "0999"
 
 _MOCK_ID = re.compile(r"^00000-(\d{7})-(\d)$")
-_MOCK_PHONE = re.compile(r"^0999-?(\d{7})$")
+# Local form 0999-NNNNNNN, or the same number in Pakistan's international form: +92 999 NNNNNNN, 92999NNNNNNN,
+# 0092999NNNNNNN. 999 after the country code is the reserved mock prefix; a real mobile number (+92 3xx) never matches.
+_MOCK_PHONE = re.compile(r"^(?:0|\+92|0092|92)999(\d{7})$")
 
 
 def luhn_check_digit(digits: str) -> int:
@@ -37,8 +39,8 @@ def make_mock_phone(serial: int) -> str:
 
 
 def normalise_mock_phone(value: str) -> str | None:
-    """Canonical `0999-NNNNNNN`, or None when the value is not a mock phone number."""
-    match = _MOCK_PHONE.match(value.strip().replace(" ", ""))
+    """Canonical `0999-NNNNNNN`, or None when the value is not a mock phone number. Accepts the +92 form too."""
+    match = _MOCK_PHONE.match(re.sub(r"[\s\-()]", "", value.strip()))
     return f"{MOCK_PHONE_PREFIX}-{match.group(1)}" if match else None
 
 
@@ -62,3 +64,9 @@ def mask_identifier(value: str) -> str:
     """Show only the last three characters, for screens and logs."""
     cleaned = value.strip()
     return "•" * max(len(cleaned) - 3, 0) + cleaned[-3:]
+
+
+def international_mock_phone(value: str) -> str | None:
+    """The +92 form for display, `+92 999 NNNNNNN`, or None when the value is not a mock phone number."""
+    canonical = normalise_mock_phone(value)
+    return f"+92 999 {canonical[-7:]}" if canonical else None

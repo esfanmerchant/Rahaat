@@ -162,3 +162,19 @@ def test_the_app_role_keeps_a_pooler_project_suffix() -> None:
     plain = Settings(app_env="dev", database_url_owner="postgresql://owner:pw@db.example:5432/rahat", app_db_password="apw")
     assert plain.app_url().username == "rahat_app"
     config._url_cache.clear()
+
+
+def test_a_mock_phone_may_be_written_in_the_international_form() -> None:
+    for written in ("+92 999 1234567", "+92-999-1234567", "+929991234567", "0092 999 1234567", "92 999 1234567", "0999 1234567"):
+        assert mockdata.normalise_mock_phone(written) == "0999-1234567", written
+        assert mockdata.international_mock_phone(written) == "+92 999 1234567", written
+    for refused in ("+92 300 1234567", "+92 999 123456", "+92 999 12345678", "+44 999 1234567"):  # mock-lint: allow
+        assert mockdata.normalise_mock_phone(refused) is None, refused
+
+
+def test_the_international_form_of_a_mock_phone_is_redacted_like_the_local_one() -> None:
+    from app.modules.guardrails.pii import redact_for_storage
+
+    for written in ("0999-1234567", "+92 999 1234567", "+929991234567", "0092-999-1234567"):
+        out = redact_for_storage(f"send it to {written} now")
+        assert "1234567" not in str(out), (written, out)

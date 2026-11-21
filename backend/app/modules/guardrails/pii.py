@@ -19,7 +19,7 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
     ("pii_iban", re.compile(r"(?i)\bPK\d{2}[A-Z]{4}\d{16}\b"), "[account]"),
     ("pii_card_number", re.compile(r"(?<!\d)(?:\d{4}[-\s]?){3}\d{4}(?!\d)"), "[card]"),
     ("pii_phone", re.compile(r"(?<!\d)(?:\+92[-\s]?|0092[-\s]?|0)3\d{2}[-\s]?\d{7}(?!\d)"), "[phone]"),
-    ("pii_mock_phone", re.compile(r"(?<!\d)0999[-\s]?\d{7}(?!\d)"), "[mock-phone]"),
+    ("pii_mock_phone", re.compile(r"(?<![\d+])(?:\+92[-\s]?|0092[-\s]?|92[-\s]?|0)999[-\s]?\d{7}(?!\d)"), "[mock-phone]"),
     ("pii_phone", re.compile(r"(?<!\d)0\d{2,3}[-\s]?\d{7,8}(?!\d)"), "[phone]"),
     ("pii_email", re.compile(r"\b[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}\b"), "[email]"),
     (
