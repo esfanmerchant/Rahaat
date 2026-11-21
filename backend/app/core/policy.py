@@ -93,6 +93,9 @@ class Policy:
                 if not key.scopes:
                     raise Forbidden("This API key works only after a second admin approves it.", code=code)
                 raise Forbidden("This API key is not allowed to call this endpoint.", code=code)
+            from app.modules.plans.service import enforce_api_calls  # imported here: modules import core, not the other way round
+
+            enforce_api_calls(key.tenant_id, key.id)  # 429 plan_limit_reached once this month's api_calls are used up
             apikeys.record_use(key)
             return principal
         ratelimit.charge(request.url.path, ratelimit.user_charges(principal.tenant_id, principal.user_id, principal.role), cost)

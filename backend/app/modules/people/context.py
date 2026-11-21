@@ -34,6 +34,10 @@ Scope = Literal["track", "apply", "upload"]
 DELEGATION_SCOPES: Final[frozenset[str]] = frozenset({"track", "apply", "upload"})
 PERSON_ROLES: Final = ("citizen", "helper")
 
+# Calls that are metered as `ai_calls` against the department's plan (the person check has passed by then).
+# Typing the answer instead of speaking it always works, so refusing a spoken one never blocks an application.
+AI_CALL_ROUTES: Final[frozenset[tuple[str, str]]] = frozenset({("POST", "/v1/voice/interpret"), ("POST", "/v1/voice/stt")})
+
 _DENIED_MESSAGE = "You cannot do this for that person."
 _TICKET_MESSAGES: Final[dict[str, str]] = {
     "ticket_required": "Enter this family's PIN first.",
@@ -164,6 +168,10 @@ def acting_person(policy_name: str, scope: Scope, *, description: str = "") -> C
         ),
     ) -> PersonContext:
         ctx = resolve_person(db, principal, x_acting_for, scope, x_helper_ticket)
+        if (request.method, request.url.path) in AI_CALL_ROUTES:
+            from app.modules.plans.service import consume_committed  # imported here: plans does not import people
+
+            consume_committed(ctx.principal.rls(), ctx.tenant_id, "ai_calls")
         request.state.principal = ctx.principal
         return ctx
 

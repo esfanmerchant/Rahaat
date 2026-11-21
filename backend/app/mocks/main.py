@@ -22,11 +22,15 @@ from app.core.mockdata import normalise_mock_phone
 from app.mocks import identity as identity_rules
 from app.mocks import registry
 from app.mocks.config import SERVICES, get_mock_service_settings
+from app.mocks.receiver import RECEIVER
+from app.mocks.receiver import router as receiver_router
 from app.mocks.state import STATE
 
 LABEL = "Simulated service for the Rahat prototype. Not a real identity, registry, payment or SMS system."
 
 app = FastAPI(title="Rahat mock services (simulated)", description=LABEL, version="1", docs_url="/docs", redoc_url=None)
+
+app.include_router(receiver_router)
 
 ServiceName = Literal["identity", "registry", "payment", "sms"]
 
@@ -185,6 +189,7 @@ def get_controls() -> dict[str, Any]:
 def reset_controls(everything: bool = Query(False, description="Also clear the ledger, the outbox and registry overrides")) -> dict[str, Any]:
     if everything:
         STATE.reset_all()
+        RECEIVER.reset()
     else:
         STATE.reset_controls()
     return _controls()
