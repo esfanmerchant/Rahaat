@@ -299,7 +299,7 @@ export function LabPage() {
       const msgs = [
         { label: 'A relief scam', text: 'Congratulations! You are selected for Rahat relief Rs 25,000. Send Rs 500 fee to 0999-0000777 today to receive your money.' },
         { label: 'A lookalike link', text: 'Your Rahat payment is on hold. Verify your card now at http://rahat-relief-pay.example.xyz/verify' },
-        { label: 'A short ambiguous message', text: 'Call me back about the form' },
+        { label: 'A short ambiguous message', text: 'Your payment is ready. Please confirm your details at the office' },
       ];
       const words: string[] = [];
       let scam = false;
