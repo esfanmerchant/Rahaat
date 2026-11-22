@@ -1,0 +1,558 @@
+/*
+ * Staff console, calm pass (unslop). Loaded after staff.css and shell.css, so it wins on equal specificity.
+ *
+ * Direction: a quiet graphite instrument panel. Chrome is neutral; noor gold is the one accent (focus, the current page,
+ * the Emblem). Colour appears in content (the decision mix, the audit chain, the maps), never on chrome.
+ * No glows, no coloured shadows, no hue gradients on chrome, sentence-case labels, a 4 px grid, one radius per role
+ * (controls 6, panels 8, floating layers 12), one figure size per kind of figure.
+ */
+
+/* ---------- Tokens ---------- */
+:root {
+  --r-ctl: 6px;
+  --r-panel: 8px;
+  --r-float: 12px;
+  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --shadow-float: 0 8px 24px -8px rgb(0 0 0 / 0.35);
+}
+html[data-theme="night"],
+[data-theme="night"] {
+  --st-shadow: none;
+  --st-glow-ok: transparent;
+  --st-glow-bad: transparent;
+  --st-glow-noor: transparent;
+  --st-glow-info: transparent;
+  --st-glow-warn: transparent;
+}
+html[data-theme="day"],
+[data-theme="day"] {
+  --st-shadow: 0 1px 0 rgb(0 0 0 / 0.03);
+  --st-glow-ok: transparent;
+  --st-glow-bad: transparent;
+  --st-glow-noor: transparent;
+  --st-glow-info: transparent;
+  --st-glow-warn: transparent;
+  --shadow-float: 0 8px 24px -8px rgb(0 0 0 / 0.18);
+}
+
+/* ---------- Labels: sentence case, normal tracking, one small size ---------- */
+.st-root .uppercase {
+  text-transform: none;
+}
+.st-root .tracking-widest,
+.st-root .tracking-wider,
+.st-root .tracking-wide {
+  letter-spacing: 0;
+}
+.st-root .text-\[10px\],
+.st-root .text-\[11px\] {
+  font-size: 12px;
+}
+.nv-more-h,
+.nv-rail-sep span {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Top bar: one row ---------- */
+.st-bar {
+  background: var(--st-panel);
+  background-image: none;
+  border-bottom: 1px solid var(--st-edge);
+  color: var(--color-ink);
+}
+.sb-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding-inline: 12px;
+}
+.sb-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: none;
+  text-decoration: none;
+}
+.sb-brand-en {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.sb-brand-ur {
+  font-size: 16px;
+}
+.sb-ctx-wrap {
+  position: relative;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.sb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--st-edge);
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-ui), border-color 140ms var(--ease-ui);
+}
+.sb-btn:hover:not(:disabled) {
+  background: var(--st-panel-2);
+  border-color: var(--color-line-strong);
+}
+.sb-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.sb-btn:focus-visible,
+.sb-pop select:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.sb-ctx {
+  max-width: 100%;
+  min-width: 0;
+}
+.sb-ctx-dept {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+.sb-ctx-role {
+  flex: none;
+  padding-inline-start: 8px;
+  border-inline-start: 1px solid var(--st-edge);
+  color: var(--st-noor-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.sb-chev {
+  flex: none;
+  color: var(--color-ink-subtle);
+}
+.sb-pop {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 8px);
+  inset-inline-start: 0;
+  width: 288px;
+  max-width: calc(100vw - 24px);
+  padding: 12px;
+  border: 1px solid var(--st-edge);
+  border-radius: var(--r-float);
+  background: var(--st-panel);
+  box-shadow: var(--shadow-float);
+  animation: st-rise 160ms var(--ease-ui) both;
+}
+.sb-pop-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.sb-pop-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.sb-pop-list dt {
+  color: var(--color-ink-muted);
+}
+.sb-pop-list dd {
+  margin: 0;
+  min-width: 0;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+.sb-pop-switch {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+.sb-pop-switch select {
+  height: 32px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-size: 13px;
+}
+.sb-pop-out {
+  width: 100%;
+  justify-content: center;
+}
+.sb-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  flex: none;
+}
+.sb-name {
+  display: none;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-ink-muted);
+  font-size: 13px;
+}
+.sb-out,
+.sb-jump-text,
+.sb-kbd,
+.sb-theme-text {
+  display: none;
+}
+.sb-jump,
+.sb-theme {
+  padding: 0 8px;
+}
+.sb-jump svg,
+.sb-theme svg {
+  flex: none;
+}
+.sb-btn.sb-jump {
+  color: var(--color-ink-muted);
+}
+kbd.st-kbd.sb-kbd {
+  color: var(--color-ink-subtle);
+  border-color: var(--st-edge);
+}
+@media (min-width: 768px) {
+  .sb-jump {
+    padding: 0 12px;
+  }
+  .sb-jump-text,
+  .sb-theme-text {
+    display: inline;
+  }
+}
+@media (min-width: 1024px) {
+  .sb-kbd,
+  .sb-name {
+    display: inline;
+  }
+  .sb-out {
+    display: inline-flex;
+  }
+  .sb-theme {
+    padding: 0 12px;
+  }
+  .sb-pop-account,
+  .sb-pop-out {
+    display: none;
+  }
+}
+.st-pulse {
+  background: var(--st-panel);
+  border-bottom: 1px solid var(--st-edge);
+  color: var(--color-ink);
+}
+.st-stat {
+  padding-inline: 12px;
+  border-inline-start-color: var(--st-edge);
+}
+
+/* ---------- Rail and More: neutral, no glow ---------- */
+.nv-rail-panel,
+.nv-rail.is-open .nv-rail-panel,
+[data-theme="day"] .nv-rail-panel {
+  border-radius: var(--r-float);
+  box-shadow: var(--shadow-float);
+}
+.nv-rail-logo,
+.nv-rail-link {
+  border-radius: var(--r-panel);
+}
+.nv-rail-link:hover {
+  background: var(--st-panel-2);
+}
+.nv-rail-link[aria-current="page"] {
+  background: color-mix(in srgb, var(--st-noor) 14%, transparent);
+  box-shadow: none;
+}
+.nv-more {
+  border-radius: var(--r-float);
+  box-shadow: var(--shadow-float);
+}
+.nv-more-item {
+  border-radius: var(--r-panel);
+}
+.nv-more-item[aria-current="page"] {
+  border-color: var(--st-noor-text);
+}
+
+/* ---------- Surfaces: flat, hairline, one radius ---------- */
+.st-panel,
+.st-tile {
+  border-radius: var(--r-panel);
+  box-shadow: none;
+}
+.st-panel-head {
+  border-radius: var(--r-panel) var(--r-panel) 0 0;
+}
+.st-lit,
+.dm-verdict,
+.st-block.ok {
+  box-shadow: none;
+}
+.st-block.bad {
+  box-shadow: 0 0 0 1px var(--st-bad);
+}
+.st-sheet {
+  border-radius: var(--r-float);
+  box-shadow: var(--shadow-float);
+}
+.st-tip,
+.cc-tip-pop {
+  box-shadow: var(--shadow-float);
+}
+.st-glow,
+.st-glow-line,
+.st-seg {
+  filter: none;
+}
+.st-halo {
+  display: none;
+}
+.st-swatch,
+.st-track > i,
+.st-h0,
+.st-nav a[aria-current="page"]::before {
+  box-shadow: none;
+}
+.st-marker {
+  box-shadow: 0 0 0 1px var(--st-noor);
+}
+.st-tab-on {
+  box-shadow: 0 0 0 1px var(--st-edge);
+}
+.st-tabs {
+  border-radius: var(--r-panel);
+}
+.st-tab {
+  border-radius: var(--r-ctl);
+}
+.cc-btn {
+  border-radius: var(--r-ctl);
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.dg-item.is-lifted {
+  box-shadow: var(--shadow-float), 0 0 0 1px var(--st-noor-text);
+}
+
+/* KPI tile: a neutral figure and a small tone dot in the label. One size for every figure. */
+.st-tile::before {
+  display: none;
+}
+.st-tile-num {
+  color: var(--color-ink);
+  text-shadow: none;
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.st-tile-num > span:not(.rh-num) {
+  font-size: 14px;
+}
+.st-tile-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.st-tile-label::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tc);
+  flex: none;
+}
+.dm-verdict-label {
+  text-shadow: none;
+}
+
+/* ---------- Tables: header sentence case ---------- */
+.st-table thead th {
+  text-transform: none;
+}
+
+/* ---------- Motion ---------- */
+.st-page-in {
+  animation: st-fade 200ms var(--ease-ui) both;
+}
+@keyframes st-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* One entrance per page: the title. Rows and panels fade in, they do not travel. */
+.st-row-in {
+  animation: st-fade 240ms var(--ease-ui) both;
+  animation-delay: calc(min(var(--i, 0), 10) * 16ms);
+}
+.st-panel {
+  animation: st-fade 200ms var(--ease-ui) both;
+}
+.rise {
+  display: inline;
+}
+.rise-w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.rise-w > i {
+  display: inline-block;
+  font-style: normal;
+  transform: translateY(105%);
+  animation: rise-up 520ms var(--ease-ui) both;
+  animation-delay: calc(var(--w, 0) * 60ms + 40ms);
+}
+@keyframes rise-up {
+  from {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise-w > i {
+    animation: st-fade 160ms linear both;
+    animation-delay: 0ms;
+    transform: none;
+  }
+  .st-page-in,
+  .st-row-in,
+  .st-panel,
+  .sb-pop {
+    animation: st-fade 120ms linear both !important;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* Light to dark: one 400 ms reveal, one easing. Colours inside also ease, so nothing snaps behind the circle. */
+html.st-theme-vt::view-transition-new(root) {
+  animation: st-theme-reveal 400ms var(--ease-ui) both;
+}
+.st-root,
+.st-bar,
+.st-pulse,
+.st-panel,
+.st-tile,
+.nv-rail-panel {
+  transition: background-color 400ms var(--ease-ui), border-color 400ms var(--ease-ui), color 400ms var(--ease-ui);
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-root,
+  .st-bar,
+  .st-pulse,
+  .st-panel,
+  .st-tile,
+  .nv-rail-panel {
+    transition: none;
+  }
+}
+
+/* Page titles: one size everywhere. */
+.st-root h1#page-title {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.cc-grid-2 {
+  align-items: start;
+}
+.cc-grid-kpi .st-tile {
+  min-height: 136px;
+}
+
+/* Case, Audit and Impact cards (pages.css): same surfaces, same figure size, no lift on hover. */
+[data-theme="day"] .st-pulse {
+  background-color: var(--st-panel);
+}
+.st-root *:not(.dm-title):not(.dm-lede) {
+  text-shadow: none !important;
+}
+.pg-card,
+.pg-tile,
+.pg-action {
+  border-radius: var(--r-panel);
+  box-shadow: none;
+}
+.pg-card:hover,
+.pg-tile:hover {
+  transform: none;
+}
+.pg-card-head h2,
+.pg-cap {
+  font-size: 12px;
+  font-weight: 600;
+}
+.pg-tile::before {
+  display: none;
+}
+.pg-tile .pg-num {
+  color: var(--color-ink);
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.pg-tile .pg-num small {
+  font-size: 14px;
+}
+.pg-pbig {
+  font-size: 28px;
+  font-weight: 700;
+}
+.pg-lit,
+.pg-block.scan {
+  box-shadow: none;
+}
+.pg-lit {
+  border-color: var(--st-noor-text);
+}
+.pg-block.scan {
+  transform: none;
+}
+.pg-block.bad {
+  box-shadow: 0 0 0 1px var(--st-bad);
+}
+.st-node.act {
+  animation: none;
+}

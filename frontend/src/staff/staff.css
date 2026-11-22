@@ -19,35 +19,35 @@
 html[data-theme="night"],
 [data-theme="night"] {
   color-scheme: dark;
-  --color-paper: #0b1026;
-  --color-surface: #151e47;
-  --color-sunken: #111939;
-  --color-ink: #eef0ff;
-  --color-ink-muted: #c7cdee;
-  --color-ink-subtle: #a3abd6;
-  --color-line: #26306a;
-  --color-line-strong: #7683c9;
+  --color-paper: #15171b;
+  --color-surface: #1f2228;
+  --color-sunken: #1b1e23;
+  --color-ink: #edeef1;
+  --color-ink-muted: #c5c8cf;
+  --color-ink-subtle: #a0a5af;
+  --color-line: #2e3239;
+  --color-line-strong: #8a909c;
   --color-primary-soft: #0d2f2b;
   --color-danger-soft: #3b1220;
   --color-warning-soft: #33260a;
   --color-warning-ink: #f5b13a;
   --color-info: #8ea2ff;
   --color-info-strong: #8ea2ff;
-  --color-info-soft: #172152;
+  --color-info-soft: #1c2230;
   --color-focus: #ffd36e;
-  --color-chrome: #070b1d;
+  --color-chrome: #0f1013;
 
-  --st-page: #070b1d;
-  --st-panel: #0b1026;
-  --st-panel-2: #111939;
-  --st-edge: #26306a;
+  --st-page: #0f1013;
+  --st-panel: #15171b;
+  --st-panel-2: #1b1e23;
+  --st-edge: #2e3239;
   --st-ok: #4ee6a6;
   --st-bad: #ff7d92;
   --st-info: #8ea2ff;
   --st-warn: #f5b13a;
   --st-noor: #ffd36e;
   --st-noor-text: #ffd36e;
-  --st-grid: #26306a;
+  --st-grid: #2e3239;
   --st-glow-ok: rgb(78 230 166 / 0.55);
   --st-glow-bad: rgb(255 107 129 / 0.55);
   --st-glow-noor: rgb(255 211 110 / 0.6);
@@ -136,7 +136,7 @@ html[data-theme="day"],
 
 /* Tile labels on a bright night fill need dark text. */
 [data-theme="night"] .fill-white {
-  fill: #070b1d;
+  fill: #0f1013;
 }
 
 /* Native form controls follow the theme. */
@@ -146,7 +146,7 @@ html[data-theme="day"],
   color-scheme: dark;
 }
 [data-theme="night"] ::selection {
-  background: #3b4a9a;
+  background: #3d4a73;
   color: #fff;
 }
 
@@ -156,29 +156,29 @@ html[data-theme="day"],
 
 /* ---------- Shell ---------- */
 .st-bar {
-  background-color: #070b1d;
+  background-color: #0f1013;
   background-image: linear-gradient(180deg, rgb(255 211 110 / 0.07), transparent 70%);
-  border-bottom: 1px solid #26306a;
-  color: #eef0ff;
+  border-bottom: 1px solid #2e3239;
+  color: #edeef1;
 }
 .st-bar a {
   color: inherit;
 }
 .st-bar .st-bar-muted {
-  color: #a7aed6;
+  color: #a0a5af;
 }
 .st-pulse {
-  background-color: #0b1026;
-  border-bottom: 1px solid #26306a;
-  color: #eef0ff;
+  background-color: #15171b;
+  border-bottom: 1px solid #2e3239;
+  color: #edeef1;
 }
 [data-theme="day"] .st-pulse {
-  background-color: #121a3c;
+  background-color: #1b1e23;
 }
 .st-stat {
   position: relative;
   padding-inline: 0.9rem;
-  border-inline-start: 1px solid #26306a;
+  border-inline-start: 1px solid #2e3239;
 }
 .st-stat:first-child {
   border-inline-start: 0;
@@ -534,8 +534,8 @@ kbd.st-kbd {
 
 /* The top bar is night in both themes, so its key caps use night colours. */
 .st-bar kbd.st-kbd {
-  color: #a7aed6;
-  border-color: #2a3570;
+  color: #a0a5af;
+  border-color: #2e3239;
 }
 
 /* ---------- Chart tones: gradients, glows, pills, legend chips (Noor v2) ---------- */
@@ -628,10 +628,10 @@ html[data-theme="night"], [data-theme="night"] {
 }
 
 /* ---------- /demo: the cinematic landing ---------- */
-.dm-hero { background-color: #070b1d; color: #eef0ff; }
+.dm-hero { background-color: #0f1013; color: #edeef1; }
 /* One layered sky: lattice, fine grain (it dithers the gradient, which is what removes the banding), lamp pool, indigo corner. */
 .dm-sky {
-  background-color: #070b1d;
+  background-color: #0f1013;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffd36e' stroke-opacity='.07'%3E%3Cpath d='M18 18h28v28H18z'/%3E%3Cpath d='M32 12.2 51.8 32 32 51.8 12.2 32z'/%3E%3Ccircle cx='32' cy='32' r='3'/%3E%3C/g%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E"),
@@ -650,7 +650,7 @@ html[data-theme="night"], [data-theme="night"] {
     radial-gradient(46% 42% at 50% 52%, rgb(7 11 29 / 0.55), rgb(7 11 29 / 0.18) 70%, transparent 100%),
     linear-gradient(180deg, rgb(7 11 29 / 0.55), rgb(7 11 29 / 0.1) 30%, rgb(7 11 29 / 0.1) 70%, rgb(7 11 29 / 0.7));
 }
-[data-theme="night"] .dm-hero { box-shadow: 0 60px 80px -40px #070b1d; }
+[data-theme="night"] .dm-hero { box-shadow: 0 60px 80px -40px #0f1013; }
 .dm-title { text-shadow: 0 0 60px rgb(255 211 110 / 0.35), 0 2px 24px rgb(7 11 29 / 0.8); }
 .dm-lede { text-shadow: 0 1px 14px rgb(7 11 29 / 0.9); }
 .dm-cue svg { animation: rh-float 2.2s ease-in-out infinite; }

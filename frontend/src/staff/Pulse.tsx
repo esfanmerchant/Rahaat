@@ -106,32 +106,32 @@ export function PulseStrip() {
     };
   }, []);
 
-  const tone = (t: Stat['tone']): string => (t === 'ok' ? 'text-emerald-glow' : t === 'bad' ? 'text-madder-glow' : t === 'info' ? 'text-indigo-glow' : 'text-night-ink');
+  const tone = (t: Stat['tone']): string => (t === 'ok' ? 'text-primary' : t === 'bad' ? 'text-danger' : t === 'info' ? 'text-info' : 'text-ink');
 
   return (
     <section aria-label="Live counters" class="st-pulse flex flex-wrap items-center gap-y-1 px-3 py-1.5">
-      <div class="flex items-center gap-2 pe-3 text-xs text-night-muted">
+      <div class="flex items-center gap-2 pe-3 text-xs text-ink-muted">
         <span class="st-live" aria-hidden="true" />
-        <span class="font-semibold uppercase tracking-wide">Live</span>
+        <span class="font-medium">Live</span>
       </div>
       {stats === null ? (
-        <span class="text-xs text-night-muted" role="status">
+        <span class="text-xs text-ink-muted" role="status">
           {failed ? 'Counters unavailable.' : 'Reading the counters…'}
         </span>
       ) : stats.length === 0 ? (
-        <span class="text-xs text-night-muted">No counters are available for this role.</span>
+        <span class="text-xs text-ink-muted">No counters are available for this role.</span>
       ) : (
         stats.map((s) => (
           <div key={s.key} class="st-stat flex items-baseline gap-2" title={s.hint}>
-            <span class={`rh-num text-xl font-black leading-none tracking-tight ${tone(s.tone)}`}>
+            <span class={`rh-num text-base font-semibold leading-none tabular-nums ${tone(s.tone)}`}>
               <CountUp value={s.value} {...(s.format ? { format: s.format } : {})} />
               {s.plus ? '+' : ''}
             </span>
-            <span class="text-xs text-night-muted">{s.label}</span>
+            <span class="text-xs text-ink-muted">{s.label}</span>
           </div>
         ))
       )}
-      <span class="ms-auto ps-3 text-xs text-night-muted" aria-live="off">
+      <span class="ms-auto ps-3 text-xs text-ink-muted" aria-live="off">
         {failed ? 'Refresh failed, showing the last numbers. ' : ''}
         {at ? `Updated ${at.toISOString().slice(11, 19)}Z, every 15 s` : ''}
       </span>

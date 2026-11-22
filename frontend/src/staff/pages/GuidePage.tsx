@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'preact/hooks';
+import { Rise } from '../Rise';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { activeRole } from '../scam';
 import { findNavItem, type StaffRole } from '../nav';
@@ -186,8 +187,8 @@ export function GuidePage() {
     <section aria-labelledby="page-title" class="gd flex max-w-5xl flex-col gap-3">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-lg font-semibold">
-            Where is what
+          <h1 id="page-title" ref={headingRef} tabIndex={-1}>
+            <Rise text="Where is what" />
           </h1>
           <p class="text-sm text-ink-muted">The brief, mapped to the running app. Each link opens the page that shows it.</p>
         </div>

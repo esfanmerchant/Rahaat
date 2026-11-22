@@ -9,6 +9,7 @@ import { PrototypeFooter } from '../shared/components/PrototypeFooter';
 import { moreFor, railFor, type NavItem } from './nav';
 import { NavIcon } from './NavIcons';
 import { Palette } from './Palette';
+import { prefetchPage } from './lazyPages';
 import { PulseStrip } from './Pulse';
 import { theme, toggleTheme } from './theme';
 
@@ -53,6 +54,9 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [ctxOpen, setCtxOpen] = useState(false);
+  const ctxBtn = useRef<HTMLButtonElement>(null);
+  const ctxPanel = useRef<HTMLDivElement>(null);
   const [railOpen, setRailOpen] = useState(false);
   const railRef = useRef<HTMLElement>(null);
 
@@ -67,6 +71,29 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    setMoreOpen(false);
+    setCtxOpen(false);
+  }, [path]);
+  useEffect(() => {
+    if (!ctxOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!ctxPanel.current?.contains(t) && !ctxBtn.current?.contains(t)) setCtxOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setCtxOpen(false);
+        ctxBtn.current?.focus();
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, [ctxOpen]);
   useEffect(() => setMoreOpen(false), [path]);
   useEffect(() => {
     if (!moreOpen) return;
@@ -117,7 +144,6 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
   };
 
   const night = theme.value === 'night';
-  const BTN_BAR = 'h-7 rounded-md border border-night-line px-2 text-night-ink hover:bg-night-3 disabled:opacity-70';
 
   return (
     <div class="st-frame flex min-h-dvh flex-col">
@@ -127,50 +153,81 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
       >
         Skip to content
       </a>
-      <header class="st-bar flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-1.5">
-        <a href="/staff" class="flex items-center gap-2 no-underline" aria-label="Rahat staff home">
-          <span class="text-base font-black tracking-tight">Rahat</span>
-          <span class="font-urdu-hint text-base" lang="ur" dir="rtl">راحت</span>
+      <header class="st-bar sb-row">
+        <a href="/staff" class="sb-brand" aria-label="Rahat staff home">
+          <span class="sb-brand-en">Rahat</span>
+          <span class="font-urdu-hint sb-brand-ur" lang="ur" dir="rtl">راحت</span>
         </a>
-        <span class="st-bar-muted" title={active.tenant_slug}>
-          Department <span class="font-semibold text-night-ink">{active.tenant_name}</span>
-        </span>
-        <span class="st-bar-muted">
-          Role <span class="rounded-full bg-night-3 px-2 py-0.5 font-mono text-xs font-semibold text-noor">{active.role}</span>
-        </span>
-        {memberships.length > 1 ? (
-          <label class="st-bar-muted flex min-w-0 max-w-full items-center gap-1.5">
-            Switch
-            <select
-              class="h-7 min-w-0 max-w-[14rem] rounded-md border border-night-line bg-night px-1 text-night-ink"
-              value={membershipKey(active)}
-              disabled={switching}
-              onChange={(event) => void onSwitch(event.currentTarget.value)}
-            >
-              {memberships.map((m) => (
-                <option key={membershipKey(m)} value={membershipKey(m)}>
-                  {m.tenant_name} / {m.role}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        <div class="ms-auto flex items-center gap-2">
-          <button type="button" class={`${BTN_BAR} flex items-center gap-2 text-night-muted`} onClick={() => setPaletteOpen(true)} aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K">
-            <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.8" />
-              <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        <div class="sb-ctx-wrap">
+          <button
+            ref={ctxBtn}
+            type="button"
+            class="sb-btn sb-ctx"
+            aria-haspopup="dialog"
+            aria-expanded={ctxOpen}
+            aria-controls="sb-ctx-panel"
+            title={`${active.tenant_name} (${active.tenant_slug}), ${active.role}`}
+            onClick={() => setCtxOpen((v) => !v)}
+          >
+            <span class="sb-ctx-dept">{active.tenant_name}</span>
+            <span class="sb-ctx-role">{active.role}</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" class="sb-chev">
+              <path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            Jump to
-            <kbd class="st-kbd">{isMac ? 'Cmd' : 'Ctrl'} K</kbd>
           </button>
-          <button type="button" class={BTN_BAR} onClick={(e) => toggleTheme(e)} aria-pressed={night} title="Switch between night and day" data-testid="theme-toggle">
-            {night ? 'Night' : 'Day'}
+          {ctxOpen ? (
+            <div ref={ctxPanel} id="sb-ctx-panel" role="dialog" aria-label="Department, role and account" class="sb-pop">
+              <dl class="sb-pop-list">
+                <div>
+                  <dt>Department</dt>
+                  <dd>{active.tenant_name}</dd>
+                </div>
+                <div>
+                  <dt>Role</dt>
+                  <dd class="font-mono">{active.role}</dd>
+                </div>
+                <div class="sb-pop-account">
+                  <dt>Signed in as</dt>
+                  <dd>{user.display_name}</dd>
+                </div>
+              </dl>
+              {memberships.length > 1 ? (
+                <label class="sb-pop-switch">
+                  <span>Switch department or role</span>
+                  <select value={membershipKey(active)} disabled={switching} onChange={(event) => void onSwitch(event.currentTarget.value)}>
+                    {memberships.map((m) => (
+                      <option key={membershipKey(m)} value={membershipKey(m)}>
+                        {m.tenant_name} / {m.role}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <button type="button" class="sb-btn sb-pop-out" disabled={leaving} onClick={() => void signOut()}>
+                {leaving ? 'Signing out…' : 'Sign out'}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <div class="sb-right">
+          <button type="button" class="sb-btn sb-jump" onClick={() => setPaletteOpen(true)} aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" aria-label="Jump to a page">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            <span class="sb-jump-text">Jump to</span>
+            <kbd class="st-kbd sb-kbd">{isMac ? 'Cmd' : 'Ctrl'} K</kbd>
           </button>
-          <span class="st-bar-muted" title={user.display_name}>
+          <button type="button" class="sb-btn sb-theme" onClick={(e) => toggleTheme(e)} aria-pressed={night} title="Switch between night and day" data-testid="theme-toggle">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              {night ? <path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1Z" /> : <><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" /></>}
+            </svg>
+            <span class="sb-theme-text">{night ? 'Night' : 'Day'}</span>
+          </button>
+          <span class="sb-name" title={user.display_name}>
             {user.display_name}
           </span>
-          <button type="button" class={BTN_BAR} disabled={leaving} onClick={() => void signOut()}>
+          <button type="button" class="sb-btn sb-out" disabled={leaving} onClick={() => void signOut()}>
             {leaving ? 'Signing out…' : 'Sign out'}
           </button>
         </div>
@@ -205,7 +262,15 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
               const current = path === href || path.startsWith(`${href}/`);
               return (
                 <li key={item.slug}>
-                  <a href={href} aria-label={item.label} title={item.label} aria-current={current ? 'page' : undefined} class="nv-rail-link">
+                  <a
+                    href={href}
+                    aria-label={item.label}
+                    title={item.label}
+                    aria-current={current ? 'page' : undefined}
+                    class="nv-rail-link"
+                    onPointerEnter={() => prefetchPage(item.slug)}
+                    onFocus={() => prefetchPage(item.slug)}
+                  >
                     <span class="nv-rail-icon">
                       <NavIcon slug={item.slug} />
                     </span>
@@ -248,7 +313,7 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
                   const current = path === href || path.startsWith(`${href}/`);
                   return (
                     <li key={item.slug}>
-                      <a href={href} class="nv-more-item" aria-current={current ? 'page' : undefined}>
+                      <a href={href} class="nv-more-item" aria-current={current ? 'page' : undefined} onPointerEnter={() => prefetchPage(item.slug)} onFocus={() => prefetchPage(item.slug)}>
                         <NavIcon slug={item.slug} />
                         <span>{item.label}</span>
                       </a>

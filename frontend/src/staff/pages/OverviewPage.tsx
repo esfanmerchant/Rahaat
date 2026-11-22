@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { Rise } from '../Rise';
 import { session } from '../../shared/api/auth';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
@@ -65,8 +66,8 @@ function Tile({
 }) {
   return (
     <div class={`st-tile st-tone-${tone} flex min-w-0 flex-col gap-1 p-3`} data-testid={`tile-${id}`} title={spark ? `${hint}, last ${spark.window}` : hint}>
-      <p class="text-xs font-bold uppercase tracking-widest text-ink-muted">{label}</p>
-      <p class="st-tile-num rh-num flex items-baseline gap-1 text-3xl font-black leading-none tracking-tight 2xl:text-4xl">
+      <p class="st-tile-label">{label}</p>
+      <p class="st-tile-num rh-num flex items-baseline gap-1">
         <CountUp value={value} ms={1100} {...(format ? { format } : {})} />
         {suffix ? <span class="text-base font-bold text-ink-muted">{suffix}</span> : null}
       </p>
@@ -283,8 +284,8 @@ export function OverviewPage() {
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-xl font-black tracking-tight">
-          Command Center
+        <h1 id="page-title" ref={headingRef} tabIndex={-1} >
+          <Rise text="Command Center" />
         </h1>
         <InfoTip
           label="About this page"
@@ -452,10 +453,10 @@ function CostBody({ pulse, evals, reloadPulse }: { pulse: Quiet<Pulse>; evals: Q
                 { l: 'Silent guesses', v: hl.silent_guesses, t: 'ok' as Tone },
               ].map((x) => (
                 <div key={x.l} class={`st-tile st-tone-${x.t} px-1 py-2`}>
-                  <dd class="st-tile-num rh-num text-3xl font-black leading-none">
+                  <dd class="st-tile-num rh-num">
                     <CountUp value={x.v} />
                   </dd>
-                  <dt class="mt-1 text-[11px] uppercase tracking-wide text-ink-muted">{x.l}</dt>
+                  <dt class="mt-1 text-xs text-ink-muted">{x.l}</dt>
                 </div>
               ))}
             </dl>

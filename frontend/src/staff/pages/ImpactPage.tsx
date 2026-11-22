@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Rise } from '../Rise';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { HBars, type Tone } from '../charts';
@@ -43,8 +44,8 @@ export function ImpactPage() {
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3">
       <div class="pg-head pg-rise">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} style={{ fontSize: '1.5rem' }}>
-          Impact
+        <h1 id="page-title" ref={headingRef} tabIndex={-1}>
+          <Rise text="Impact" />
         </h1>
         {data.state === 'ok' ? (
           <>
