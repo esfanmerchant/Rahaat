@@ -2,6 +2,7 @@ import { useCallback, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { playPrompt } from '../shared/audio';
 import { login, loginNotice } from '../shared/api/auth';
+import type { ApiFailure } from '../shared/api/problem';
 import { demoMode } from '../shared/api/system';
 import { AudioPrompt } from '../shared/components/AudioPrompt';
 import { Button } from '../shared/components/Button';
@@ -33,6 +34,22 @@ export function buzz(): void {
 export function sayDigit(digit: string, code: Lang): void {
   const key = numberKey(Number(digit));
   if (key) playPrompt(key, code, t(key, undefined, code));
+}
+
+/** What a refusal means on a keypad screen. `wrong`: what to say for wrong details (a wrong PIN or code). */
+export function noticeFor(failure: ApiFailure, wrong: MessageKey): Notice {
+  const kind = failure.kind;
+  const key: MessageKey =
+    kind === 'rate_limited' || kind === 'locked'
+      ? 'login_locked'
+      : kind === 'offline'
+        ? 'state_offline_body'
+        : failure.problem?.code === 'weak_pin'
+          ? 'signup_pin_weak'
+          : kind === 'unauthenticated' || kind === 'validation' || kind === 'not_found'
+            ? wrong
+            : 'state_error_body';
+  return { key, requestId: key === 'state_error_body' ? failure.problem?.request_id : undefined };
 }
 
 /** A refusal or problem on a keypad screen, spoken, with the reference a helper can trace. */
@@ -113,22 +130,8 @@ export function LoginScreen() {
     setBusy(false);
     if (result.ok) return; // the /login route guard sends the person to their home
     setPin('');
-    switch (result.failure.kind) {
-      case 'unauthenticated':
-      case 'validation':
-      case 'not_found':
-        show('login_wrong');
-        break;
-      case 'locked':
-      case 'rate_limited':
-        show('login_locked');
-        break;
-      case 'offline':
-        show('state_offline_body');
-        break;
-      default:
-        show('state_error_body', result.failure.problem?.request_id);
-    }
+    const why = noticeFor(result.failure, 'login_wrong');
+    show(why.key, why.requestId);
   };
 
   const onDone = useCallback(() => {

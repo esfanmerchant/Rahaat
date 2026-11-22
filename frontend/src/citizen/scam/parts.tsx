@@ -168,7 +168,7 @@ export function WhatToDo({ answer }: { answer: ScamCheckOut }) {
 
 const RISK: Record<ScamUrl['risk'], { key: MessageKey; box: string; icon: PictogramName }> = {
   high: { key: 'scam_risk_high', box: 'border-danger bg-danger-soft text-danger', icon: 'warning' },
-  medium: { key: 'scam_risk_medium', box: 'border-warning bg-warning-soft text-warning-ink', icon: 'warning' },
+  medium: { key: 'warn_title', box: 'border-warning bg-warning-soft text-warning-ink', icon: 'warning' },
   low: { key: 'scam_risk_low', box: 'border-line-strong bg-surface text-ink', icon: 'link' },
 };
 

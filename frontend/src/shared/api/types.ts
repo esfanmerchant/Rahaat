@@ -10,6 +10,7 @@ type Json<T> = T extends { content: { 'application/json': infer Body } } ? Body 
 export type AuthOut = Json<paths['/v1/auth/login']['post']['responses'][200]>;
 export type LoginBody = Json<paths['/v1/auth/login']['post']['requestBody']>;
 export type SwitchBody = Json<paths['/v1/auth/switch']['post']['requestBody']>;
+export type NotificationOut = Json<paths['/v1/notifications']['get']['responses'][200]>['items'][number];
 export type MeOut = Json<paths['/v1/auth/me']['get']['responses'][200]>;
 export type SystemInfo = Json<paths['/v1/system/info']['get']['responses'][200]>;
 export type DemoAccountsOut = Json<paths['/v1/demo/accounts']['get']['responses'][200]>;

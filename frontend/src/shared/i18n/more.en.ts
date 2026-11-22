@@ -36,7 +36,6 @@ export const enMore = {
 
   // Voice answers
   voice_listening: 'I am listening. Please speak now.',
-  voice_stop: 'Stop',
   voice_checking: 'Checking what you said',
   voice_heard: 'I heard',
   voice_ok_yes: 'Yes, that is right',
@@ -59,7 +58,6 @@ export const enMore = {
   rules_source: 'Where this comes from',
   rules_source_line: '{title}, version {version}, {section}',
   rules_again: 'Ask something else',
-  rules_person: 'Ask a person',
   rules_limit: 'You asked many questions. Wait one minute.',
   rules_unavailable: 'The rules helper is not working now. Please ask a person.',
   rules_heard_ok: 'Ask this',
@@ -153,9 +151,6 @@ export const enMore = {
   mh_empty_body: 'Choose a helper if you want someone to help you.',
   mh_add: 'Choose a helper',
   mh_live: 'May help',
-  mh_ended: 'Ended',
-  mh_stopped: 'Stopped',
-  mh_scope_track: 'See my application',
   mh_scope_apply: 'Fill it in for me',
   mh_scope_upload: 'Add photos',
   mh_stop: 'Stop this helper',

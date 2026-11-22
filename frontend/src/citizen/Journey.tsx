@@ -7,7 +7,7 @@ import { NightStar } from './JourneyPath';
  * Finished steps glow lamp gold, the current one pulses gently, the next ones are outlined.
  */
 export const JOURNEY_STEPS: readonly { key: MessageKey }[] = [
-  { key: 'journey_sent' },
+  { key: 'outbox_sent' },
   { key: 'journey_checked' },
   { key: 'journey_decided' },
   { key: 'journey_paid' },

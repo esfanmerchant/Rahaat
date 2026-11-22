@@ -74,13 +74,14 @@ export function statusIcon(status: string): PictogramName {
   return STATUS_ICON[status as ApplicationStatus] ?? 'clock';
 }
 
-/** A date in the person's language, with 0-9 digits as everywhere else in the app. */
-export function formatDate(iso: string, code: Lang): string {
+/** A date (and with `withTime`, the time) in the person's language, with 0-9 digits as everywhere else in the app. */
+export function formatDate(iso: string, code: Lang, withTime = false): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat(code === 'ur' ? 'ur-PK-u-nu-latn' : 'en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
   }).format(date);
 }

@@ -2,16 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { login, session } from '../shared/api/auth';
 import { api } from '../shared/api/client';
-import { call, type ApiFailure } from '../shared/api/problem';
+import { call } from '../shared/api/problem';
 import { playPrompt } from '../shared/audio';
 import { Button } from '../shared/components/Button';
 import { Pictogram, type PictogramName } from '../shared/components/Pictogram';
-import { celebrate } from '../shared/feedback';
 import { lang, t, type MessageKey } from '../shared/i18n';
 import { Redirect } from '../shared/routing';
 import { CitizenShell } from './CitizenShell';
 import { Keypad, PinDots } from './Keypad';
-import { buzz, NoticeBox, PhoneDisplay, sayDigit, type Notice } from './LoginScreen';
+import { buzz, NoticeBox, noticeFor, PhoneDisplay, sayDigit, type Notice } from './LoginScreen';
 import { PhoneSlots, usePhonePaste } from './PhoneField';
 import { checkPhone, formatPhone, mockPhone, PHONE_LENGTH, PIN_MAX, PIN_MIN } from './phone';
 
@@ -20,7 +19,6 @@ const TENANT = 'sindh-relief';
 const CODE_LENGTH = 6;
 
 type Step = 'phone' | 'code' | 'name' | 'pin' | 'again' | 'done';
-const ORDER: readonly Step[] = ['phone', 'code', 'name', 'pin', 'again', 'done'];
 
 const SPEC: Record<Step, { icon: PictogramName; title: MessageKey; hint: MessageKey }> = {
   phone: { icon: 'phone', title: 'signup_title', hint: 'login_phone_hint' },
@@ -30,23 +28,8 @@ const SPEC: Record<Step, { icon: PictogramName; title: MessageKey; hint: Message
   again: { icon: 'lock', title: 'signup_pin_title', hint: 'pin_again' },
   done: { icon: 'yes', title: 'signup_done_title', hint: 'signup_done_body' },
 };
-
-/** What a refusal means here, in plain words. The server answers the same for a wrong, old or used code. */
-function noticeFor(failure: ApiFailure): Notice {
-  const kind = failure.kind;
-  const code = failure.problem?.code;
-  const key: MessageKey =
-    kind === 'rate_limited' || kind === 'locked'
-      ? 'login_locked'
-      : kind === 'offline' || kind === 'network'
-        ? 'state_offline_body'
-        : code === 'invalid_code'
-          ? 'signup_code_wrong'
-          : code === 'weak_pin'
-            ? 'signup_pin_weak'
-            : 'state_error_body';
-  return { key, requestId: key === 'state_error_body' ? failure.problem?.request_id : undefined };
-}
+/** The steps in order (the order of SPEC). */
+const ORDER = Object.keys(SPEC) as Step[];
 
 /**
  * Make an account: the phone number, the six-number code from the SMS, the name, a PIN typed twice;
@@ -90,7 +73,7 @@ export function SignupScreen() {
     setBusy(true);
     const result = await call(api.POST('/v1/people/register/start', { body: { tenant_slug: TENANT, phone: mockPhone(local), lang: ui } }));
     setBusy(false);
-    if (!result.ok) return show(noticeFor(result.failure));
+    if (!result.ok) return show(noticeFor(result.failure, result.failure.problem?.code === 'invalid_code' ? 'signup_code_wrong' : 'state_error_body'));
     setRegistration(result.data.registration_id);
     setCode('');
     go('code');
@@ -114,7 +97,7 @@ export function SignupScreen() {
     );
     if (!result.ok) {
       setBusy(false);
-      const why = noticeFor(result.failure);
+      const why = noticeFor(result.failure, result.failure.problem?.code === 'invalid_code' ? 'signup_code_wrong' : 'state_error_body');
       setPin('');
       if (why.key === 'signup_code_wrong') {
         setFirst('');
@@ -130,7 +113,6 @@ export function SignupScreen() {
     await login({ identifier: mockPhone(local), secret: pin, tenant_slug: TENANT });
     setBusy(false);
     go('done');
-    celebrate();
   };
 
   const setValue = step === 'phone' ? setLocal : step === 'code' ? setCode : setPin;
@@ -202,10 +184,7 @@ export function SignupScreen() {
       progress={
         step === 'done' ? null : (
           <div
-            role="progressbar"
-            aria-valuemin={1}
-            aria-valuemax={4}
-            aria-valuenow={at + 1}
+            role="img"
             aria-label={t('apply_progress', { current: at + 1, total: 4 })}
             class="flex justify-center gap-2 py-1"
           >
@@ -295,8 +274,9 @@ export function SignupScreen() {
       ) : null}
 
       {step === 'done' ? (
-        <Button size="lg" icon="home" block onClick={() => route(session.peek().status === 'signed-in' ? '/' : '/login', true)}>
-          {t(session.value.status === 'signed-in' ? 'go_home' : 'sign_in')}
+        // If the sign-in after making the account failed, home is the start screen, which leads to sign-in.
+        <Button size="lg" icon="home" block onClick={() => route('/', true)}>
+          {t('go_home')}
         </Button>
       ) : null}
     </CitizenShell>

@@ -10,7 +10,7 @@ const FIELD_LABEL: Readonly<Record<string, MessageKey>> = {
   income_band: 'review_income',
   is_widow: 'step_widow',
   has_disability: 'review_disability',
-  receives_other_aid: 'review_aid',
+  receives_other_aid: 'step_aid',
 };
 
 const KIND_LABEL: Record<Exclude<OpKind, 'patch'>, MessageKey> = {

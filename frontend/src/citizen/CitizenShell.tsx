@@ -6,6 +6,7 @@ import { t, type Key } from '../shared/i18n';
 import { useDesktop } from '../shared/useMedia';
 import { ActingBanner } from './ActingBanner';
 import { ContextPane, type PaneSpec } from './ContextPane';
+import { Bell } from './Inbox';
 
 interface CitizenShellProps {
   /** Shows the back button at the start side of the top bar. */
@@ -56,7 +57,10 @@ export function CitizenShell({ onBack, prompt, speech, autoPlay = true, progress
         ) : (
           <span />
         )}
-        {speech || prompt ? <AudioPrompt prompt={prompt} speech={speech} autoPlay={autoPlay} tone={night ? 'night' : 'paper'} /> : null}
+        <div class="flex items-center gap-2">
+          <Bell night={night} />
+          {speech || prompt ? <AudioPrompt prompt={prompt} speech={speech} autoPlay={autoPlay} tone={night ? 'night' : 'paper'} /> : null}
+        </div>
       </div>
       {progress ? <div class="lg:hidden">{progress}</div> : null}
     </header>

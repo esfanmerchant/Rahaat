@@ -37,13 +37,6 @@ function Page({ icon, title, prompt, children }: { icon: PictogramName; title: K
   );
 }
 
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
-  return `${formatDate(iso, lang.value)}, ${time}`;
-}
-
 /** Fetch once and again on retry; a failure keeps its kind so the right state shows (offline, denied, error). */
 function useLoad<T>(load: () => Promise<{ ok: true; data: T } | { ok: false; failure: ApiFailure }>): {
   data: T | null;
@@ -127,7 +120,7 @@ function AccessRow({ entry }: { entry: AccessEntry }) {
           </p>
         ) : null}
         <p class="text-base text-ink-muted">
-          <span class="rh-ltr">{formatDateTime(entry.at)}</span>
+          <span class="rh-ltr">{formatDate(entry.at, lang.value, true)}</span>
         </p>
         <p class={`text-base font-semibold ${entry.allowed ? 'text-primary-strong' : 'text-danger'}`}>{t(entry.allowed ? 'acc_allowed' : 'acc_refused')}</p>
       </div>
@@ -501,11 +494,11 @@ function RequestsPage() {
 // ---- my helpers ------------------------------------------------------------------------------------
 
 const SCOPE_ICON: Record<string, PictogramName> = { track: 'clock', apply: 'edit', upload: 'camera' };
-const SCOPE_KEY: Record<string, Key> = { track: 'mh_scope_track', apply: 'mh_scope_apply', upload: 'mh_scope_upload' };
+const SCOPE_KEY: Record<string, Key> = { track: 'home_see_application', apply: 'mh_scope_apply', upload: 'mh_scope_upload' };
 const DELEGATION_STATUS: Record<string, { key: Key; tone: string; icon: PictogramName }> = {
   live: { key: 'mh_live', tone: 'border-primary bg-primary-soft text-primary-strong', icon: 'yes' },
-  expired: { key: 'mh_ended', tone: 'border-line-strong bg-surface text-ink', icon: 'clock' },
-  revoked: { key: 'mh_stopped', tone: 'border-line-strong bg-surface text-ink', icon: 'pause' },
+  expired: { key: 'mydata_status_expired', tone: 'border-line-strong bg-surface text-ink', icon: 'clock' },
+  revoked: { key: 'acc_refused', tone: 'border-line-strong bg-surface text-ink', icon: 'pause' },
 };
 
 function HelperCard({ item, onChanged }: { item: DelegationOut; onChanged: () => void }) {
