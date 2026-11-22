@@ -1,4 +1,5 @@
 import { formatPhone } from '../phone';
+import { Rise } from '../Rise';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ApiFailure } from '../../shared/api/problem';
 import { api } from '../../shared/api/client';
@@ -75,7 +76,7 @@ export function CasePage({ id }: { id: string }) {
           &larr; Queue
         </a>
         <h1 id="page-title" ref={headingRef} tabIndex={-1}>
-          {c.subject_name ?? 'Unnamed subject'}
+          <Rise text={c.subject_name ?? 'Unnamed subject'} />
         </h1>
         <Badge>{humanize(c.kind)}</Badge>
         <Badge tone="info">{humanize(c.status)}</Badge>

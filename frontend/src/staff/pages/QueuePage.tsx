@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { Rise } from '../Rise';
 import { useLocation } from 'preact-iso';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
@@ -88,8 +89,8 @@ export function QueuePage() {
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3" onKeyDown={onKeyDown}>
       <div class="flex flex-wrap items-center gap-3">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-xl font-black tracking-tight">
-          Review queue
+        <h1 id="page-title" ref={headingRef} tabIndex={-1}>
+          <Rise text="Review queue" />
         </h1>
         <label class="flex items-center gap-1">
           Status

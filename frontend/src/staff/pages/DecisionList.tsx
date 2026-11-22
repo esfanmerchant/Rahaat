@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Rise } from '../Rise';
 import { useLocation } from 'preact-iso';
 import { api } from '../../shared/api/client';
 import { call, type Result } from '../../shared/api/problem';
@@ -51,8 +52,8 @@ export function DecisionIndex() {
   );
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3">
-      <h1 id="page-title" ref={headingRef} tabIndex={-1} class="text-lg font-semibold">
-        Decisions
+      <h1 id="page-title" ref={headingRef} tabIndex={-1}>
+        <Rise text="Decisions" />
       </h1>
       <form class="flex flex-wrap items-end gap-2" onSubmit={(e) => e.preventDefault()}>
         <label class="flex flex-col gap-1">

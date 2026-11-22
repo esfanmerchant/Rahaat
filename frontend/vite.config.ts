@@ -54,6 +54,17 @@ const KEEP_AUDIO = {
     response.status === 200 && (response.headers.get('content-type') ?? '').startsWith('audio/') ? response : null,
 };
 
+
+// The staff console is split per page so /staff paints the shell and one page, not all 30. Only the shell and its shared
+// kit are a manual chunk ('staff'); each page is a dynamic import (src/staff/lazyPages.tsx) that Rollup splits itself, which
+// keeps code shared with the citizen app in the citizen entry. Chunks made only of staff modules are named staff-* below, so
+// check:bundle counts them as excluded and the service worker never precaches them (globIgnores).
+const STAFF_CORE = ['StaffApp', 'StaffShell', 'StaffLogin', 'theme', 'nav', 'NavIcons', 'Palette', 'Pulse', 'ui', 'kit', 'loadview', 'viz', 'InfoTip', 'SectionTabs', 'lazyPages', 'Rise', 'phone', 'wpe', 'calm', 'shell', 'staff', 'PlaceholderPage'];
+function staffChunk(path: string): string | undefined {
+  const m = /\/src\/staff\/([A-Za-z]+)\.(?:tsx?|css)$/.exec(path);
+  return m && STAFF_CORE.includes(m[1] as string) ? 'staff' : undefined;
+}
+
 export default defineConfig({
   plugins: [
     preact(),
@@ -146,10 +157,12 @@ export default defineConfig({
         // (preact, src/shared) into it, and the citizen entry then imports the
         // staff chunk statically. check:bundle fails the build if that happens.
         onlyExplicitManualChunks: true,
+        chunkFileNames: (chunk: { moduleIds: string[]; name: string }) =>
+          !/^(staff|demo)$/.test(chunk.name) && chunk.moduleIds.length > 0 && chunk.moduleIds.every((id) => id.replaceAll('\\', '/').includes('/src/staff/')) ? 'assets/staff-[name]-[hash].js' : 'assets/[name]-[hash].js',
         manualChunks(id) {
           const path = id.replace(/\\/g, '/');
           if (path.includes('/src/staff/demo/')) return 'demo';
-          if (path.includes('/src/staff/')) return 'staff';
+          if (path.includes('/src/staff/')) return staffChunk(path);
           // /live: the page and its HUD in 'live'; three.js and the scene in 'live-three', fetched only when WebGL will run.
           if (path.includes('/node_modules/three/') || path.includes('/src/live/scene')) return 'live-three';
           if (path.includes('/src/live/')) return 'live';

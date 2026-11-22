@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { Rise } from '../Rise';
 import { useLocation } from 'preact-iso';
 import { api } from '../../shared/api/client';
 import { call, type Result } from '../../shared/api/problem';
@@ -92,8 +93,8 @@ export function AuditPage() {
   return (
     <section aria-labelledby="page-title" class="flex flex-col gap-3">
       <div class="pg-head pg-rise">
-        <h1 id="page-title" ref={headingRef} tabIndex={-1} style={{ fontSize: '1.5rem' }}>
-          Audit chain
+        <h1 id="page-title" ref={headingRef} tabIndex={-1}>
+          <Rise text="Audit chain" />
         </h1>
         <span class="st-chip" title="Append-only; nothing here can be edited">
           append-only
@@ -130,11 +131,11 @@ export function AuditPage() {
                       <dl class="flex flex-wrap gap-3">
                         <div class="rounded-xl border border-line px-3 py-1.5">
                           <dt class="pg-cap">Rows</dt>
-                          <dd class="pg-big rh-num" style={{ fontSize: '1.5rem' }}>{verify.data.checked}</dd>
+                          <dd class="pg-big rh-num">{verify.data.checked}</dd>
                         </div>
                         <div class="rounded-xl border border-line px-3 py-1.5">
                           <dt class="pg-cap">Head</dt>
-                          <dd class="pg-big rh-num" style={{ fontSize: '1.5rem' }}>#{verify.data.head_seq}</dd>
+                          <dd class="pg-big rh-num">#{verify.data.head_seq}</dd>
                         </div>
                       </dl>
                     ) : null}
@@ -405,7 +406,7 @@ function VerifySeal({ verify }: { verify: Verify }) {
           <circle cx="17" cy="17" r="11" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5" />
           <path d="M10.5 17.5 15 22l8.5-10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="rh-draw" pathLength={100} />
         </svg>
-        <span class="pg-big" style={{ fontSize: '1.5rem' }}>
+        <span class="pg-big">
           <CountUp value={data.checked} ms={700} /> of {data.checked} verified
         </span>
         <span class="st-chip font-mono" title={`head hash ${data.head_hash}`}>

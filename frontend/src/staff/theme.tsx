@@ -3,6 +3,7 @@ import { useEffect } from 'preact/hooks';
 import { signal } from '@preact/signals';
 import './staff.css';
 import './shell.css';
+import './calm.css';
 
 /** Night is the default; the choice is remembered per browser. Storage can be blocked, so every access is guarded. */
 export type Theme = 'night' | 'day';

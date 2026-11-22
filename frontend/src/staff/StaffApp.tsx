@@ -9,35 +9,7 @@ import { useTemporaryLang } from '../shared/i18n';
 import { Redirect } from '../shared/routing';
 import { findNavItem, navFor, type NavItem } from './nav';
 import { PlaceholderPage } from './PlaceholderPage';
-import { AuditPage } from './pages/AuditPage';
-import { CasePage } from './pages/CasePage';
-import { DecisionPage } from './pages/DecisionPage';
-import { DecisionIndex } from './pages/DecisionList';
-import { CostPage } from './pages/CostPage';
-import { TwinPage } from './pages/TwinPage';
-import { EvalsPage } from './pages/EvalsPage';
-import { DuplicatesPage } from './pages/DuplicatesPage';
-import { KeysPage } from './pages/KeysPage';
-import { LabPage } from './pages/LabPage';
-import { JobsPage, MocksPage } from './pages/AdminPages';
-import { GuidePage } from './pages/GuidePage';
-import { HealthPage } from './pages/HealthPage';
-import { ImpactPage } from './pages/ImpactPage';
-import { AnomaliesPage } from './pages/AnomaliesPage';
-import { ApprovalsPage, PaymentsPage } from './pages/MoneyPages';
-import { OutboxPage } from './pages/OutboxPage';
-import { OverviewPage } from './pages/OverviewPage';
-import { QueuePage } from './pages/QueuePage';
-import { AppealsPage } from './pages/AppealsPage';
-import { ComplaintsPage } from './pages/ComplaintsPage';
-import { UsagePage } from './pages/UsagePage';
-import { WebhooksPage } from './pages/WebhooksPage';
-import { AgentRunPage } from './pages/AgentRunPage';
-import { MistakesPage } from './pages/MistakesPage';
-import { ScamMapPage } from './pages/ScamMapPage';
-import { ScamReportsPage } from './pages/ScamReportsPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { RulesPage } from './pages/RulesPage';
+import { LazyPage } from './lazyPages';
 import { StaffLogin } from './StaffLogin';
 import { StaffShell, StaffSignOutButton } from './StaffShell';
 import { StaffRoot } from './theme';
@@ -161,67 +133,14 @@ function StaffSection({ section }: { section?: string }) {
 }
 
 function SectionPage({ item }: { item: NavItem }) {
-  switch (item.slug) {
-    case 'guide':
-      return <GuidePage />;
-    case 'overview':
-      return <OverviewPage />;
-    case 'queue':
-      return <QueuePage />;
-    case 'audit':
-      return <AuditPage />;
-    case 'decisions':
-      return <DecisionIndex />;
-    case 'rules':
-      return <RulesPage />;
-    case 'approvals':
-      return <ApprovalsPage />;
-    case 'payments':
-      return <PaymentsPage />;
-    case 'outbox':
-      return <OutboxPage />;
-    case 'jobs':
-      return <JobsPage />;
-    case 'mocks':
-      return <MocksPage />;
-    case 'scam-map':
-      return <ScamMapPage />;
-    case 'scam-reports':
-      return <ScamReportsPage />;
-    case 'mistakes':
-      return <MistakesPage />;
-    case 'costs':
-      return <CostPage />;
-    case 'twin':
-      return <TwinRoute />;
-    case 'evals':
-      return <EvalsPage />;
-    case 'duplicates':
-      return <DuplicatesPage />;
-    case 'keys':
-      return <KeysPage />;
-    case 'webhooks':
-      return <WebhooksPage />;
-    case 'usage':
-      return <UsagePage />;
-    case 'appeals':
-      return <AppealsPage />;
-    case 'complaints':
-      return <ComplaintsPage />;
-    case 'lab':
-      return <LabPage />;
-    case 'settings':
-      return <SettingsPage />;
-    case 'health':
-      return <HealthPage />;
-    case 'impact':
-      return <ImpactPage />;
-    case 'anomalies':
-      return <AnomaliesPage />;
-    default:
-      return <PlaceholderPage item={item} />;
-  }
+  if (item.slug === 'twin') return <TwinRoute />;
+  if (!NAV_BUILT.has(item.slug)) return <PlaceholderPage item={item} />;
+  return <LazyPage page={item.slug} />;
 }
+
+const NAV_BUILT = new Set(
+  'guide overview queue audit decisions rules approvals payments outbox jobs mocks scam-map scam-reports mistakes costs twin evals duplicates keys webhooks usage appeals complaints lab settings health impact anomalies'.split(' '),
+);
 
 /** A deep link that the role's nav does not list: same guard, explicit role list. */
 function RoleRoute({ roles, label, children }: { roles: readonly string[]; label: string; children: () => ComponentChildren }) {
@@ -243,7 +162,7 @@ function RoleRoute({ roles, label, children }: { roles: readonly string[]; label
 function CaseRoute({ id }: { id?: string }) {
   return (
     <RoleRoute roles={['officer']} label="Case review">
-      {() => <CasePage id={id ?? ''} />}
+      {() => <LazyPage page="case" id={id ?? ''} />}
     </RoleRoute>
   );
 }
@@ -251,7 +170,7 @@ function CaseRoute({ id }: { id?: string }) {
 function AgentRunRoute({ id }: { id?: string }) {
   return (
     <RoleRoute roles={['officer', 'admin', 'auditor']} label="The assistant run">
-      {() => <AgentRunPage id={id ?? ''} />}
+      {() => <LazyPage page="agent-run" id={id ?? ''} />}
     </RoleRoute>
   );
 }
@@ -259,7 +178,7 @@ function AgentRunRoute({ id }: { id?: string }) {
 function DecisionRoute({ id }: { id?: string }) {
   return (
     <RoleRoute roles={['auditor', 'officer']} label="The decision viewer">
-      {() => <DecisionPage id={id ?? ''} />}
+      {() => <LazyPage page="decision" id={id ?? ''} />}
     </RoleRoute>
   );
 }
@@ -278,5 +197,5 @@ function StaffNotFound() {
 
 function TwinRoute() {
   const { query } = useLocation();
-  return <TwinPage initialDraft={query['draft']} />;
+  return <LazyPage page="twin" initialDraft={query['draft']} />;
 }
