@@ -13,7 +13,7 @@ Primary URL: **https://rahat-zeta.vercel.app**. Backup URL: given at the demo (a
 | Auditor Nadia Hussain | `auditor@rahat.example` | `Rahat-Demo-2026!` |
 | Admin Ayesha Siddiqui; second admin Bilal Ahmed | `admin@sindh.rahat.example`, `approver@sindh.rahat.example` | `Rahat-Demo-2026!` |
 
-Specimen cards for the camera step are in `data/demo_cards/<person>/` (`clean.jpg`, `blurry.jpg`, `altered.jpg`, and others). They are generated and marked SPECIMEN. Keep them on the phone or laptop beforehand.
+Specimen cards for the camera step are on the **`/demo/kit`** page (download on the phone, or point the camera at the laptop screen), and in `data/demo_cards/<person>/`. Ten per person: three pass the card check, three ask for a new photo (blurry, glare on the QR, cut off), four go to a person (edited name, someone else's QR, unknown issuer, broken signature). Measured on 22 Nov: all 30 give that result, with or without OCR. They are generated and marked SPECIMEN.
 
 **Roles.** Presenter drives the laptop. Second person holds the phone (citizen screens at phone width). Say each line in one or two sentences; let the screen do the rest.
 

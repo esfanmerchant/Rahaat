@@ -5,7 +5,7 @@
 
 **Rahat is one multi-tenant platform that helps a low-literacy widow, a scam-targeted shopkeeper and a community helper serving 40 families apply for and track a mock Relief Payment, by voice and pictures, on a weak connection. Unlike a chatbot, it decides, explains, protects, and says "I am not sure" and hands the case to a person with a briefing, because a wrong approval is priced at 31 times a human review.**
 
-**Live:** https://rahat-zeta.vercel.app (sign-ins on [`/demo`](https://rahat-zeta.vercel.app/demo), the decision engine visualised on [`/live`](https://rahat-zeta.vercel.app/live), API docs on `/docs`). Backup URL: given at the demo. Demo script: [docs/DEMO.md](docs/DEMO.md). Evaluation numbers and commands: [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
+**Live:** https://rahat-zeta.vercel.app (sign-ins on [`/demo`](https://rahat-zeta.vercel.app/demo), test cards on [`/demo/kit`](https://rahat-zeta.vercel.app/demo/kit), the decision engine visualised on [`/live`](https://rahat-zeta.vercel.app/live), API docs on `/docs`). Backup URL: given at the demo. Demo script: [docs/DEMO.md](docs/DEMO.md). Evaluation numbers and commands: [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
 
 ## What judges can try (demo accounts)
 

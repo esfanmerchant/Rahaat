@@ -115,11 +115,18 @@ export async function initLang(): Promise<void> {
  * Run an area in a fixed language while it is mounted, then restore the
  * person's language. The staff console and /demo use this for English.
  */
+// How many mounted areas hold a fixed language. A route can mount before the old one unmounts
+// (/demo -> /staff), so only the last one to leave restores the person's language. Every holder uses English.
+let holds = 0;
+let outside: Lang = DEFAULT_LANG;
+
 export function useTemporaryLang(code: Lang): void {
   useLayoutEffect(() => {
-    const previous = lang.peek();
+    if (!holds++) outside = lang.peek();
     setLang(code, { persist: false });
-    return () => setLang(previous, { persist: false });
+    return () => {
+      if (!--holds) setLang(outside, { persist: false });
+    };
   }, [code]);
 }
 
