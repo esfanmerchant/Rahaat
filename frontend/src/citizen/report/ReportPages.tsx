@@ -158,7 +158,7 @@ function NoteStep({ note, onNote, onNext }: { note: string; onNote: (text: strin
           {t('voice_ok_yes')}
         </Button>
         <Button size="lg" variant="neutral" icon="no" block onClick={listen}>
-          {t('voice_ok_no')}
+          {t('scam_heard_no')}
         </Button>
       </section>
     );

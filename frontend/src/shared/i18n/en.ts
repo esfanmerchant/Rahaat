@@ -7,9 +7,7 @@
  * /audio/{lang}/{key}.mp3 that says the same thing.
  */
 export const en = {
-  lang_name: 'English',
   app_name: 'Rahat',
-  program_name: 'Rahat (Prototype Relief Program)',
   program_tagline: 'Help to get the relief payment.',
 
   start_button: 'Start',
@@ -107,7 +105,6 @@ export const en = {
   consent_takeback_label: 'Your choice',
   consent_takeback: 'You can take it back at any time.',
   consent_yes: 'Yes, I agree',
-  consent_no: 'No',
   consent_no_title: 'That is fine',
   consent_no_body: 'We will not use your information. You can come back at any time.',
 
@@ -162,7 +159,6 @@ export const en = {
   review_name: 'Name',
   review_household: 'People in your home',
   review_income: 'Money each month',
-  review_widow: 'Widow',
   review_disability: 'Disability at home',
   review_aid: 'Other help',
   review_change: 'Change',
@@ -203,12 +199,7 @@ export const en = {
   status_paid: 'Money sent',
   status_on_hold_consent: 'Stopped because permission was taken back',
   status_withdrawn: 'Application taken back',
-  timeline_submitted: 'Application sent',
   timeline_person_checking: 'A person is checking your application',
-  timeline_needs_proof: 'One more paper needed',
-  timeline_approved: 'Approved',
-  timeline_rejected: 'Not approved',
-  timeline_paid: 'Money sent',
 
   sym_moon: 'moon',
   sym_star: 'star',
@@ -370,6 +361,24 @@ export const en = {
   signout_unsent_stay: 'Stay and send them',
   signout_unsent_go: 'Sign out and delete them',
   login_send_saved: 'Sign in to send the answers saved on this phone.',
+  sign_in: 'Sign in',
+  signup_link: 'New here? Make an account',
+  signup_title: 'Make an account',
+  signup_code_title: 'Type the code from the SMS',
+  signup_code_hint: 'We sent you an SMS with a code of 6 numbers. Type it here. It works for 10 minutes.',
+  signup_code_sim: 'Prototype: the SMS is simulated. An admin can read it in Staff, Mock services.',
+  signup_code_exists: 'If this number already has an account, the SMS says so. Then sign in instead.',
+  signup_code_new: 'Send a new code',
+  signup_code_wrong: 'This code is not right or is too old. Type it again, or ask for a new code.',
+  signup_name_title: 'What is your full name?',
+  signup_name_hint: 'Write your full name. A helper can write it for you.',
+  signup_pin_title: 'Make a secret PIN',
+  signup_pin_hint: 'Choose 4 to 6 numbers you will remember. Do not tell anyone.',
+  signup_pin_weak: 'This PIN is too easy to guess. Choose other numbers.',
+  signup_done_title: 'Your account is ready',
+  signup_done_body: 'Remember your phone number and your PIN. You need them to sign in.',
+  pin_again: 'Type the same PIN again.',
+  pin_differs: 'The two PINs are not the same. Please try again.',
 
   helper_acting_for: 'Helping {name}',
   helper_change: 'Change family',

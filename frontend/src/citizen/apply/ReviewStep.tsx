@@ -73,7 +73,7 @@ function rows(d: Draft, code: Lang): Row[] {
     field: 'income_band',
   });
   const tri: ReadonlyArray<[keyof typeof TRI_STEPS, MessageKey]> = [
-    ['widow', 'review_widow'],
+    ['widow', 'step_widow'],
     ['disability', 'review_disability'],
     ['aid', 'review_aid'],
   ];

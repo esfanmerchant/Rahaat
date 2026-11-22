@@ -5,9 +5,7 @@ import type { Dict } from './en';
  * every English key is present. Numbers stay as 0-9 digits, as on phone keypads.
  */
 export const ur: Dict = {
-  lang_name: 'اردو',
   app_name: 'راحت',
-  program_name: 'راحت (آزمائشی امدادی پروگرام)',
   program_tagline: 'امدادی رقم حاصل کرنے میں مدد۔',
 
   start_button: 'شروع کریں',
@@ -105,7 +103,6 @@ export const ur: Dict = {
   consent_takeback_label: 'آپ کی مرضی',
   consent_takeback: 'آپ یہ اجازت کبھی بھی واپس لے سکتے ہیں۔',
   consent_yes: 'ہاں، میں راضی ہوں',
-  consent_no: 'نہیں',
   consent_no_title: 'کوئی بات نہیں',
   consent_no_body: 'ہم آپ کی معلومات استعمال نہیں کریں گے۔ آپ جب چاہیں واپس آ سکتے ہیں۔',
 
@@ -160,7 +157,6 @@ export const ur: Dict = {
   review_name: 'نام',
   review_household: 'گھر کے لوگ',
   review_income: 'ہر مہینے کی آمدنی',
-  review_widow: 'بیوہ',
   review_disability: 'گھر میں معذوری',
   review_aid: 'کوئی اور مدد',
   review_change: 'بدلیں',
@@ -201,12 +197,7 @@ export const ur: Dict = {
   status_paid: 'رقم بھیج دی گئی',
   status_on_hold_consent: 'اجازت واپس لینے کی وجہ سے رکی ہوئی ہے',
   status_withdrawn: 'درخواست واپس لے لی گئی',
-  timeline_submitted: 'درخواست بھیج دی گئی',
   timeline_person_checking: 'ایک شخص آپ کی درخواست دیکھ رہا ہے',
-  timeline_needs_proof: 'ایک اور کاغذ چاہیے',
-  timeline_approved: 'منظور ہو گئی',
-  timeline_rejected: 'منظور نہیں ہوئی',
-  timeline_paid: 'رقم بھیج دی گئی',
 
   sym_moon: 'چاند',
   sym_star: 'ستارہ',
@@ -368,6 +359,24 @@ export const ur: Dict = {
   signout_unsent_stay: 'رکیں اور انہیں بھیجیں',
   signout_unsent_go: 'باہر نکلیں اور مٹا دیں',
   login_send_saved: 'اس فون میں محفوظ جواب بھیجنے کے لیے سائن ان کریں۔',
+  sign_in: 'سائن ان کریں',
+  signup_link: 'نئے ہیں؟ اکاؤنٹ بنائیں',
+  signup_title: 'اکاؤنٹ بنائیں',
+  signup_code_title: 'ایس ایم ایس والا کوڈ لکھیں',
+  signup_code_hint: 'ہم نے آپ کو ایس ایم ایس میں 6 ہندسوں کا کوڈ بھیجا ہے۔ اسے یہاں لکھیں۔ یہ 10 منٹ تک چلے گا۔',
+  signup_code_sim: 'آزمائشی ایپ: یہ ایس ایم ایس فرضی ہے۔ ایڈمن اسے اسٹاف کے صفحے پر Mock services میں پڑھ سکتا ہے۔',
+  signup_code_exists: 'اگر اس نمبر پر پہلے سے اکاؤنٹ ہے تو ایس ایم ایس میں یہی لکھا ہو گا۔ پھر سائن ان کریں۔',
+  signup_code_new: 'نیا کوڈ بھیجیں',
+  signup_code_wrong: 'یہ کوڈ درست نہیں یا پرانا ہو گیا ہے۔ دوبارہ لکھیں، یا نیا کوڈ منگوائیں۔',
+  signup_name_title: 'آپ کا پورا نام کیا ہے؟',
+  signup_name_hint: 'اپنا پورا نام لکھیں۔ کوئی مددگار بھی آپ کے لیے لکھ سکتا ہے۔',
+  signup_pin_title: 'خفیہ پن کوڈ بنائیں',
+  signup_pin_hint: 'چار سے چھ ہندسے چنیں جو آپ کو یاد رہیں۔ یہ کسی کو نہ بتائیں۔',
+  signup_pin_weak: 'یہ پن کوڈ آسانی سے سمجھ آ سکتا ہے۔ دوسرے ہندسے چنیں۔',
+  signup_done_title: 'آپ کا اکاؤنٹ بن گیا ہے',
+  signup_done_body: 'اپنا فون نمبر اور پن کوڈ یاد رکھیں۔ سائن ان کے لیے یہ ضروری ہیں۔',
+  pin_again: 'وہی پن دوبارہ لکھیں۔',
+  pin_differs: 'دونوں پن ایک جیسے نہیں ہیں۔ دوبارہ کوشش کریں۔',
 
   helper_acting_for: '{name} کی مدد',
   helper_change: 'خاندان بدلیں',

@@ -4,10 +4,12 @@ import { playPrompt } from '../shared/audio';
 import { login, loginNotice } from '../shared/api/auth';
 import { demoMode } from '../shared/api/system';
 import { AudioPrompt } from '../shared/components/AudioPrompt';
+import { Button } from '../shared/components/Button';
 import { Pictogram } from '../shared/components/Pictogram';
-import { lang, t, type MessageKey } from '../shared/i18n';
+import { lang, t, type Lang, type MessageKey } from '../shared/i18n';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
 import { vaultState } from '../shared/vault';
+import { numberKey } from './apply/parts';
 import { CitizenShell } from './CitizenShell';
 import { Keypad, PinDots } from './Keypad';
 import { PhoneSlots, usePhonePaste } from './PhoneField';
@@ -15,22 +17,36 @@ import { checkPhone, formatPhone, isValidPin, mockPhone, PHONE_LENGTH, PIN_MAX, 
 
 type Step = 'phone' | 'pin';
 
-const DIGIT_KEYS = [
-  'digit_0',
-  'digit_1',
-  'digit_2',
-  'digit_3',
-  'digit_4',
-  'digit_5',
-  'digit_6',
-  'digit_7',
-  'digit_8',
-  'digit_9',
-] as const satisfies readonly MessageKey[];
-
-interface Notice {
+export interface Notice {
   key: MessageKey;
   requestId?: string | undefined;
+}
+
+/** A short buzz confirms each key press (Android; iOS has no vibrate). */
+export function buzz(): void {
+  if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+  navigator.vibrate(10);
+}
+
+/** Say a typed digit of a phone number or a code (never of a PIN). */
+export function sayDigit(digit: string, code: Lang): void {
+  const key = numberKey(Number(digit));
+  if (key) playPrompt(key, code, t(key, undefined, code));
+}
+
+/** A refusal or problem on a keypad screen, spoken, with the reference a helper can trace. */
+export function NoticeBox({ notice }: { notice: Notice }) {
+  return (
+    <div role="alert" class="flex items-start gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
+      <Pictogram name="warning" size={32} />
+      <div class="flex flex-1 flex-col items-start gap-2">
+        <p class="text-lg font-semibold">{t(notice.key)}</p>
+        {notice.requestId ? <p class="text-sm">{t('state_reference', { id: notice.requestId })}</p> : null}
+        <AudioPrompt prompt={notice.key} />
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -48,22 +64,14 @@ export function LoginScreen() {
   const headingRef = useFocusOnMount<HTMLHeadingElement>();
   const code = lang.value;
 
-  // A short buzz confirms each key press (Android; iOS has no vibrate).
-  const tap = (): void => {
-    if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
-    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
-    navigator.vibrate(10);
-  };
-
   const onDigit = useCallback(
     (digit: string) => {
       if (busy) return;
       setNotice(null);
-      tap();
+      buzz();
       if (step === 'phone') {
         setLocal((value) => (value.length < PHONE_LENGTH ? value + digit : value));
-        const key = DIGIT_KEYS[Number(digit)];
-        if (key) playPrompt(key, code, t(key, undefined, code));
+        sayDigit(digit, code);
       } else {
         setPin((value) => (value.length < PIN_MAX ? value + digit : value));
       }
@@ -82,7 +90,7 @@ export function LoginScreen() {
   const onDelete = useCallback(() => {
     if (busy) return;
     setNotice(null);
-    tap();
+    buzz();
     if (step === 'phone') setLocal((value) => value.slice(0, -1));
     else setPin((value) => value.slice(0, -1));
   }, [busy, step]);
@@ -171,16 +179,7 @@ export function LoginScreen() {
 
       {isPhone ? <PhoneDisplay local={local} noted={notice?.key === 'phone_not_mock'} /> : <PinDisplay length={pin.length} local={local} />}
 
-      {notice ? (
-        <div role="alert" class="flex items-start gap-3 rounded-lg border-2 border-danger bg-danger-soft p-3 text-danger">
-          <Pictogram name="warning" size={32} />
-          <div class="flex flex-1 flex-col items-start gap-2">
-            <p class="text-lg font-semibold">{t(notice.key)}</p>
-            {notice.requestId ? <p class="text-sm">{t('state_reference', { id: notice.requestId })}</p> : null}
-            <AudioPrompt prompt={notice.key} />
-          </div>
-        </div>
-      ) : null}
+      {notice ? <NoticeBox notice={notice} /> : null}
 
       {busy ? (
         <p role="status" class="text-center text-lg text-ink-muted">
@@ -197,6 +196,12 @@ export function LoginScreen() {
         busy={busy}
       />
 
+      {isPhone ? (
+        <Button size="md" variant="secondary" icon="person" block onClick={() => route('/signup')}>
+          {t('signup_link')}
+        </Button>
+      ) : null}
+
       {demoMode.value ? (
         <p class="text-center text-sm" lang="en" dir="ltr">
           <a href="/demo" class="text-info-strong underline">
@@ -208,7 +213,8 @@ export function LoginScreen() {
   );
 }
 
-function PhoneDisplay({ local, noted }: { local: string; noted: boolean }) {
+/** The phone number typed so far, with a warning as soon as it is not a mock number. */
+export function PhoneDisplay({ local, noted }: { local: string; noted: boolean }) {
   const refused = checkPhone(local) === 'not_mock';
   return (
     <div class="flex flex-col gap-2">

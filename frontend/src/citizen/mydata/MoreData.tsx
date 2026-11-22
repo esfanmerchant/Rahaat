@@ -160,7 +160,7 @@ function AccessLogPage() {
   }, [attempt]);
 
   return (
-    <Page icon="lock" title="acc_title" prompt="acc_prompt">
+    <Page icon="lock" title="mydata_open_access" prompt="acc_prompt">
       {items === null && !failure ? <ScreenState kind="loading" /> : null}
       {failure && items === null ? <FailureState failure={failure} heading="h2" onRetry={() => setAttempt((n) => n + 1)} /> : null}
       {items && items.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('acc_empty_title')} body={t('acc_empty_body')} /> : null}
@@ -248,7 +248,7 @@ function FixPage() {
 
   if (step === 'field' || !field) {
     return (
-      <Page icon="edit" title="fix_title" prompt="fix_prompt">
+      <Page icon="edit" title="mydata_open_fix" prompt="fix_prompt">
         <div class="flex flex-col gap-3">
           {FIX_FIELDS.map((item) => (
             <button
@@ -270,7 +270,7 @@ function FixPage() {
   const spec = FIX_FIELDS.find((item) => item.field === field);
   if (step === 'value') {
     return (
-      <Page icon={spec?.icon ?? 'edit'} title={spec?.label ?? 'fix_title'} prompt="fix_value_prompt">
+      <Page icon={spec?.icon ?? 'edit'} title={spec?.label ?? 'mydata_open_fix'} prompt="fix_value_prompt">
         {field === 'full_name' ? (
           <label class="flex flex-col gap-1 text-base font-semibold text-ink-muted">
             {t('fix_name_label')}
@@ -329,7 +329,7 @@ function FixPage() {
           onClick={() => setStep('why')}
           class="mt-auto"
         >
-          {t('mh_next')}
+          {t('next')}
         </Button>
         <Button size="md" variant="quiet" icon="back" block onClick={() => setStep('field')}>
           {t('back')}
@@ -339,7 +339,7 @@ function FixPage() {
   }
 
   return (
-    <Page icon="edit" title="fix_title" prompt="fix_why_prompt">
+    <Page icon="edit" title="mydata_open_fix" prompt="fix_why_prompt">
       <AnswerGroup>
         {REASONS.map((reason) => (
           <AnswerButton key={reason.key} icon={reason.icon} label={t(reason.key)} selected={false} disabled={busy} onSelect={() => void send(reason.key)} />
@@ -383,7 +383,7 @@ function DownloadPage() {
   };
 
   return (
-    <Page icon="document" title="dl_title" prompt="dl_prompt">
+    <Page icon="document" title="mydata_open_download" prompt="dl_prompt">
       {phase === 'done' ? <Notice tone="ok" icon="yes" text={t('dl_done')} /> : null}
       {failure ? <InlineFailure failure={failure} /> : null}
       <Button size="lg" icon="document" block busy={phase === 'busy'} onClick={() => void download()} class="mt-auto">
@@ -431,7 +431,7 @@ function DeletePage() {
     );
   }
   return (
-    <Page icon="delete" title="del_title">
+    <Page icon="delete" title="mydata_open_delete">
       <ul class="flex flex-col gap-3">
         {WARNINGS.map((row) => (
           <li key={row.key} class="flex items-start gap-3 rounded-lg border-2 border-line bg-surface p-3">
@@ -464,7 +464,7 @@ const REQ_STATUS: Record<string, { key: Key; icon: PictogramName; tone: string }
 function RequestsPage() {
   const { data, failure, reload } = useLoad<DataRequestOut[]>(() => call(api.GET('/v1/me/data-requests')));
   return (
-    <Page icon="clock" title="req_title" prompt="req_prompt">
+    <Page icon="clock" title="mydata_open_requests" prompt="req_prompt">
       {data === null && !failure ? <ScreenState kind="loading" /> : null}
       {failure ? <FailureState failure={failure} heading="h2" onRetry={reload} /> : null}
       {data && data.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('req_empty_title')} body={t('req_empty_body')} /> : null}
@@ -478,7 +478,7 @@ function RequestsPage() {
                 <p class="flex items-center gap-2 text-xl font-bold">
                   <Pictogram name={item.kind === 'erasure' ? 'delete' : 'edit'} size={36} class="text-primary" />
                   <span>
-                    {t(item.kind === 'erasure' ? 'req_kind_erasure' : 'req_kind_correction')}
+                    {t(item.kind === 'erasure' ? 'mydata_open_delete' : 'req_kind_correction')}
                     {fieldKey && t(fieldKey) !== fieldKey ? `: ${t(fieldKey)}` : ''}
                   </span>
                 </p>
@@ -549,7 +549,7 @@ function HelperCard({ item, onChanged }: { item: DelegationOut; onChanged: () =>
         </span>
         {item.status === 'live' ? (
           <span class="text-base text-ink-muted">
-            {t('mh_until')}: {formatDate(item.expires_at, lang.value)}
+            {t('mydata_until')}: {formatDate(item.expires_at, lang.value)}
           </span>
         ) : null}
       </div>
@@ -579,7 +579,7 @@ function HelpersPage() {
   const { route } = useLocation();
   const { data, failure, reload } = useLoad<DelegationOut[]>(() => call(api.GET('/v1/me/helpers')));
   return (
-    <Page icon="person-help" title="mh_title" prompt="mh_prompt">
+    <Page icon="person-help" title="mydata_open_helpers" prompt="mh_prompt">
       {data === null && !failure ? <ScreenState kind="loading" /> : null}
       {failure ? <FailureState failure={failure} heading="h2" onRetry={reload} /> : null}
       {data && data.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('mh_empty_title')} body={t('mh_empty_body')} /> : null}
@@ -667,22 +667,22 @@ function NewHelperPage() {
         setFirst(pin);
         setPin('');
         setStep('again');
-        sayKey('mh_pin_again');
+        sayKey('pin_again');
       }
     } else if (pin.length >= PIN_MIN) {
       if (pin !== first) {
         setPin('');
         setFirst('');
         setStep('pin');
-        setNote('mh_pin_differs');
-        sayKey('mh_pin_differs');
+        setNote('pin_differs');
+        sayKey('pin_differs');
       } else void save(pin);
     }
   };
 
   if (step === 'scopes') {
     return (
-      <Page icon="person-help" title="mh_new_title" prompt="mh_what">
+      <Page icon="person-help" title="mh_add" prompt="mh_what">
         <div class="flex flex-col gap-3" role="group" aria-label={t('mh_what')}>
           {SCOPES.map((scope) => {
             const on = scopes.has(scope);
@@ -711,7 +711,7 @@ function NewHelperPage() {
           })}
         </div>
         <Button size="lg" icon="forward" block disabled={scopes.size === 0} onClick={() => setStep('pin')} class="mt-auto">
-          {t('mh_next')}
+          {t('next')}
         </Button>
         <Button size="md" variant="quiet" icon="back" block onClick={() => setStep('phone')}>
           {t('back')}
@@ -722,7 +722,7 @@ function NewHelperPage() {
 
   const phone = step === 'phone';
   return (
-    <Page icon="person-help" title="mh_new_title" prompt={phone ? 'mh_phone' : step === 'pin' ? 'mh_pin' : 'mh_pin_again'}>
+    <Page icon="person-help" title="mh_add" prompt={phone ? 'mh_phone' : step === 'pin' ? 'mh_pin' : 'pin_again'}>
       {phone ? (
         <>
           <p id="helper-phone-label" class="text-lg font-semibold">

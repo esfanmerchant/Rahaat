@@ -175,7 +175,7 @@ export default function RulesScreen() {
       <div class="flex items-center gap-4">
         <Pictogram name="message" size={56} class="text-primary" />
         <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold">
-          {t('rules_title')}
+          {t('home_rules')}
         </h1>
       </div>
       <p class="text-lg text-ink-muted">{t('rules_prompt')}</p>

@@ -212,7 +212,7 @@ export default function VoiceAnswer({ question, expected, onAnswer }: VoiceAnswe
           {t('voice_ok_yes')}
         </Button>
         <Button size="lg" variant="neutral" icon="no" block onClick={listen}>
-          {t('voice_ok_no')}
+          {t('scam_heard_no')}
         </Button>
       </section>
     );

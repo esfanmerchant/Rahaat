@@ -40,7 +40,6 @@ export const enMore = {
   voice_checking: 'Checking what you said',
   voice_heard: 'I heard',
   voice_ok_yes: 'Yes, that is right',
-  voice_ok_no: 'No, say it again',
   voice_saved: 'Done. I wrote your answer.',
   voice_denied: 'The microphone is off. Tap a picture instead.',
   voice_unavailable: 'This phone cannot listen. Tap a picture instead.',
@@ -51,7 +50,6 @@ export const enMore = {
   voice_again: 'Say it again',
 
   // Ask about the rules
-  rules_title: 'Ask about the rules',
   rules_prompt: 'Say your question about Rahat, or type it.',
   rules_example: 'For example: How much is the Rahat payment?',
   rules_label: 'Your question',
@@ -77,7 +75,6 @@ export const enMore = {
   mydata_open_requests: 'My requests',
 
   // Who looked
-  acc_title: 'Who looked at my information',
   acc_prompt: 'Here is who looked at your information, and when. The newest is first.',
   acc_empty_title: 'Nobody yet',
   acc_empty_body: 'When someone looks at your information, you will see it here.',
@@ -106,7 +103,6 @@ export const enMore = {
   acc_why_processing: 'To process your application',
 
   // Fix my information
-  fix_title: 'Fix my information',
   fix_prompt: 'Tap what is wrong.',
   fix_field_full_name: 'My name',
   fix_field_household_size: 'People in my home',
@@ -126,14 +122,12 @@ export const enMore = {
   fix_need_app: 'You have no application yet, so there is nothing to fix.',
 
   // Download my information
-  dl_title: 'Download my information',
   dl_prompt: 'This makes a file with all the information we keep about you. It has private things. Keep it safe.',
   dl_button: 'Download my file',
   dl_done: 'Done. The file is saved on this phone.',
   dl_busy: 'Making your file',
 
   // Delete my information
-  del_title: 'Delete my information',
   del_warn_1: 'A person must say yes first. Nothing is deleted when you ask.',
   del_warn_2: 'If they say yes, your information, photos and answers are deleted. Your application stops.',
   del_warn_3: 'We keep payment records and the list of who looked at your information.',
@@ -144,19 +138,16 @@ export const enMore = {
   del_exists: 'You already asked. A person will look at it soon.',
 
   // My requests
-  req_title: 'My requests',
   req_prompt: 'Here are the fixes and deletions you asked for.',
   req_empty_title: 'No requests',
   req_empty_body: 'When you ask to fix or delete something, it shows here.',
   req_kind_correction: 'Fix',
-  req_kind_erasure: 'Delete my information',
   req_open: 'A person will look at it',
   req_accepted: 'Accepted',
   req_rejected: 'Not accepted',
   req_asked: 'Asked on',
 
   // My helpers
-  mh_title: 'My helpers',
   mh_prompt: 'A helper can use a shared phone to help you. The helper needs the PIN you make for them.',
   mh_empty_title: 'No helper yet',
   mh_empty_body: 'Choose a helper if you want someone to help you.',
@@ -167,20 +158,15 @@ export const enMore = {
   mh_scope_track: 'See my application',
   mh_scope_apply: 'Fill it in for me',
   mh_scope_upload: 'Add photos',
-  mh_until: 'Until',
   mh_stop: 'Stop this helper',
   mh_stop_ask: 'Stop this helper now? They cannot see or change anything after this.',
   mh_stop_yes: 'Yes, stop them',
   mh_stop_no: 'No, keep them',
   mh_stop_done: 'Done. This helper is stopped.',
-  mh_new_title: 'Choose a helper',
   mh_phone: "Type the helper's phone number.",
   mh_what: 'What may this helper do?',
   mh_pin: 'Make a PIN for this helper.',
   mh_pin_hint: 'The helper types this PIN on the shared phone. Do not use your own PIN. Tell it only to this helper.',
-  mh_pin_again: 'Type the same PIN again.',
-  mh_pin_differs: 'The two PINs are not the same. Please try again.',
-  mh_next: 'Next',
   mh_done: 'Done. Your helper may help you now.',
   mh_not_found: 'We could not find a helper with this number.',
   mh_exists: 'You already chose this helper.',

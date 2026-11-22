@@ -13,6 +13,7 @@ import { HomeScreen } from './HomeScreen';
 import { LoginScreen } from './LoginScreen';
 import { CitizenNotFoundPage } from './NotFound';
 import { ResultScreen } from './result/ResultScreen';
+import { SignupScreen } from './SignupScreen';
 import { AskScreen, ProofScreen, TrackerScreen } from './result/TrackerScreen';
 import { StartScreen } from './StartScreen';
 import { UnlockScreen } from './UnlockScreen';
@@ -105,6 +106,8 @@ function citizenPage(path: string) {
  */
 export function CitizenNotFound() {
   const { path } = useLocation();
+  // Making an account is for people who are signed out; the screen itself sends a signed-in person home.
+  if (path.replace(/\/+$/, '') === '/signup') return session.value.status === 'restoring' ? <Restoring /> : <SignupScreen />;
   const page = citizenPage(path);
   if (page) return <SignedIn>{page}</SignedIn>;
   return <CitizenNotFoundPage />;
