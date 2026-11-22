@@ -156,3 +156,9 @@ From: Track D1   To: Track A (applications, appeals)   Status: open
 What: `ApplicationOut` could carry `appeal: { possible: boolean, reason: "appeal_window_closed" | "appeal_already_open" | "appeal_already_decided" | "appeal_not_applicable" | null, days_left: number | null }`, computed with `appeals.rules.ineligible_reason` and `days_left`.
 Why: the citizen app shows "Ask a person to look again" on every rejected application and learns about a closed window only from the 409 after the person has gone through the screens. It reads `GET /v1/me/appeals` to hide the button for an open or decided appeal, but it cannot know the 30 days are over.
 Until then: the 409 codes `appeal_window_closed` (with `window_days`), `appeal_already_open`, `appeal_already_decided`, `appeal_not_applicable` and `consent_required` are shown as keyed messages.
+
+## Citizen dark theme: one meta line in index.html
+From: Track D1   To: Lead (`frontend/index.html`)   Status: open
+What: the citizen app now follows the phone's light or dark setting (`src/citizen/theme.css`, CSS only). `index.html` still says `<meta name="color-scheme" content="light" />`, so on a phone in dark mode the browser paints a white page until the stylesheet arrives (long on Slow 3G). `content="light dark"` removes that flash. Check `/ussd` once after the change: it keeps the paper palette and does not set `color-scheme` itself, so its native form controls would follow the phone.
+Why: a white flash before a dark app is the one seam left in the light-to-dark change; the file is outside `citizen` and `shared`.
+Until then: dark mode works from the first paint of the stylesheet on.

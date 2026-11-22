@@ -7,7 +7,6 @@ import { PrototypeFooter } from '../shared/components/PrototypeFooter';
 import { celebrate } from '../shared/feedback';
 import { lang, LANGUAGES, setLang, t, type Lang } from '../shared/i18n';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
-import { HomeLights } from './HomeLights';
 
 /**
  * First screen: a night sky with the emblem drawing itself, one large start button and a language choice.
@@ -36,12 +35,6 @@ export function StartScreen() {
     <div class="rh-night-sky relative flex min-h-dvh flex-col overflow-hidden">
       <div class="relative flex flex-1 flex-col">
       <div aria-hidden="true" class="rh-lattice-night absolute inset-0 opacity-80" />
-      <HomeLights />
-      {/* Laptop: a thin dawn line of noor light along the bottom, as on /live. */}
-      <div aria-hidden="true" class="hidden lg:block">
-        <div class="rh-dawn-glow" />
-        <div class="rh-dawn" />
-      </div>
       <div class="relative mx-auto flex w-full max-w-phone flex-1 flex-col px-5 pt-3 pb-4 md:max-w-xl lg:max-w-[84rem] lg:flex-row lg:items-center lg:gap-20 lg:px-16 lg:py-10">
         <div class="flex justify-end lg:absolute lg:end-10 lg:top-8">
           <AudioPrompt prompt="start_hint" autoPlay={false} tone="night" />
@@ -49,7 +42,6 @@ export function StartScreen() {
 
         <main id="main" class="flex flex-1 flex-col items-center justify-center gap-3 py-2 text-center lg:gap-5 lg:py-0">
           <div class="relative grid place-items-center">
-            <span aria-hidden="true" class="absolute size-[clamp(140px,32dvh,240px)] rounded-full bg-noor/20 blur-md motion-safe:animate-float lg:size-[clamp(280px,52dvh,440px)]" />
             <Emblem size={150} tone="night" animate class="relative size-[clamp(96px,22dvh,176px)] lg:size-[clamp(220px,40dvh,320px)]" />
           </div>
           <h1 ref={headingRef} tabIndex={-1} class="flex flex-col items-center gap-0">
@@ -70,7 +62,6 @@ export function StartScreen() {
           style={{ animationDelay: '700ms' }}
         >
           <div class="relative">
-            <span aria-hidden="true" class="absolute inset-0 rounded-lg border-2 border-noor hidden motion-safe:block motion-safe:animate-ring" />
             <button
               type="button"
               onClick={start}
