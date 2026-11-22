@@ -140,10 +140,10 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
           Role <span class="rounded-full bg-night-3 px-2 py-0.5 font-mono text-xs font-semibold text-noor">{active.role}</span>
         </span>
         {memberships.length > 1 ? (
-          <label class="st-bar-muted flex items-center gap-1.5">
+          <label class="st-bar-muted flex min-w-0 max-w-full items-center gap-1.5">
             Switch
             <select
-              class="h-7 rounded-md border border-night-line bg-night px-1 text-night-ink"
+              class="h-7 min-w-0 max-w-[14rem] rounded-md border border-night-line bg-night px-1 text-night-ink"
               value={membershipKey(active)}
               disabled={switching}
               onChange={(event) => void onSwitch(event.currentTarget.value)}

@@ -11,10 +11,9 @@ const ICONS: Record<string, JSX.Element> = {
   ),
   more: (
     <>
-      <rect x="4" y="4" width="6.5" height="6.5" rx="1.6" />
-      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6" />
-      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6" />
-      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6" />
+      <circle cx="5.5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="18.5" cy="12" r="1.6" />
     </>
   ),
   overview: (

@@ -64,7 +64,7 @@ const GROUPS: Group[] = [
     id: 'core',
     title: 'Core platform features',
     rows: [
-      { req: 'Secure login with role-based access', places: [P('Sign-in list', '/demo'), S('health', 'System health')], look: 'One-tap accounts on /demo; Health lists every route with the roles the server allows.' },
+      { req: 'Secure login with role-based access', places: [P('Sign-in list', '/demo')], look: 'One-tap accounts per role. Open a page of another role: the page says no, and the server refuses the calls too.' },
       { req: 'Dashboard with progress and history', places: [S('overview'), C('Citizen app /track')], look: 'Overview: live tiles and charts. /track: the citizen\'s own tracker.' },
       { req: 'Case management', places: [S('queue')], look: 'Open a case to decide, request proof or escalate, each with a written reason.' },
       { req: 'Public REST API with keys and docs', places: [S('keys'), { kind: 'api', label: 'API docs /docs', href: '/docs' }], look: 'Create a key (shown once); the docs page is the OpenAPI explorer.' },
