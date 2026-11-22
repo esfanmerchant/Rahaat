@@ -4,6 +4,13 @@ Prototype. Not an official service. All identity, payment and data services are 
 
 The rules both frontend tracks follow. Citizen app (`frontend/src/citizen`, `frontend/src/shared`, Track D1); staff console (`frontend/src/staff`, Track D2). Change tokens, pictograms or shared components by request to D1.
 
+## Visual language v3: Noor, unslopped (Sun 22 Nov, at the owner's request; wins where it differs from v2)
+
+Method: the unslop skill by Damir Sokolovsky (CC BY 4.0, heydamir/unslop). The brand stays (the ajrak eight-point-star Emblem and noor gold); the chrome goes quiet.
+
+- Staff console: graphite neutral ramp in day and night, noor gold only for focus, the current page and the role. No glow tokens, no gradients or coloured shadows on chrome, sentence-case labels, a 4 px grid, radii 6 / 8 / 12, one 28 px figure size for KPI tiles, the top bar in one row. Colour lives in content: the decision mix, the audit chain, maps and status chips. Motion: the page title rises word by word, numbers tween, a 400 ms theme reveal, pulsing only for live indicators. Pages load as their own chunks (shell 16 KB gzip).
+- Citizen app: the same rules within the 100 KB JavaScript budget, so the pass is CSS: entrance on the main heading, the phone's own dark setting with a smooth colour transition.
+
 ## Visual language v2: "Noor" (decided Sat 21 Nov, 20:00; supersedes the "never gradients" rule below)
 
 The owner asked for an interface that stops people in their tracks: judges, citizens and the team. The answer
