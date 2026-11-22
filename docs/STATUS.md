@@ -122,6 +122,17 @@ Primary: **https://rahat-zeta.vercel.app** (Vercel, function in bom1 Mumbai, Sup
 - [x] Checked after deploy (71bdf32): `npm run verify` 1271 passed; Vercel READY; `/`, `/demo`, `/staff`, `/live`, `/v1/public/pulse` 200 on https://rahat-zeta.vercel.app; the phone start screen renders at 390 px with no overflow; PC backup updated
 - [ ] Not verified on a real phone: sound, vibration, view-transition slide, voice; not verified on a real GPU: `/live` frame rate (36 fps at 1080p on a software rasteriser)
 
+## Final day fixes (Sun 22 Nov)
+
+- [x] Assistant: an undecided document check (`document_needs_review`) is a review guard, so the planner proposes the cheapest proof or abstains with a plain reason instead of `unknown_guard`; 40 golden cases, 0 mismatches (ADR 23, 1fbfcb4)
+- [x] Staff v4: case review, audit chain and impact as tabs with less text (5cd7e9f); focused rail per role with a More grid and the Guide page "Where is what" (2b98025)
+- [x] `/demo/kit`: the 30 specimen test cards with the measured result of the document check for each (all 30 as labelled, with or without OCR) (d2c7dd9)
+- [x] Serverless sign-up: the admin's simulated SMS view reads the department's copies, so a new citizen can finish registering on Vercel; measured 0/3 before, 3/3 after (ADR 24, 24e5e41)
+- [x] Staff console opened right-to-left after `/demo` (language race); fixed (d7f2645). Title shows only "Rahat"; footers keep the prototype label (d42ffaf)
+- [x] Live database re-seeded after an interrupted reset (logins were failing); officer, admin, auditor and citizen sign-in checked on the live URL
+- [x] OCR checked: RapidOCR (PP-OCR models) reads all five fields of a clean card on the PC host in 0.8 s; the hosted deploy has no OCR (size limit, ADR 19) and verifies cards by the signed QR and forensics
+- [ ] Citizen sign-up screens and in-app inbox (track/citizen4)  - [ ] Staff unslop pass and per-page chunks (track/staff6)  - [ ] Citizen design pass  - [ ] Device voice prefers the recording voices
+
 ## Integration and submission
 
 - [ ] E1 Merge loop running  - [ ] E2 Demo fixtures and reset  - [ ] E3 End-to-end tests  - [ ] E4 Docs and reports
