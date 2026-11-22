@@ -1,6 +1,8 @@
 /* Tailwind entry. Scans src/ only. Built into one external stylesheet (CSP: style-src 'self'). */
 @import "tailwindcss" source("../");
 @import "./tokens.css";
+/* The citizen theme: quiet chrome, dark mode from the phone, text entrances (CSS only). */
+@import "../citizen/theme.css";
 
 @layer base {
   html {

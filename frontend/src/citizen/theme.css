@@ -1,0 +1,323 @@
+/*
+ * Citizen theme: the quiet pass on "Noor" (docs/DESIGN.md). CSS only: no script, no new class in the markup.
+ *
+ * Direction. Paper and ink by day, one lamp at night. The chrome is ivory paper, indigo-black ink and one
+ * emerald action; noor gold appears only where a lamp is lit (the verdict, the paid card, the current step, a
+ * selected language). No hue gradients, glows, colored shadows, blobs or looping motion on the chrome.
+ *
+ * Scope. Every rule here applies only while a citizen screen is showing: <html> carries no staff theme and the
+ * page holds no staff root (/staff, /demo), USSD stage (/ussd) or Live scene (/live). Browsers without :has()
+ * drop these rules and keep the original look, which still works.
+ *
+ * Dark. The app follows the phone's own setting (prefers-color-scheme): the paper tokens are re-pointed to the
+ * night tokens and colors fade over 240 ms when the setting changes. Contrast (WCAG 2.x, text 4.5:1):
+ *   light: ink on paper 17.6, ink-muted 10.2, ink-subtle 6.2 (5.6 on surface), line-strong 3.7 (controls, 3:1).
+ *   dark:  ink on paper 16.6, ink-muted 11.4, ink-subtle 7.8 (7.1 on surface), line-strong 5.2,
+ *          white on primary 5.0, primary edge 3.8, emerald text 11.4 (8.8 on primary-soft), madder text 8.7
+ *          (7.4 on danger-soft), saffron text 10.6 (8.6 on warning-soft), indigo text 9.8 (8.3 on info-soft),
+ *          white on danger 5.6, gold on night-2 11.9, night-muted on night-2 7.8.
+ */
+
+/* ---------- Light: one neutral ramp, quiet depth, two weights, nested radii ---------- */
+:root:not([data-theme]):not(:has(.st-root, .ussd-stage, [aria-label="Rahat Live"])) {
+  /* Paper ramp, a little less yellow so content carries the color. */
+  --color-paper: #fffdf9;
+  --color-surface: #f5f2ec;
+  --color-sunken: #ede9e1;
+  --color-line: #e6e1d8;
+  --color-line-strong: #858294;
+
+  /* Hierarchy from size and color: 400 for reading, 600 for headings, buttons and figures. */
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 600;
+  --font-weight-black: 600;
+
+  /* Controls 8 to 12, cards 16, panels 20. */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  /* One easing curve, no springs, no loops on things that are not live. */
+  --ease-spring: var(--ease-out);
+  --animate-pop: rh-pop 320ms var(--ease-out) both;
+  --animate-rise: rh-settle 420ms var(--ease-out) both;
+  --animate-ring: none;
+  --animate-twinkle: none;
+  --animate-float: none;
+  --animate-spin-slow: none;
+
+  /* Depth: neutral, soft and small. Nothing glows. */
+  & .shadow-lift {
+    --tw-shadow: 0 1px 2px rgb(20 22 38 / 0.05);
+  }
+  & .shadow-float {
+    --tw-shadow: 0 8px 24px rgb(20 22 38 / 0.08);
+  }
+  & .shadow-glow,
+  & .shadow-glow-emerald,
+  & .shadow-glow-madder {
+    --tw-shadow: 0 0 #0000;
+  }
+  & .drop-shadow-glow {
+    filter: none;
+  }
+
+  /* Decoration that said nothing: the blurred lamp blobs, the breathing wash, the twinkling sky, the dawn line,
+     and the rings that pulsed around things that are not live. */
+  & .blur-md,
+  & .rh-breathe,
+  & .rh-dawn,
+  & .rh-dawn-glow,
+  & .motion-safe\:animate-ring,
+  & .motion-safe\:animate-twinkle.shadow-glow,
+  & .motion-safe\:animate-twinkle.shadow-glow-emerald {
+    display: none;
+  }
+
+  /* Night surfaces are flat night ink. The ajrak lattice stays only as a faint print inside them. */
+  & .rh-night-sky {
+    background-image: none;
+  }
+  & .rh-lattice-night {
+    opacity: 0.45;
+  }
+  & .rh-lattice-faint {
+    background-image: none;
+  }
+
+  /* The home band: flat night, a straight edge, no shadow and no fading lattice. */
+  & .rh-hero {
+    background-image: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  & .rh-hero::after {
+    display: none;
+  }
+
+  /* The emblem, drawn as a block print: finer lines with sharp ajrak corners, the eight homes in the lamp's own
+     light instead of a second hue. */
+  & g[stroke-width="4.5"] {
+    stroke-width: 3.25;
+    stroke-linejoin: miter;
+  }
+  & circle[r="15"][opacity="0.5"] {
+    stroke-width: 1.25;
+  }
+  & circle[r="3.4"][fill="#4ee6a6"] {
+    fill: #ffd36e;
+  }
+  & .motion-safe\:animate-spin-slow {
+    animation: none;
+  }
+
+  /* The monogram is a flat dyed star: no gold ring around it. */
+  & circle[r="40"][stroke="#ffd36e"] {
+    display: none;
+  }
+
+  /* Labels in sentence case, no tracking on Urdu. */
+  & .uppercase.tracking-wide {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  & :lang(ur)[class*="tracking-"] {
+    letter-spacing: 0;
+  }
+
+  /* Home tiles: one quiet circle, the pictogram in ink. Hover is a surface step, press a small scale. */
+  & .rh-tile {
+    transition:
+      transform 120ms var(--ease-out),
+      background-color 160ms var(--ease-out),
+      border-color 160ms var(--ease-out),
+      color 160ms var(--ease-out);
+  }
+  & .rh-tile > .size-16.rounded-full {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+  @media (hover: hover) {
+    & .rh-tile:hover {
+      transform: none;
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+    & .rh-tile.bg-paper:hover {
+      background-color: var(--color-surface);
+    }
+  }
+  & .rh-tile:active {
+    transform: scale(0.98);
+  }
+
+  /* A chosen answer settles in place; the border, the fill and the tick already mark it. */
+  & .rh-select {
+    animation: rh-settle-scale 180ms var(--ease-out) both;
+    box-shadow: none;
+  }
+
+  /* Cards that ask for something: a hairline of their own color, not a thick frame. */
+  & .border-4.border-warning,
+  & section.border-2.border-warning.bg-warning-soft {
+    border-width: 1px;
+  }
+  & .rh-slide-in {
+    animation: rh-slide-in-quiet 360ms var(--ease-out) 120ms both;
+  }
+
+  /* "A person will check": the lamp travels as a plain gold dot and the person's ring lights without a glow. */
+  & .rh-arc-lamp > span {
+    box-shadow: none;
+  }
+  & .rh-arc-end {
+    box-shadow: 0 0 0 2px var(--color-noor);
+    animation-name: rh-arc-ring;
+  }
+
+  /* The paid card is the one rich object on home: a printed slip with a fine gold frame inside its edge. */
+  & section[aria-labelledby="paid-title"]::before {
+    content: "";
+    position: absolute;
+    inset: 0.5rem;
+    border: 1px solid rgb(255 211 110 / 0.35);
+    border-radius: calc(var(--radius-2xl) - 0.5rem);
+    pointer-events: none;
+  }
+
+  /* The checker's scanning line is live, so it moves; it does not glow. */
+  & .rh-sweep {
+    box-shadow: none;
+  }
+
+  /* Children of a stagger fade in close together: a short settle, at most five steps. */
+  & .rh-stagger > * {
+    animation: rh-settle 360ms var(--ease-out) both;
+    animation-delay: calc(min(var(--i, 0), 5) * 45ms);
+  }
+
+  /* The start button is the one action on night: solid emerald, no gold ring and no glow. */
+  & .rh-night-sky {
+    --color-primary: #13804f;
+  }
+  & .rh-night-sky .border-noor.bg-primary {
+    border-color: var(--color-primary);
+  }
+}
+
+/* Text entrance: the heading of each screen settles once, after the page arrives. Reduced motion: none. */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-theme]):not(:has(.st-root, .ussd-stage, [aria-label="Rahat Live"])) {
+    & #main h1:not(:has(.motion-safe\:animate-rise)),
+    & .rh-hero h1 {
+      animation: rh-heading-in 520ms var(--ease-out) 60ms both;
+    }
+  }
+}
+
+/* ---------- Dark: follows the phone. Night tokens, depth from surface steps and hairlines ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]):not(:has(.st-root, .ussd-stage, [aria-label="Rahat Live"])) {
+    color-scheme: dark;
+    --color-paper: #0b1026;
+    --color-surface: #131a38;
+    --color-sunken: #0f1530;
+    --color-ink: #eef0ff;
+    --color-ink-muted: #c3c8e8;
+    --color-ink-subtle: #9ea5cc;
+    --color-line: #232b52;
+    --color-line-strong: #7a83b8;
+    --color-primary: #13804f;
+    --color-primary-strong: #0f7046;
+    --color-primary-soft: #0f2e2a;
+    --color-danger: #c42b47;
+    --color-danger-soft: #3a1422;
+    --color-warning-ink: #f5b847;
+    --color-warning-soft: #2f240c;
+    --color-info: #2b47a8;
+    --color-info-strong: #2b47a8;
+    --color-info-soft: #161f4a;
+    --color-focus: #ffd36e;
+    --color-noor-strong: #ffd36e;
+    --color-noor-soft: #2a2410;
+
+    /* Tokens that are a fill under white text and also a text color: the fill keeps its value, text and
+       strokes read the light shade. */
+    & .text-primary,
+    & .text-primary-strong {
+      color: #7fdcb0;
+    }
+    & .text-danger,
+    & .hover\:text-danger:hover,
+    & .active\:text-danger:active {
+      color: #ff8fa0;
+    }
+    & .text-info,
+    & .text-info-strong {
+      color: #a9b8ff;
+    }
+
+    /* The offline banner stays a dark strip with white text. */
+    & .bg-ink.text-white {
+      background-color: #1b2552;
+    }
+
+    /* No shadows on night: depth is a surface step and a hairline. */
+    & .shadow-lift,
+    & .shadow-float {
+      --tw-shadow: 0 0 #0000;
+    }
+
+    /* The home band melts into the page; night moments sit one step up with a hairline. */
+    & .rh-hero {
+      background-color: transparent;
+    }
+    & .rh-night-sky:not(.min-h-dvh) {
+      background-color: var(--color-night-2);
+      box-shadow: inset 0 0 0 1px rgb(238 240 255 / 0.08);
+    }
+  }
+}
+
+/* Colors fade when the phone switches between light and dark, and on state changes that have no faster
+   transition of their own. Utilities like transition-colors and the reduced-motion rule still win. */
+@layer base {
+  :root:not([data-theme]):not(:has(.st-root, .ussd-stage, [aria-label="Rahat Live"])) {
+    &,
+    & *,
+    & *::before,
+    & *::after {
+      transition-property: color, background-color, border-color, fill, stroke;
+      transition-duration: 240ms;
+      transition-timing-function: var(--ease-out);
+    }
+  }
+}
+
+@keyframes rh-settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes rh-settle-scale {
+  from {
+    transform: scale(0.98);
+  }
+}
+@keyframes rh-heading-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+}
+@keyframes rh-slide-in-quiet {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes rh-arc-ring {
+  from {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
