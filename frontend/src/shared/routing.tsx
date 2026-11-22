@@ -34,7 +34,7 @@ function ChunkFailed() {
 export function lazyRoute<P>(load: () => Promise<{ default: ComponentType<P> }>): ComponentType<P> {
   return lazy(() =>
     load().catch((error: unknown) => {
-      console.error('Route chunk failed to load', error);
+      if (import.meta.env.DEV) console.error('Route chunk failed to load', error); // dev only: production keeps the error screen, not the log
       return { default: ChunkFailed as ComponentType<P> };
     }),
   );

@@ -20,7 +20,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   override componentDidCatch(error: unknown): void {
     if (error && typeof (error as { then?: unknown }).then === 'function') return;
-    console.error('Render error', error);
+    if (import.meta.env.DEV) console.error('Render error', error); // dev only: production keeps the error screen, not the log
     this.setState({ failed: true });
   }
 
