@@ -1,4 +1,4 @@
-import createClient from 'openapi-fetch';
+import type { Client } from 'openapi-fetch';
 import type { paths } from './schema';
 import { actingEpoch, actingHeaders } from '../acting';
 import { lang } from '../i18n';
@@ -44,16 +44,73 @@ async function authFetch(request: Request): Promise<Response> {
   return checked(await fetch(withBearer(spare)));
 }
 
+interface Init {
+  params?: { path?: Record<string, unknown>; query?: Record<string, unknown>; header?: Record<string, unknown> };
+  body?: unknown;
+  headers?: Record<string, string>;
+  parseAs?: 'json' | 'text' | 'blob' | 'arrayBuffer';
+}
+
 /**
- * Typed API client (same origin). Usage:
+ * One request, with the subset of openapi-fetch's behaviour this app uses: `{name}` path parameters,
+ * scalar or array query parameters (`a=1&a=2`; null and undefined left out), header parameters, a JSON or
+ * FormData body, and `parseAs`. Returns `{ data }` or `{ error }` with the response, as openapi-fetch does;
+ * a network failure throws (`call()` turns it into a value).
+ */
+async function send(method: string, path: string, init: Init = {}): Promise<{ data?: unknown; error?: unknown; response: Response }> {
+  const { params = {}, body, headers, parseAs = 'json' } = init;
+  let url = path.replace(/\{(\w+)\}/g, (_, name: string) => encodeURIComponent(String(params.path?.[name])));
+  const search = Object.entries(params.query ?? {})
+    .flatMap(([name, value]) => (value == null ? [] : [value].flat().map((one) => `${name}=${encodeURIComponent(String(one))}`)))
+    .join('&');
+  if (search) url += `?${search}`;
+  const merged = new Headers({ Accept: 'application/json' });
+  for (const [name, value] of Object.entries({ ...headers, ...params.header })) if (value != null) merged.set(name, String(value));
+  let payload: BodyInit | undefined;
+  if (body !== undefined) {
+    // FormData: the browser writes the multipart Content-Type with its boundary.
+    if (body instanceof FormData) payload = body;
+    else {
+      payload = JSON.stringify(body);
+      merged.set('Content-Type', 'application/json');
+    }
+  }
+  const response = await authFetch(new Request(url, { method, headers: merged, body: payload, credentials: 'same-origin', redirect: 'follow' }));
+  const length = response.headers.get('Content-Length');
+  if (response.status === 204 || method === 'HEAD' || (length === '0' && !response.headers.get('Transfer-Encoding')?.includes('chunked'))) {
+    return { response };
+  }
+  if (response.ok) {
+    if (parseAs !== 'json') return { data: await response[parseAs](), response };
+    const raw = await response.text();
+    return { data: raw ? JSON.parse(raw) : undefined, response };
+  }
+  let error: unknown = await response.text();
+  try {
+    error = JSON.parse(error as string);
+  } catch {
+    // not JSON: keep the text
+  }
+  return { error, response };
+}
+
+const method =
+  (name: string) =>
+  (path: string, init?: Init): ReturnType<typeof send> =>
+    send(name, path, init);
+
+/**
+ * Typed API client (same origin), with the types of openapi-fetch and the
+ * generated schema. Usage:
  *
  *   import { api } from '../shared/api/client';
  *   import { call } from '../shared/api/problem';
  *   const res = await call(api.GET('/v1/auth/me'));
  */
-export const api = createClient<paths>({
-  baseUrl: '',
-  credentials: 'same-origin',
-  headers: { Accept: 'application/json' },
-  fetch: authFetch,
-});
+export const api = {
+  GET: method('GET'),
+  POST: method('POST'),
+  PUT: method('PUT'),
+  PATCH: method('PATCH'),
+  DELETE: method('DELETE'),
+} as unknown as Client<paths>;

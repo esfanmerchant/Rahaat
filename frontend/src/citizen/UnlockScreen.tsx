@@ -10,7 +10,7 @@ import { lang, t, type MessageKey } from '../shared/i18n';
 import { useFocusOnMount } from '../shared/useFocusOnMount';
 import { forgetVaultState, lockReason, unlock } from '../shared/vault';
 import { CitizenShell } from './CitizenShell';
-import { Keypad } from './Keypad';
+import { Keypad, PinDots } from './Keypad';
 import { PIN_MAX, PIN_MIN } from './phone';
 
 /**
@@ -85,19 +85,7 @@ export function UnlockScreen({ user }: { user: AuthUser }) {
         </div>
       </div>
       <p class="text-lg text-ink-muted">{t('unlock_hint')}</p>
-      <div
-        role="status"
-        aria-label={`${t('login_pin_label')}: ${t('login_pin_progress', { count: pin.length })}`}
-        class="rh-ltr flex min-h-tap-lg items-center justify-center gap-4 rounded-lg border-2 border-line-strong bg-paper px-3"
-      >
-        {Array.from({ length: PIN_MAX }, (_, index) => (
-          <span
-            key={index}
-            aria-hidden="true"
-            class={`inline-block size-5 rounded-full border-2 ${index < pin.length ? 'border-ink bg-ink' : index < PIN_MIN ? 'border-ink-muted' : 'border-line-strong border-dashed'}`}
-          />
-        ))}
-      </div>
+      <PinDots count={pin.length} />
       {notice ? (
         <div role="alert" class="flex items-start gap-3 rounded-lg border-2 border-warning bg-warning-soft p-3 text-warning-ink">
           <Pictogram name={notice === 'unlock_idle' ? 'clock' : 'warning'} size={32} />

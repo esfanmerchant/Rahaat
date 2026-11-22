@@ -8,9 +8,9 @@ const FIELD_LABEL: Readonly<Record<string, MessageKey>> = {
   full_name: 'review_name',
   household_size: 'review_household',
   income_band: 'review_income',
-  is_widow: 'review_widow',
+  is_widow: 'step_widow',
   has_disability: 'review_disability',
-  receives_other_aid: 'review_aid',
+  receives_other_aid: 'step_aid',
 };
 
 const KIND_LABEL: Record<Exclude<OpKind, 'patch'>, MessageKey> = {

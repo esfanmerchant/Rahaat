@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
-import type { SpeechItem } from '../../shared/audio';
+import { useServerSpeech, type SpeechItem } from '../../shared/audio';
 import type { ApiFailure } from '../../shared/api/problem';
 import type { ScamCheckOut } from '../../shared/api/types';
 import { Button } from '../../shared/components/Button';
@@ -8,7 +8,6 @@ import { Pictogram } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
 import { lang, t, type MessageKey } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
-import { useServerSpeech } from '../../shared/useServerSpeech';
 import { InlineFailure, Notice } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
 import { askPerson, cachedAnswer, composeSender, composeSpoken, composeText, justDisputed, loadAnswer } from './api';
@@ -108,7 +107,7 @@ export function ScamAnswerScreen({ id }: { id: string }) {
       <div class="mt-auto flex flex-col gap-3 pt-2">
         {ask === 'ask' ? (
           <Button size="lg" icon="person-help" block onClick={() => route(`/scam/answer/${id}/ask`)}>
-            {t('scam_ask_person')}
+            {t('ask_person')}
           </Button>
         ) : null}
         <Button size="lg" variant={ask === 'ask' ? 'secondary' : 'primary'} icon="shield" block onClick={another}>

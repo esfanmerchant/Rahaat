@@ -5,24 +5,13 @@ import type { MyScamReport } from '../../shared/api/types';
 import { Button } from '../../shared/components/Button';
 import { Pictogram } from '../../shared/components/Pictogram';
 import { FailureState, ScreenState } from '../../shared/components/ScreenState';
-import { isMessageKey, lang, t, type Lang } from '../../shared/i18n';
+import { isMessageKey, lang, t } from '../../shared/i18n';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { InlineFailure } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
+import { formatDate } from '../result/data';
 import { myChecks } from './api';
 import { certaintyOf, reviewKey, TONE_BOX } from './parts';
-
-/** Day and time in the person's language, with 0-9 digits. */
-function formatWhen(iso: string, code: Lang): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat(code === 'ur' ? 'ur-PK-u-nu-latn' : 'en-GB', {
-    day: 'numeric',
-    month: 'long',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
-}
 
 type Loaded =
   | { state: 'loading' }
@@ -115,7 +104,7 @@ export function ScamHistoryScreen() {
                   {item.label && isMessageKey(`scam_label_${item.label}`) ? (
                     <span class="text-base text-ink">{t(`scam_label_${item.label}` as Parameters<typeof t>[0])}</span>
                   ) : null}
-                  <span class="text-sm text-ink-muted">{formatWhen(item.checked_at, code)}</span>
+                  <span class="text-sm text-ink-muted">{formatDate(item.checked_at, code, true)}</span>
                   {review ? (
                     <span class="flex items-center gap-1 text-sm font-semibold text-info-strong">
                       <Pictogram name={item.review.status === 'waiting' ? 'clock' : 'person-help'} size={20} />

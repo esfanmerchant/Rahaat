@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { api } from '../../shared/api/client';
 import { call } from '../../shared/api/problem';
 import type { VoiceIn, VoiceOut } from '../../shared/api/types';
-import { unlockAudio } from '../../shared/audio';
+import { unlockAudio, useServerSpeech } from '../../shared/audio';
 import { AudioPrompt } from '../../shared/components/AudioPrompt';
 import { Button } from '../../shared/components/Button';
 import { Pictogram, type PictogramName } from '../../shared/components/Pictogram';
 import { isLang, lang, t, type Key, type Lang, type MessageKey } from '../../shared/i18n';
 import '../../shared/i18n/more';
 import { useSpeechInput } from '../../shared/speechInput';
-import { useServerSpeech } from '../../shared/useServerSpeech';
 import { draft } from '../apply/flow';
 import { Notice, sayKey } from '../apply/parts';
 
@@ -178,7 +177,7 @@ export default function VoiceAnswer({ question, expected, onAnswer }: VoiceAnswe
           {speech.input.partial ? <span dir="auto">{speech.input.partial}</span> : t('voice_listening')}
         </p>
         <Button size="md" variant="neutral" icon="pause" block onClick={speech.stop}>
-          {t('voice_stop')}
+          {t('scam_stop_listening')}
         </Button>
       </div>
     );
@@ -212,7 +211,7 @@ export default function VoiceAnswer({ question, expected, onAnswer }: VoiceAnswe
           {t('voice_ok_yes')}
         </Button>
         <Button size="lg" variant="neutral" icon="no" block onClick={listen}>
-          {t('voice_ok_no')}
+          {t('scam_heard_no')}
         </Button>
       </section>
     );

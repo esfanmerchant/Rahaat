@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'preact/hooks';
-import { api } from '../shared/api/client';
-import { call } from '../shared/api/problem';
+import { useEffect } from 'preact/hooks';
 import { AudioPrompt } from '../shared/components/AudioPrompt';
 import { Emblem } from '../shared/components/Emblem';
 import { Seal } from '../shared/components/Seal';
 import { t } from '../shared/i18n';
 import { celebrate } from '../shared/feedback';
+import { inbox, refreshInbox } from './Inbox';
 
 interface Paid {
   amount: string | null;
@@ -29,17 +28,13 @@ function readPaid(items: readonly { template: string; body: string; verify_code?
  * anyone can check in the message checker, inside the seal. Text only comes from keyed strings and the API.
  */
 export function PaidCard() {
-  const [paid, setPaid] = useState<Paid | null>(null);
+  // The payment message comes from the inbox (one fetch for the bell and this card).
+  const items = inbox.value.items;
+  const paid: Paid | null = items ? readPaid(items) : null;
   useEffect(() => {
-    let live = true;
-    void call(api.GET('/v1/notifications', { params: { query: { limit: 20 } } })).then((result) => {
-      if (live) setPaid(result.ok ? readPaid(result.data.items) : { amount: null, code: null });
-    });
+    void refreshInbox(true);
     const id = window.setTimeout(celebrate, 600);
-    return () => {
-      live = false;
-      window.clearTimeout(id);
-    };
+    return () => window.clearTimeout(id);
   }, []);
 
   return (

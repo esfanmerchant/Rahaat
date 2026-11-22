@@ -3,7 +3,7 @@ import { useLocation } from 'preact-iso';
 import { api } from '../../shared/api/client';
 import { call, type ApiFailure } from '../../shared/api/problem';
 import type { AskOut } from '../../shared/api/types';
-import { playSpeech, unlockAudio, type SpeechItem } from '../../shared/audio';
+import { playSpeech, unlockAudio, type SpeechItem, useServerSpeech } from '../../shared/audio';
 import { AudioPrompt } from '../../shared/components/AudioPrompt';
 import { Button } from '../../shared/components/Button';
 import { Pictogram } from '../../shared/components/Pictogram';
@@ -12,7 +12,6 @@ import { isLang, lang, t, type Key, type Lang } from '../../shared/i18n';
 import '../../shared/i18n/more';
 import { speechInputAvailable, useSpeechInput } from '../../shared/speechInput';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
-import { useServerSpeech } from '../../shared/useServerSpeech';
 import { InlineFailure, Notice } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
 
@@ -58,7 +57,7 @@ function Answer({ out, onAgain }: { out: AskOut; onAgain: () => void }) {
           </h1>
         </div>
         <Button size="lg" icon="person-help" block onClick={() => route('/ask')}>
-          {t('rules_person')}
+          {t('ask_person')}
         </Button>
         <Button size="md" variant="neutral" icon="retry" block onClick={onAgain}>
           {t('rules_again')}
@@ -175,7 +174,7 @@ export default function RulesScreen() {
       <div class="flex items-center gap-4">
         <Pictogram name="message" size={56} class="text-primary" />
         <h1 ref={headingRef} tabIndex={-1} class="text-2xl font-bold">
-          {t('rules_title')}
+          {t('home_rules')}
         </h1>
       </div>
       <p class="text-lg text-ink-muted">{t('rules_prompt')}</p>
@@ -188,7 +187,7 @@ export default function RulesScreen() {
               {speech.input.state === 'listening' && speech.input.partial ? <span dir="auto">{speech.input.partial}</span> : t('voice_listening')}
             </p>
             <Button size="lg" variant="neutral" icon="pause" block onClick={speech.stop}>
-              {t('voice_stop')}
+              {t('scam_stop_listening')}
             </Button>
           </div>
         ) : (

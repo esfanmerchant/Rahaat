@@ -10,9 +10,11 @@ import { vaultState } from '../shared/vault';
 import { ApplyFlow } from './apply/ApplyFlow';
 import { CitizenShell } from './CitizenShell';
 import { HomeScreen } from './HomeScreen';
+import { InboxScreen } from './Inbox';
 import { LoginScreen } from './LoginScreen';
 import { CitizenNotFoundPage } from './NotFound';
 import { ResultScreen } from './result/ResultScreen';
+import { SignupScreen } from './SignupScreen';
 import { AskScreen, ProofScreen, TrackerScreen } from './result/TrackerScreen';
 import { StartScreen } from './StartScreen';
 import { UnlockScreen } from './UnlockScreen';
@@ -93,6 +95,8 @@ function citizenPage(path: string) {
       return <AskScreen />;
     case 'proof':
       return <ProofScreen />;
+    case 'messages':
+      return <InboxScreen />;
     default:
       return null;
   }
@@ -100,11 +104,13 @@ function citizenPage(path: string) {
 
 /**
  * The router's default route: the citizen pages (/apply/..., /result, /track,
- * /ask, /proof, /scam/..., /my-data/...), else "page not found". Keeping them
+ * /ask, /proof, /messages, /scam/..., /my-data/...), else "page not found". Keeping them
  * here leaves App.tsx alone.
  */
 export function CitizenNotFound() {
   const { path } = useLocation();
+  // Making an account is for people who are signed out; the screen itself sends a signed-in person home.
+  if (path.replace(/\/+$/, '') === '/signup') return session.value.status === 'restoring' ? <Restoring /> : <SignupScreen />;
   const page = citizenPage(path);
   if (page) return <SignedIn>{page}</SignedIn>;
   return <CitizenNotFoundPage />;

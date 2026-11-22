@@ -13,7 +13,7 @@ import '../../shared/i18n/more';
 import { useFocusOnMount } from '../../shared/useFocusOnMount';
 import { AnswerButton, AnswerGroup, InlineFailure, Notice, sayKey } from '../apply/parts';
 import { CitizenShell } from '../CitizenShell';
-import { Keypad } from '../Keypad';
+import { Keypad, PinDots } from '../Keypad';
 import { CitizenNotFoundPage } from '../NotFound';
 import { PhoneSlots, usePhonePaste } from '../PhoneField';
 import { checkPhone, mockPhone, PHONE_LENGTH, PIN_MAX, PIN_MIN } from '../phone';
@@ -35,13 +35,6 @@ function Page({ icon, title, prompt, children }: { icon: PictogramName; title: K
       {children}
     </CitizenShell>
   );
-}
-
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
-  return `${formatDate(iso, lang.value)}, ${time}`;
 }
 
 /** Fetch once and again on retry; a failure keeps its kind so the right state shows (offline, denied, error). */
@@ -127,7 +120,7 @@ function AccessRow({ entry }: { entry: AccessEntry }) {
           </p>
         ) : null}
         <p class="text-base text-ink-muted">
-          <span class="rh-ltr">{formatDateTime(entry.at)}</span>
+          <span class="rh-ltr">{formatDate(entry.at, lang.value, true)}</span>
         </p>
         <p class={`text-base font-semibold ${entry.allowed ? 'text-primary-strong' : 'text-danger'}`}>{t(entry.allowed ? 'acc_allowed' : 'acc_refused')}</p>
       </div>
@@ -160,7 +153,7 @@ function AccessLogPage() {
   }, [attempt]);
 
   return (
-    <Page icon="lock" title="acc_title" prompt="acc_prompt">
+    <Page icon="lock" title="mydata_open_access" prompt="acc_prompt">
       {items === null && !failure ? <ScreenState kind="loading" /> : null}
       {failure && items === null ? <FailureState failure={failure} heading="h2" onRetry={() => setAttempt((n) => n + 1)} /> : null}
       {items && items.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('acc_empty_title')} body={t('acc_empty_body')} /> : null}
@@ -248,7 +241,7 @@ function FixPage() {
 
   if (step === 'field' || !field) {
     return (
-      <Page icon="edit" title="fix_title" prompt="fix_prompt">
+      <Page icon="edit" title="mydata_open_fix" prompt="fix_prompt">
         <div class="flex flex-col gap-3">
           {FIX_FIELDS.map((item) => (
             <button
@@ -270,7 +263,7 @@ function FixPage() {
   const spec = FIX_FIELDS.find((item) => item.field === field);
   if (step === 'value') {
     return (
-      <Page icon={spec?.icon ?? 'edit'} title={spec?.label ?? 'fix_title'} prompt="fix_value_prompt">
+      <Page icon={spec?.icon ?? 'edit'} title={spec?.label ?? 'mydata_open_fix'} prompt="fix_value_prompt">
         {field === 'full_name' ? (
           <label class="flex flex-col gap-1 text-base font-semibold text-ink-muted">
             {t('fix_name_label')}
@@ -329,7 +322,7 @@ function FixPage() {
           onClick={() => setStep('why')}
           class="mt-auto"
         >
-          {t('mh_next')}
+          {t('next')}
         </Button>
         <Button size="md" variant="quiet" icon="back" block onClick={() => setStep('field')}>
           {t('back')}
@@ -339,7 +332,7 @@ function FixPage() {
   }
 
   return (
-    <Page icon="edit" title="fix_title" prompt="fix_why_prompt">
+    <Page icon="edit" title="mydata_open_fix" prompt="fix_why_prompt">
       <AnswerGroup>
         {REASONS.map((reason) => (
           <AnswerButton key={reason.key} icon={reason.icon} label={t(reason.key)} selected={false} disabled={busy} onSelect={() => void send(reason.key)} />
@@ -383,7 +376,7 @@ function DownloadPage() {
   };
 
   return (
-    <Page icon="document" title="dl_title" prompt="dl_prompt">
+    <Page icon="document" title="mydata_open_download" prompt="dl_prompt">
       {phase === 'done' ? <Notice tone="ok" icon="yes" text={t('dl_done')} /> : null}
       {failure ? <InlineFailure failure={failure} /> : null}
       <Button size="lg" icon="document" block busy={phase === 'busy'} onClick={() => void download()} class="mt-auto">
@@ -431,7 +424,7 @@ function DeletePage() {
     );
   }
   return (
-    <Page icon="delete" title="del_title">
+    <Page icon="delete" title="mydata_open_delete">
       <ul class="flex flex-col gap-3">
         {WARNINGS.map((row) => (
           <li key={row.key} class="flex items-start gap-3 rounded-lg border-2 border-line bg-surface p-3">
@@ -464,7 +457,7 @@ const REQ_STATUS: Record<string, { key: Key; icon: PictogramName; tone: string }
 function RequestsPage() {
   const { data, failure, reload } = useLoad<DataRequestOut[]>(() => call(api.GET('/v1/me/data-requests')));
   return (
-    <Page icon="clock" title="req_title" prompt="req_prompt">
+    <Page icon="clock" title="mydata_open_requests" prompt="req_prompt">
       {data === null && !failure ? <ScreenState kind="loading" /> : null}
       {failure ? <FailureState failure={failure} heading="h2" onRetry={reload} /> : null}
       {data && data.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('req_empty_title')} body={t('req_empty_body')} /> : null}
@@ -478,7 +471,7 @@ function RequestsPage() {
                 <p class="flex items-center gap-2 text-xl font-bold">
                   <Pictogram name={item.kind === 'erasure' ? 'delete' : 'edit'} size={36} class="text-primary" />
                   <span>
-                    {t(item.kind === 'erasure' ? 'req_kind_erasure' : 'req_kind_correction')}
+                    {t(item.kind === 'erasure' ? 'mydata_open_delete' : 'req_kind_correction')}
                     {fieldKey && t(fieldKey) !== fieldKey ? `: ${t(fieldKey)}` : ''}
                   </span>
                 </p>
@@ -501,11 +494,11 @@ function RequestsPage() {
 // ---- my helpers ------------------------------------------------------------------------------------
 
 const SCOPE_ICON: Record<string, PictogramName> = { track: 'clock', apply: 'edit', upload: 'camera' };
-const SCOPE_KEY: Record<string, Key> = { track: 'mh_scope_track', apply: 'mh_scope_apply', upload: 'mh_scope_upload' };
+const SCOPE_KEY: Record<string, Key> = { track: 'home_see_application', apply: 'mh_scope_apply', upload: 'mh_scope_upload' };
 const DELEGATION_STATUS: Record<string, { key: Key; tone: string; icon: PictogramName }> = {
   live: { key: 'mh_live', tone: 'border-primary bg-primary-soft text-primary-strong', icon: 'yes' },
-  expired: { key: 'mh_ended', tone: 'border-line-strong bg-surface text-ink', icon: 'clock' },
-  revoked: { key: 'mh_stopped', tone: 'border-line-strong bg-surface text-ink', icon: 'pause' },
+  expired: { key: 'mydata_status_expired', tone: 'border-line-strong bg-surface text-ink', icon: 'clock' },
+  revoked: { key: 'acc_refused', tone: 'border-line-strong bg-surface text-ink', icon: 'pause' },
 };
 
 function HelperCard({ item, onChanged }: { item: DelegationOut; onChanged: () => void }) {
@@ -549,7 +542,7 @@ function HelperCard({ item, onChanged }: { item: DelegationOut; onChanged: () =>
         </span>
         {item.status === 'live' ? (
           <span class="text-base text-ink-muted">
-            {t('mh_until')}: {formatDate(item.expires_at, lang.value)}
+            {t('mydata_until')}: {formatDate(item.expires_at, lang.value)}
           </span>
         ) : null}
       </div>
@@ -579,7 +572,7 @@ function HelpersPage() {
   const { route } = useLocation();
   const { data, failure, reload } = useLoad<DelegationOut[]>(() => call(api.GET('/v1/me/helpers')));
   return (
-    <Page icon="person-help" title="mh_title" prompt="mh_prompt">
+    <Page icon="person-help" title="mydata_open_helpers" prompt="mh_prompt">
       {data === null && !failure ? <ScreenState kind="loading" /> : null}
       {failure ? <FailureState failure={failure} heading="h2" onRetry={reload} /> : null}
       {data && data.length === 0 ? <ScreenState kind="empty" heading="h2" title={t('mh_empty_title')} body={t('mh_empty_body')} /> : null}
@@ -601,16 +594,6 @@ function HelpersPage() {
 
 const SCOPES = ['track', 'apply', 'upload'] as const;
 type Scope = (typeof SCOPES)[number];
-
-function PinDots({ count }: { count: number }) {
-  return (
-    <div role="status" aria-label={t('login_pin_progress', { count })} class="rh-ltr flex min-h-tap-lg items-center justify-center gap-4 rounded-lg border-2 border-line-strong bg-paper px-3">
-      {Array.from({ length: PIN_MAX }, (_, index) => (
-        <span key={index} aria-hidden="true" class={`inline-block size-5 rounded-full border-2 ${index < count ? 'border-ink bg-ink' : index < PIN_MIN ? 'border-ink-muted' : 'border-line-strong border-dashed'}`} />
-      ))}
-    </div>
-  );
-}
 
 /** Choose a helper: phone, what they may do, a PIN (twice, so a slip is caught), then save. */
 function NewHelperPage() {
@@ -677,22 +660,22 @@ function NewHelperPage() {
         setFirst(pin);
         setPin('');
         setStep('again');
-        sayKey('mh_pin_again');
+        sayKey('pin_again');
       }
     } else if (pin.length >= PIN_MIN) {
       if (pin !== first) {
         setPin('');
         setFirst('');
         setStep('pin');
-        setNote('mh_pin_differs');
-        sayKey('mh_pin_differs');
+        setNote('pin_differs');
+        sayKey('pin_differs');
       } else void save(pin);
     }
   };
 
   if (step === 'scopes') {
     return (
-      <Page icon="person-help" title="mh_new_title" prompt="mh_what">
+      <Page icon="person-help" title="mh_add" prompt="mh_what">
         <div class="flex flex-col gap-3" role="group" aria-label={t('mh_what')}>
           {SCOPES.map((scope) => {
             const on = scopes.has(scope);
@@ -721,7 +704,7 @@ function NewHelperPage() {
           })}
         </div>
         <Button size="lg" icon="forward" block disabled={scopes.size === 0} onClick={() => setStep('pin')} class="mt-auto">
-          {t('mh_next')}
+          {t('next')}
         </Button>
         <Button size="md" variant="quiet" icon="back" block onClick={() => setStep('phone')}>
           {t('back')}
@@ -732,7 +715,7 @@ function NewHelperPage() {
 
   const phone = step === 'phone';
   return (
-    <Page icon="person-help" title="mh_new_title" prompt={phone ? 'mh_phone' : step === 'pin' ? 'mh_pin' : 'mh_pin_again'}>
+    <Page icon="person-help" title="mh_add" prompt={phone ? 'mh_phone' : step === 'pin' ? 'mh_pin' : 'pin_again'}>
       {phone ? (
         <>
           <p id="helper-phone-label" class="text-lg font-semibold">

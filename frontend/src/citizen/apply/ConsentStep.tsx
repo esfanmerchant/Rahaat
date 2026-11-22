@@ -65,7 +65,7 @@ export function ConsentStep() {
           {t('consent_yes')}
         </Button>
         <Button size="lg" variant="neutral" icon="no" block disabled={busy} onClick={() => route('/apply/declined')}>
-          {t('consent_no')}
+          {t('answer_no')}
         </Button>
       </div>
     </StepLayout>

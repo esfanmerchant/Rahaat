@@ -130,7 +130,7 @@ function NoteStep({ note, onNote, onNext }: { note: string; onNote: (text: strin
           {speech.input.partial ? <span dir="auto">{speech.input.partial}</span> : t('voice_listening')}
         </p>
         <Button size="md" variant="neutral" icon="pause" block onClick={speech.stop}>
-          {t('voice_stop')}
+          {t('scam_stop_listening')}
         </Button>
       </div>
     );
@@ -158,7 +158,7 @@ function NoteStep({ note, onNote, onNext }: { note: string; onNote: (text: strin
           {t('voice_ok_yes')}
         </Button>
         <Button size="lg" variant="neutral" icon="no" block onClick={listen}>
-          {t('voice_ok_no')}
+          {t('scam_heard_no')}
         </Button>
       </section>
     );
