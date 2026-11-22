@@ -8,7 +8,6 @@ import { PROTOTYPE_LABEL_EN, PROTOTYPE_LABEL_UR } from '../shared/components/Pro
 import { lang, t, type MessageKey } from '../shared/i18n';
 import { online } from '../shared/network';
 import { draft, STEPS, type StepId } from './apply/flow';
-import { HomeLights } from './HomeLights';
 import { JOURNEY_STEPS, stepsDone } from './Journey';
 import { StarBullet, StarPath, type PathItem } from './JourneyPath';
 import { ensureJourney, journeyStatus } from './journeyStore';
@@ -112,7 +111,6 @@ export function ContextPane({ spec }: { spec: PaneSpec }) {
       style={{ position: 'sticky', top: offline ? '44px' : '0px', height: offline ? 'calc(100dvh - 44px)' : '100dvh' }}
     >
       <div aria-hidden="true" class="rh-lattice-night absolute inset-0" />
-      <HomeLights class="opacity-70" />
       {/* A large, faint emblem turning slowly in the corner: the lamp the whole product is about. */}
       <Emblem size={520} tone="night" class="pointer-events-none absolute -bottom-40 -end-40 opacity-[0.07] motion-safe:animate-spin-slow" />
       <div class="relative flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-10 py-8 xl:px-14">

@@ -1,5 +1,6 @@
 /*
- * Citizen theme: the quiet pass on "Noor" (docs/DESIGN.md). CSS only: no script, no new class in the markup.
+ * Citizen theme: the quiet pass on "Noor" (docs/DESIGN.md). CSS only: no script and no new class in the markup
+ * (the citizen JS budget is full), so it works through the existing tokens, classes and SVG attributes.
  *
  * Direction. Paper and ink by day, one lamp at night. The chrome is ivory paper, indigo-black ink and one
  * emerald action; noor gold appears only where a lamp is lit (the verdict, the paid card, the current step, a
@@ -45,6 +46,9 @@
   --animate-float: none;
   --animate-spin-slow: none;
 
+  /* Presses show as the control's own state, not as the browser's grey flash. */
+  -webkit-tap-highlight-color: transparent;
+
   /* Depth: neutral, soft and small. Nothing glows. */
   & .shadow-lift {
     --tw-shadow: 0 1px 2px rgb(20 22 38 / 0.05);
@@ -61,15 +65,12 @@
     filter: none;
   }
 
-  /* Decoration that said nothing: the blurred lamp blobs, the breathing wash, the twinkling sky, the dawn line,
-     and the rings that pulsed around things that are not live. */
+  /* Decoration that said nothing: the blurred lamp blob behind the verdict, the breathing wash on the paid card
+     and the rings that pulsed around things that are not live. (The start screen's twinkling sky, blob, ring
+     and dawn line are gone from the markup.) */
   & .blur-md,
   & .rh-breathe,
-  & .rh-dawn,
-  & .rh-dawn-glow,
-  & .motion-safe\:animate-ring,
-  & .motion-safe\:animate-twinkle.shadow-glow,
-  & .motion-safe\:animate-twinkle.shadow-glow-emerald {
+  & .motion-safe\:animate-ring {
     display: none;
   }
 
@@ -201,6 +202,19 @@
   & .rh-night-sky .border-noor.bg-primary {
     border-color: var(--color-primary);
   }
+
+  /* A press is felt at once: a tiny scale down on buttons and keys (no grey tap flash, set above). */
+  & :is(button, a.no-underline):not(.rh-tile):not(:disabled):active {
+    scale: 0.98;
+  }
+
+  /* Route changes: a short, gentle slide in the reading direction (was 28 px). */
+  &::view-transition-old(root) {
+    animation: rh-vt-out-soft 160ms var(--ease-out) both;
+  }
+  &::view-transition-new(root) {
+    animation: rh-vt-in-soft 300ms var(--ease-out) both;
+  }
 }
 
 /* Text entrance: the heading of each screen settles once, after the page arrives. Reduced motion: none. */
@@ -217,6 +231,8 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]):not(:has(.st-root, .ussd-stage, [aria-label="Rahat Live"])) {
     color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     --color-paper: #0b1026;
     --color-surface: #131a38;
     --color-sunken: #0f1530;
@@ -255,6 +271,12 @@
       color: #a9b8ff;
     }
 
+    /* Finished steps (progress stars, timeline) in the brighter emerald, so they read on night (3.8:1). */
+    & g[fill="#0b6a46"] {
+      fill: #13804f;
+      stroke: #13804f;
+    }
+
     /* The offline banner stays a dark strip with white text. */
     & .bg-ink.text-white {
       background-color: #1b2552;
@@ -289,6 +311,11 @@
       transition-duration: 240ms;
       transition-timing-function: var(--ease-out);
     }
+    /* Controls answer a tap faster than the page fades. */
+    & :is(button, a, input, textarea, [role="radio"]) {
+      transition-property: color, background-color, border-color, fill, stroke, scale;
+      transition-duration: 120ms;
+    }
   }
 }
 
@@ -313,6 +340,18 @@
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+@keyframes rh-vt-out-soft {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--rh-sign) * -12px));
+  }
+}
+@keyframes rh-vt-in-soft {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--rh-sign) * 16px));
   }
 }
 @keyframes rh-arc-ring {
