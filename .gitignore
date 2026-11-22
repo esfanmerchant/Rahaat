@@ -34,9 +34,13 @@ desktop.ini
 !.vscode/extensions.json
 *.swp
 
-# claude: keep agents tracked, ignore local settings
-.claude/settings.local.json
-.claude/worktrees/
+# AI assistant setup stays local (agents, settings, rules, kickoff prompts)
+.claude/
+CLAUDE.md
+docs/KICKOFF.md
+
+# logs
+*.log
 
 # the organisers' documents stay local; they are not ours to publish
 AI_Hackathon_*.pdf
