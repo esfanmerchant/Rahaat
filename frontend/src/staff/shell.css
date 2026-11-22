@@ -200,6 +200,107 @@
   }
 }
 
+/* ---------- More grid ---------- */
+.nv-rail-more {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #26306a;
+}
+button.nv-rail-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+}
+.nv-rail-link.is-here {
+  color: #ffd36e;
+}
+.nv-more {
+  position: fixed;
+  z-index: 45;
+  inset-block-end: var(--rail-gap);
+  inset-inline-start: calc(var(--rail-w) + var(--rail-gap) * 2);
+  width: min(560px, calc(100vw - var(--rail-w) - var(--rail-gap) * 3));
+  max-height: calc(100dvh - var(--rail-gap) * 2);
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  border-radius: 20px;
+  background: #0b1026;
+  border: 1px solid #26306a;
+  box-shadow: 0 24px 64px -12px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 211 110 / 0.12);
+  color: #c7cdee;
+  animation: st-rise 200ms var(--ease-out) both;
+}
+.nv-more-h {
+  margin: 10px 0 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a3abd6;
+}
+.nv-more section:first-child .nv-more-h {
+  margin-top: 0;
+}
+.nv-more-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+}
+.nv-more-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 72px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 1px solid #26306a;
+  background: #111939;
+  color: #eef0ff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+}
+.nv-more-item:hover {
+  background: #1a2352;
+  border-color: #3a478f;
+}
+.nv-more-item:focus-visible {
+  outline: 2px solid #ffd36e;
+  outline-offset: 2px;
+}
+.nv-more-item[aria-current="page"] {
+  color: #ffd36e;
+  border-color: rgb(255 211 110 / 0.5);
+}
+@media (max-width: 767px) {
+  .nv-more {
+    inset-inline: var(--rail-gap);
+    inset-block-end: calc(56px + var(--rail-gap) * 2);
+    width: auto;
+    max-height: calc(100dvh - 56px - var(--rail-gap) * 4);
+  }
+  .nv-rail-more {
+    margin: 0;
+    padding: 0 0 0 4px;
+    border-top: 0;
+    border-inline-start: 1px solid #26306a;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nv-more {
+    animation: none;
+  }
+}
+
 /* ---------- Page transition ---------- */
 .st-page-in {
   animation: st-rise 340ms var(--ease-out) both;

@@ -3,6 +3,19 @@ import type { JSX } from 'preact';
 /** One clean stroke icon per nav slug (24 px grid, currentColor). Drawn here; no icon package, no emoji. */
 const P = (d: string): JSX.Element => <path d={d} />;
 const ICONS: Record<string, JSX.Element> = {
+  guide: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      {P('m15.5 8.5-2 5-5 2 2-5z')}
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="5.5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="18.5" cy="12" r="1.6" />
+    </>
+  ),
   overview: (
     <>
       <rect x="3" y="3" width="7" height="9" rx="1.6" />

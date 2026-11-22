@@ -6,7 +6,7 @@ import type { ActiveMembership, AuthUser, Membership, Role } from '../shared/api
 import { Button } from '../shared/components/Button';
 import { Emblem } from '../shared/components/Emblem';
 import { PrototypeFooter } from '../shared/components/PrototypeFooter';
-import { navFor, type NavItem } from './nav';
+import { moreFor, railFor, type NavItem } from './nav';
 import { NavIcon } from './NavIcons';
 import { Palette } from './Palette';
 import { PulseStrip } from './Pulse';
@@ -21,9 +21,9 @@ interface StaffShellProps {
 
 const membershipKey = (m: { tenant_id: string; role: string }): string => `${m.tenant_id}|${m.role}`;
 
-/** Side navigation groups: what you decide, what protects people, what proves it, what runs the system. */
+/** "More" grid groups: what you decide, what protects people, what proves it, what runs the system. */
 const GROUPS: Array<{ title: string; slugs: readonly string[] }> = [
-  { title: 'Command', slugs: ['overview'] },
+  { title: 'Command', slugs: ['overview', 'guide'] },
   { title: 'Decide', slugs: ['queue', 'approvals', 'payments', 'appeals', 'complaints', 'duplicates', 'decisions'] },
   { title: 'Protect', slugs: ['scam-map', 'scam-reports', 'mistakes', 'anomalies'] },
   { title: 'Prove', slugs: ['audit', 'costs', 'evals', 'twin', 'rules', 'impact', 'lab'] },
@@ -34,7 +34,7 @@ function grouped(items: NavItem[]): Array<{ title: string; items: NavItem[] }> {
   const out = GROUPS.map((g) => ({ title: g.title, items: g.slugs.map((s) => items.find((i) => i.slug === s)).filter((i): i is NavItem => Boolean(i)) })).filter((g) => g.items.length > 0);
   const known = new Set(GROUPS.flatMap((g) => g.slugs));
   const rest = items.filter((i) => !known.has(i.slug));
-  if (rest.length) out.push({ title: 'More', items: rest });
+  if (rest.length) out.push({ title: 'Other', items: rest });
   return out;
 }
 
@@ -43,7 +43,12 @@ const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform
 /** Dense staff layout: night top bar, live pulse strip, grouped side navigation, command palette, content. */
 export function StaffShell({ user, active, memberships, children }: StaffShellProps) {
   const { path, route } = useLocation();
-  const items = navFor(active.role);
+  const pinned = railFor(active.role);
+  const more = moreFor(active.role);
+  const moreActive = more.some((i) => path === `/staff/${i.slug}` || path.startsWith(`/staff/${i.slug}/`));
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreBtn = useRef<HTMLButtonElement>(null);
+  const morePanel = useRef<HTMLDivElement>(null);
   const [switching, setSwitching] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
@@ -61,6 +66,28 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
+
+  useEffect(() => setMoreOpen(false), [path]);
+  useEffect(() => {
+    if (!moreOpen) return;
+    morePanel.current?.querySelector<HTMLElement>('a')?.focus();
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!morePanel.current?.contains(t) && !moreBtn.current?.contains(t)) setMoreOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMoreOpen(false);
+        moreBtn.current?.focus();
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, [moreOpen]);
 
   const onSwitch = async (value: string): Promise<void> => {
     const target = memberships.find((m) => membershipKey(m) === value);
@@ -113,10 +140,10 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
           Role <span class="rounded-full bg-night-3 px-2 py-0.5 font-mono text-xs font-semibold text-noor">{active.role}</span>
         </span>
         {memberships.length > 1 ? (
-          <label class="st-bar-muted flex items-center gap-1.5">
+          <label class="st-bar-muted flex min-w-0 max-w-full items-center gap-1.5">
             Switch
             <select
-              class="h-7 rounded-md border border-night-line bg-night px-1 text-night-ink"
+              class="h-7 min-w-0 max-w-[14rem] rounded-md border border-night-line bg-night px-1 text-night-ink"
               value={membershipKey(active)}
               disabled={switching}
               onChange={(event) => void onSwitch(event.currentTarget.value)}
@@ -174,32 +201,66 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
             <span class="nv-rail-label">Rahat</span>
           </a>
           <ul class="nv-rail-list">
-            {grouped(items).map((g) => (
-              <li key={g.title} class="nv-rail-group" role="presentation">
-                <p class="nv-rail-sep" aria-hidden="true">
-                  <span>{g.title}</span>
-                </p>
-                <ul>
-                  {g.items.map((item) => {
-                    const href = `/staff/${item.slug}`;
-                    const current = path === href || path.startsWith(`${href}/`);
-                    return (
-                      <li key={item.slug}>
-                        <a href={href} aria-label={item.label} title={item.label} aria-current={current ? 'page' : undefined} class="nv-rail-link">
-                          <span class="nv-rail-icon">
-                            <NavIcon slug={item.slug} />
-                          </span>
-                          <span class="nv-rail-label">{item.label}</span>
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ul>
+            {pinned.map((item) => {
+              const href = `/staff/${item.slug}`;
+              const current = path === href || path.startsWith(`${href}/`);
+              return (
+                <li key={item.slug}>
+                  <a href={href} aria-label={item.label} title={item.label} aria-current={current ? 'page' : undefined} class="nv-rail-link">
+                    <span class="nv-rail-icon">
+                      <NavIcon slug={item.slug} />
+                    </span>
+                    <span class="nv-rail-label">{item.label}</span>
+                  </a>
+                </li>
+              );
+            })}
+            {more.length > 0 ? (
+              <li class="nv-rail-more">
+                <button
+                  ref={moreBtn}
+                  type="button"
+                  class={`nv-rail-link${moreActive ? ' is-here' : ''}`}
+                  aria-label="More pages"
+                  title="More pages"
+                  aria-haspopup="dialog"
+                  aria-expanded={moreOpen}
+                  aria-controls="nv-more"
+                  onClick={() => setMoreOpen((v) => !v)}
+                >
+                  <span class="nv-rail-icon">
+                    <NavIcon slug="more" />
+                  </span>
+                  <span class="nv-rail-label">More</span>
+                </button>
               </li>
-            ))}
+            ) : null}
           </ul>
         </div>
       </nav>
+      {moreOpen ? (
+        <div ref={morePanel} id="nv-more" role="dialog" aria-label="All pages for your role" class="nv-more">
+          {grouped(more).map((g) => (
+            <section key={g.title} aria-label={g.title}>
+              <h2 class="nv-more-h">{g.title}</h2>
+              <ul class="nv-more-grid">
+                {g.items.map((item) => {
+                  const href = `/staff/${item.slug}`;
+                  const current = path === href || path.startsWith(`${href}/`);
+                  return (
+                    <li key={item.slug}>
+                      <a href={href} class="nv-more-item" aria-current={current ? 'page' : undefined}>
+                        <NavIcon slug={item.slug} />
+                        <span>{item.label}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : null}
       <main id="staff-main" tabIndex={-1} class="min-w-0 flex-1 p-4">
         <div key={path} class="st-page-in">
           {children}
