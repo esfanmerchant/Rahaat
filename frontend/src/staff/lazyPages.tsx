@@ -107,3 +107,9 @@ export function LazyPage({ page, ...props }: { page: string } & Record<string, u
   const C = Comp as unknown as ComponentType<Record<string, unknown>>;
   return <C {...props} />;
 }
+
+// A direct visit to /staff/<page> starts that page's chunk now, in parallel with the session check, instead of after it.
+if (typeof location !== 'undefined') {
+  const first = /^\/staff\/([a-z-]+)/.exec(location.pathname)?.[1];
+  if (first) prefetchPage(first === 'cases' ? 'case' : first === 'decisions' && /^\/staff\/decisions\/./.test(location.pathname) ? 'decision' : first);
+}
