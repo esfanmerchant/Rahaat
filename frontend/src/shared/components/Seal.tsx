@@ -21,7 +21,7 @@ export function Seal({ children, size = 176, tone = 'primary' }: { children: Com
           </defs>
           <text lang="en" style={{ direction: 'ltr', unicodeBidi: 'isolate' }} font-size="11" font-weight="700" letter-spacing="1.5" fill="currentColor">
             <textPath href={`#${id}`} textLength="276" lengthAdjust="spacing">
-              RAHAT · PROTOTYPE · RAHAT · PROTOTYPE ·
+              RAHAT · RELIEF · RAHAT · RELIEF ·
             </textPath>
           </text>
         </g>

@@ -132,7 +132,6 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
           <span class="text-base font-black tracking-tight">Rahat</span>
           <span class="font-urdu-hint text-base" lang="ur" dir="rtl">راحت</span>
         </a>
-        <span class="rounded-full border border-night-line px-2 font-mono text-xs uppercase tracking-wide text-night-muted">Prototype</span>
         <span class="st-bar-muted" title={active.tenant_slug}>
           Department <span class="font-semibold text-night-ink">{active.tenant_name}</span>
         </span>
