@@ -253,7 +253,7 @@ export function StaffShell({ user, active, memberships, children }: StaffShellPr
       >
         <div class="nv-rail-panel">
           <a href="/staff" class="nv-rail-logo" aria-label="Rahat staff home">
-            <Emblem size={26} tone="night" animate />
+            <Emblem size={26} tone={night ? 'night' : 'paper'} />
             <span class="nv-rail-label">Rahat</span>
           </a>
           <ul class="nv-rail-list">
