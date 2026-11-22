@@ -136,9 +136,11 @@ function speak(text: string | undefined, code: Lang): Promise<boolean> {
   if (!text || typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') {
     return Promise.resolve(false);
   }
-  const voice = speechSynthesis
-    .getVoices()
-    .find((candidate) => candidate.lang.toLowerCase().replace('_', '-').startsWith(code));
+  const voices = speechSynthesis.getVoices().filter((candidate) => candidate.lang.toLowerCase().replace('_', '-').startsWith(code));
+  // The recordings' own voices first (Uzma, whose Edge name is in Urdu script, and Neerja), then a female or Indian English
+  // voice. Windows lists a male US voice first, and it mangles Roman Urdu.
+  const voice =
+    voices.find((v) => /uzma|عظم|neerja|heera|zira|female/i.test(v.name)) ?? voices.find((v) => /[-_]in$/i.test(v.lang)) ?? voices[0];
   if (!voice) return Promise.resolve(false);
   return new Promise<boolean>((resolve) => {
     const utterance = new SpeechSynthesisUtterance(text.replace(/[⁦-⁩]/g, ''));

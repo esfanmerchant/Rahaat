@@ -131,7 +131,11 @@ Primary: **https://rahat-zeta.vercel.app** (Vercel, function in bom1 Mumbai, Sup
 - [x] Staff console opened right-to-left after `/demo` (language race); fixed (d7f2645). Title shows only "Rahat"; footers keep the prototype label (d42ffaf)
 - [x] Live database re-seeded after an interrupted reset (logins were failing); officer, admin, auditor and citizen sign-in checked on the live URL
 - [x] OCR checked: RapidOCR (PP-OCR models) reads all five fields of a clean card on the PC host in 0.8 s; the hosted deploy has no OCR (size limit, ADR 19) and verifies cards by the signed QR and forensics
-- [ ] Citizen sign-up screens and in-app inbox (track/citizen4)  - [ ] Staff unslop pass and per-page chunks (track/staff6)  - [ ] Citizen design pass  - [ ] Device voice prefers the recording voices
+- [x] Citizen self-registration (`/signup`: phone, SMS code, name, PIN twice, signed in), PIN dots show 4 and grow to 6, in-app inbox (`/messages`) with a bell and unread count (1605944; ADR 25 own request runtime)
+- [x] Staff console unslopped: graphite chrome, one-row top bar with a context menu, sentence-case labels, rising titles, per-page lazy chunks (shell 16 KB gzip, was 112 KB); rail logo static and theme-aware (0e4a328, c0d1e36)
+- [x] Citizen app unslopped in CSS: decoration removed, finer emblem, dark theme that follows the phone with a 240 ms fade, heading entrance; `color-scheme: light dark` (68ae988)
+- [x] Device voice prefers the recordings' voices (Uzma, Neerja), then a female or Indian English voice; never Urdu with an English voice. Citizen JS 99.674 KB
+- [ ] Not verified on a real phone: the new dark theme, the device-voice choice on Android
 
 ## Integration and submission
 
