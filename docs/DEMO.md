@@ -17,7 +17,7 @@ Specimen cards for the camera step are on the **`/demo/kit`** page (download on 
 
 **Roles.** Presenter drives the laptop. Second person holds the phone (citizen screens at phone width). Say each line in one or two sentences; let the screen do the rest.
 
-**Before the demo (2 minutes):** reset to the clean state with `npm run seed -- --reset` on the PC host, or use the reset on the Vercel database (lead only). Open `/demo` on the laptop. Check `/healthz` returns 200. Have two browser profiles: citizen and staff.
+**Before the demo (2 minutes):** reset to the clean state with `npm run seed -- --reset` on the PC host, or, for the Vercel database, `powershell -ExecutionPolicy Bypass -File deploy/vercel/reset-db.ps1 -Reset` on the PC that holds `.live/secrets.env` (about 5 minutes; every demo account comes back clean). Open `/demo` on the laptop. Check `/healthz` returns 200. Have two browser profiles: citizen and staff.
 
 ## The script
 
